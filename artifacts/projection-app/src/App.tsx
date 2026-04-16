@@ -40,7 +40,6 @@ const clerkAppearance = {
     formFieldInput: "border-border focus:ring-[#156082] focus:border-[#156082]",
     footerActionLink: "text-[#156082] hover:text-[#0E2841]",
     identityPreviewEditButton: "text-[#156082]",
-    internal: "shadow-none",
     rootBox: "w-full",
     cardBox: "w-full shadow-none",
   },

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-function useReducedMotion() {
+export function useReducedMotion() {
   const [reduced, setReduced] = useState(false);
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -96,10 +96,12 @@ export function AuthDecorativePanel() {
 
 function FeatureItem({ text, delay }: { text: string; delay: number }) {
   const [visible, setVisible] = useState(false);
+  const reducedMotion = useReducedMotion();
   useEffect(() => {
+    if (reducedMotion) { setVisible(true); return; }
     const timer = setTimeout(() => setVisible(true), delay);
     return () => clearTimeout(timer);
-  }, [delay]);
+  }, [delay, reducedMotion]);
 
   return (
     <div className={`flex items-center gap-3 transition-all duration-700 ease-out ${visible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"}`}>
@@ -115,10 +117,12 @@ function FeatureItem({ text, delay }: { text: string; delay: number }) {
 
 export function AuthContentWrapper({ children }: { children: React.ReactNode }) {
   const [visible, setVisible] = useState(false);
+  const reducedMotion = useReducedMotion();
   useEffect(() => {
+    if (reducedMotion) { setVisible(true); return; }
     const timer = setTimeout(() => setVisible(true), 100);
     return () => clearTimeout(timer);
-  }, []);
+  }, [reducedMotion]);
 
   return (
     <div className="min-h-screen w-full flex">

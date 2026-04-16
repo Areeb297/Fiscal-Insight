@@ -1,15 +1,17 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { AuthContentWrapper } from "@/components/auth-panel";
+import { AuthContentWrapper, useReducedMotion } from "@/components/auth-panel";
 import { BarChart3, TrendingUp, Shield } from "lucide-react";
 import { useState, useEffect } from "react";
 
 function FadeIn({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
   const [visible, setVisible] = useState(false);
+  const reducedMotion = useReducedMotion();
   useEffect(() => {
+    if (reducedMotion) { setVisible(true); return; }
     const timer = setTimeout(() => setVisible(true), delay);
     return () => clearTimeout(timer);
-  }, [delay]);
+  }, [delay, reducedMotion]);
   return (
     <div className={`transition-all duration-700 ease-out ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"}`}>
       {children}
