@@ -1,0 +1,563 @@
+import { useState, useEffect } from "react";
+import { 
+  useListProjections, 
+  getListProjectionsQueryKey,
+  useCreateProjection,
+  useUpdateProjection,
+  useGetProjectionSummary,
+  getGetProjectionSummaryQueryKey,
+  useListEmployees,
+  getListEmployeesQueryKey,
+  useCreateEmployee,
+  useUpdateEmployee,
+  useDeleteEmployee,
+  useListSubscriptions,
+  getListSubscriptionsQueryKey,
+  useCreateSubscription,
+  useUpdateSubscription,
+  useDeleteSubscription,
+  useListSalesSupportResources,
+  getListSalesSupportResourcesQueryKey,
+  useCreateSalesSupportResource,
+  useUpdateSalesSupportResource,
+  useDeleteSalesSupportResource,
+  useListCtcRules,
+  getListCtcRulesQueryKey,
+  useListCurrencies,
+  getListCurrenciesQueryKey,
+  type Employee,
+  type Subscription,
+  type SalesSupportResource
+} from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Plus, Trash, Save, Calculator } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+export default function Projection() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: projections, isLoading: isLoadingProjections } = useListProjections({
+    query: { queryKey: getListProjectionsQueryKey() }
+  });
+
+  const activeProjectionId = projections?.[0]?.id;
+
+  const { data: summary, isLoading: isLoadingSummary } = useGetProjectionSummary(activeProjectionId || 0, {
+    query: { enabled: !!activeProjectionId, queryKey: getGetProjectionSummaryQueryKey(activeProjectionId || 0) }
+  });
+
+  const { data: employees } = useListEmployees(activeProjectionId || 0, {
+    query: { enabled: !!activeProjectionId, queryKey: getListEmployeesQueryKey(activeProjectionId || 0) }
+  });
+
+  const { data: subscriptions } = useListSubscriptions(activeProjectionId || 0, {
+    query: { enabled: !!activeProjectionId, queryKey: getListSubscriptionsQueryKey(activeProjectionId || 0) }
+  });
+
+  const { data: salesSupport } = useListSalesSupportResources(activeProjectionId || 0, {
+    query: { enabled: !!activeProjectionId, queryKey: getListSalesSupportResourcesQueryKey(activeProjectionId || 0) }
+  });
+
+  const { data: ctcRules } = useListCtcRules({
+    query: { queryKey: getListCtcRulesQueryKey() }
+  });
+
+  const { data: currencies } = useListCurrencies({
+    query: { queryKey: getListCurrenciesQueryKey() }
+  });
+
+  const createProjection = useCreateProjection();
+  const updateProjection = useUpdateProjection();
+  
+  const createEmployee = useCreateEmployee();
+  const updateEmployee = useUpdateEmployee();
+  const deleteEmployee = useDeleteEmployee();
+
+  const createSubscription = useCreateSubscription();
+  const updateSubscription = useUpdateSubscription();
+  const deleteSubscription = useDeleteSubscription();
+
+  const createSalesSupport = useCreateSalesSupportResource();
+  const updateSalesSupport = useUpdateSalesSupportResource();
+  const deleteSalesSupport = useDeleteSalesSupportResource();
+
+  const handleCreateInitialProjection = () => {
+    createProjection.mutate(
+      { data: { yearLabel: new Date().getFullYear().toString(), sarRate: 3.75, numClients: 1, marginPercent: 20 } },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getListProjectionsQueryKey() });
+          toast({ title: "Projection created" });
+        }
+      }
+    );
+  };
+
+  const handleUpdateProjectionSettings = (field: string, value: number) => {
+    if (!activeProjectionId) return;
+    updateProjection.mutate(
+      { id: activeProjectionId, data: { [field]: value } },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getGetProjectionSummaryQueryKey(activeProjectionId) });
+          queryClient.invalidateQueries({ queryKey: getListProjectionsQueryKey() });
+        }
+      }
+    );
+  };
+
+  const handleAddEmployee = () => {
+    if (!activeProjectionId) return;
+    createEmployee.mutate(
+      { projectionId: activeProjectionId, data: { name: "New Employee", title: "Role", country: ctcRules?.[0]?.countryName || "KSA", salarySar: 0, monthsFte: 12 } },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getListEmployeesQueryKey(activeProjectionId) });
+          queryClient.invalidateQueries({ queryKey: getGetProjectionSummaryQueryKey(activeProjectionId) });
+        }
+      }
+    );
+  };
+
+  const handleUpdateEmployee = (id: number, field: string, value: any) => {
+    if (!activeProjectionId) return;
+    updateEmployee.mutate(
+      { projectionId: activeProjectionId, id, data: { [field]: value } },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getListEmployeesQueryKey(activeProjectionId) });
+          queryClient.invalidateQueries({ queryKey: getGetProjectionSummaryQueryKey(activeProjectionId) });
+        }
+      }
+    );
+  };
+
+  const handleDeleteEmployee = (id: number) => {
+    if (!activeProjectionId) return;
+    deleteEmployee.mutate(
+      { projectionId: activeProjectionId, id },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getListEmployeesQueryKey(activeProjectionId) });
+          queryClient.invalidateQueries({ queryKey: getGetProjectionSummaryQueryKey(activeProjectionId) });
+        }
+      }
+    );
+  };
+
+  const handleAddSubscription = () => {
+    if (!activeProjectionId) return;
+    createSubscription.mutate(
+      { projectionId: activeProjectionId, data: { name: "New Sub", currency: "SAR", originalPrice: 0 } },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getListSubscriptionsQueryKey(activeProjectionId) });
+          queryClient.invalidateQueries({ queryKey: getGetProjectionSummaryQueryKey(activeProjectionId) });
+        }
+      }
+    );
+  };
+
+  const handleUpdateSubscription = (id: number, field: string, value: any) => {
+    if (!activeProjectionId) return;
+    updateSubscription.mutate(
+      { projectionId: activeProjectionId, id, data: { [field]: value } },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getListSubscriptionsQueryKey(activeProjectionId) });
+          queryClient.invalidateQueries({ queryKey: getGetProjectionSummaryQueryKey(activeProjectionId) });
+        }
+      }
+    );
+  };
+
+  const handleDeleteSubscription = (id: number) => {
+    if (!activeProjectionId) return;
+    deleteSubscription.mutate(
+      { projectionId: activeProjectionId, id },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getListSubscriptionsQueryKey(activeProjectionId) });
+          queryClient.invalidateQueries({ queryKey: getGetProjectionSummaryQueryKey(activeProjectionId) });
+        }
+      }
+    );
+  };
+
+  const handleAddSalesSupport = () => {
+    if (!activeProjectionId) return;
+    createSalesSupport.mutate(
+      { projectionId: activeProjectionId, data: { title: "New Resource", country: ctcRules?.[0]?.countryName || "KSA", salarySar: 0, months: 12, marginPercent: 20 } },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getListSalesSupportResourcesQueryKey(activeProjectionId) });
+          queryClient.invalidateQueries({ queryKey: getGetProjectionSummaryQueryKey(activeProjectionId) });
+        }
+      }
+    );
+  };
+
+  const handleUpdateSalesSupport = (id: number, field: string, value: any) => {
+    if (!activeProjectionId) return;
+    updateSalesSupport.mutate(
+      { projectionId: activeProjectionId, id, data: { [field]: value } },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getListSalesSupportResourcesQueryKey(activeProjectionId) });
+          queryClient.invalidateQueries({ queryKey: getGetProjectionSummaryQueryKey(activeProjectionId) });
+        }
+      }
+    );
+  };
+
+  const handleDeleteSalesSupport = (id: number) => {
+    if (!activeProjectionId) return;
+    deleteSalesSupport.mutate(
+      { projectionId: activeProjectionId, id },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getListSalesSupportResourcesQueryKey(activeProjectionId) });
+          queryClient.invalidateQueries({ queryKey: getGetProjectionSummaryQueryKey(activeProjectionId) });
+        }
+      }
+    );
+  };
+
+  const formatCurrency = (val: number) => new Intl.NumberFormat('en-SA', { style: 'currency', currency: 'SAR' }).format(val);
+
+  if (isLoadingProjections) {
+    return <div className="p-8 space-y-8"><Skeleton className="h-12 w-1/3" /><Skeleton className="h-[400px] w-full" /></div>;
+  }
+
+  if (!activeProjectionId) {
+    return (
+      <div className="p-8 flex flex-col items-center justify-center min-h-[80vh] text-center">
+        <Calculator className="h-16 w-16 text-muted-foreground mb-4 opacity-50" />
+        <h2 className="text-2xl font-bold mb-2">No Active Projection</h2>
+        <p className="text-muted-foreground mb-6">Create a projection to start managing your department costs and margins.</p>
+        <Button onClick={handleCreateInitialProjection} size="lg">Create Projection</Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8 pb-24">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Projection Workspace</h1>
+          <p className="text-muted-foreground mt-1">Manage departmental costs, margins, and client economics</p>
+        </div>
+        {summary && (
+          <div className="flex items-center gap-4 bg-muted/50 p-2 rounded-lg border border-border">
+            <div className="px-4 py-1 text-center">
+              <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Total Cost</div>
+              <div className="font-bold text-primary">{formatCurrency(summary.totalDeptCostYearly)}</div>
+            </div>
+            <div className="w-px h-8 bg-border"></div>
+            <div className="px-4 py-1 text-center">
+              <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Selling Price</div>
+              <div className="font-bold text-primary">{formatCurrency(summary.sellingPriceWithoutVat)}</div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Global Settings */}
+      <Card>
+        <CardHeader className="pb-4">
+          <CardTitle>Global Projection Settings</CardTitle>
+          <CardDescription>Adjust base parameters that affect all calculations</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="sarRate">SAR Exchange Rate (vs USD)</Label>
+              <Input 
+                id="sarRate" 
+                type="number" 
+                step="0.01" 
+                defaultValue={projections?.[0]?.sarRate} 
+                onBlur={(e) => handleUpdateProjectionSettings("sarRate", parseFloat(e.target.value))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="numClients">Number of Clients</Label>
+              <Input 
+                id="numClients" 
+                type="number" 
+                min="1" 
+                defaultValue={projections?.[0]?.numClients} 
+                onBlur={(e) => handleUpdateProjectionSettings("numClients", parseInt(e.target.value))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="marginPercent">Target Margin (%)</Label>
+              <Input 
+                id="marginPercent" 
+                type="number" 
+                step="0.1" 
+                defaultValue={projections?.[0]?.marginPercent} 
+                onBlur={(e) => handleUpdateProjectionSettings("marginPercent", parseFloat(e.target.value))}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Section 1: Department Cost (Employees) */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <div>
+            <CardTitle>Department Cost (Team)</CardTitle>
+            <CardDescription>Manage your team and their associated costs</CardDescription>
+          </div>
+          <Button size="sm" onClick={handleAddEmployee}><Plus className="h-4 w-4 mr-2" /> Add Employee</Button>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[200px]">Name</TableHead>
+                  <TableHead className="w-[150px]">Title</TableHead>
+                  <TableHead className="w-[150px]">Country</TableHead>
+                  <TableHead className="w-[150px]">Salary (SAR)</TableHead>
+                  <TableHead className="w-[100px]">Months</TableHead>
+                  <TableHead className="w-[100px] text-right">CTC</TableHead>
+                  <TableHead className="w-[150px] text-right">Total</TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {employees?.map((emp) => (
+                  <TableRow key={emp.id}>
+                    <TableCell className="p-2">
+                      <Input defaultValue={emp.name} onBlur={(e) => handleUpdateEmployee(emp.id, "name", e.target.value)} className="h-8 border-transparent hover:border-input focus:border-input bg-transparent" />
+                    </TableCell>
+                    <TableCell className="p-2">
+                      <Input defaultValue={emp.title} onBlur={(e) => handleUpdateEmployee(emp.id, "title", e.target.value)} className="h-8 border-transparent hover:border-input focus:border-input bg-transparent" />
+                    </TableCell>
+                    <TableCell className="p-2">
+                      <Select defaultValue={emp.country} onValueChange={(val) => handleUpdateEmployee(emp.id, "country", val)}>
+                        <SelectTrigger className="h-8 border-transparent hover:border-input focus:border-input bg-transparent">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ctcRules?.map(r => (
+                            <SelectItem key={r.id} value={r.countryName}>{r.countryName}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell className="p-2">
+                      <Input type="number" defaultValue={emp.salarySar} onBlur={(e) => handleUpdateEmployee(emp.id, "salarySar", parseFloat(e.target.value))} className="h-8 border-transparent hover:border-input focus:border-input bg-transparent text-right" />
+                    </TableCell>
+                    <TableCell className="p-2">
+                      <Input type="number" step="0.5" defaultValue={emp.monthsFte} onBlur={(e) => handleUpdateEmployee(emp.id, "monthsFte", parseFloat(e.target.value))} className="h-8 border-transparent hover:border-input focus:border-input bg-transparent text-right" />
+                    </TableCell>
+                    <TableCell className="text-right font-mono text-xs p-2">{emp.ctc}</TableCell>
+                    <TableCell className="text-right font-medium p-2">{formatCurrency(emp.totalYearlyCost)}</TableCell>
+                    <TableCell className="p-2 text-right">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteEmployee(emp.id)}>
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {!employees?.length && (
+                  <TableRow>
+                    <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">No employees added.</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+              <TableFooter>
+                <TableRow>
+                  <TableCell colSpan={6} className="text-right font-bold">Grand Total Yearly Cost:</TableCell>
+                  <TableCell className="text-right font-bold text-primary">{formatCurrency(summary?.totalDeptCostYearly || 0)}</TableCell>
+                  <TableCell></TableCell>
+                </TableRow>
+              </TableFooter>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Section 2: Overheads & Subscriptions */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <div>
+              <CardTitle>Overheads & Subscriptions</CardTitle>
+              <CardDescription>Software and operational expenses</CardDescription>
+            </div>
+            <Button size="sm" variant="outline" onClick={handleAddSubscription}><Plus className="h-4 w-4 mr-2" /> Add Overhead</Button>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-md border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead className="w-[100px]">Currency</TableHead>
+                    <TableHead className="w-[100px] text-right">Price/mo</TableHead>
+                    <TableHead className="w-[120px] text-right">SAR/mo</TableHead>
+                    <TableHead className="w-[50px]"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {subscriptions?.map((sub) => (
+                    <TableRow key={sub.id}>
+                      <TableCell className="p-2">
+                        <Input defaultValue={sub.name} onBlur={(e) => handleUpdateSubscription(sub.id, "name", e.target.value)} className="h-8 border-transparent hover:border-input focus:border-input bg-transparent" />
+                      </TableCell>
+                      <TableCell className="p-2">
+                        <Select defaultValue={sub.currency} onValueChange={(val) => handleUpdateSubscription(sub.id, "currency", val)}>
+                          <SelectTrigger className="h-8 border-transparent hover:border-input focus:border-input bg-transparent">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {currencies?.map(c => (
+                              <SelectItem key={c.id} value={c.code}>{c.code}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell className="p-2">
+                        <Input type="number" defaultValue={sub.originalPrice} onBlur={(e) => handleUpdateSubscription(sub.id, "originalPrice", parseFloat(e.target.value))} className="h-8 border-transparent hover:border-input focus:border-input bg-transparent text-right" />
+                      </TableCell>
+                      <TableCell className="text-right font-medium p-2">{formatCurrency(sub.monthlySar)}</TableCell>
+                      <TableCell className="p-2 text-right">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteSubscription(sub.id)}>
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {!subscriptions?.length && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">No subscriptions added.</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+                <TableFooter>
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-right font-medium">Total Monthly Overhead:</TableCell>
+                    <TableCell className="text-right font-medium">{formatCurrency(summary?.totalOverheadMonthly || 0)}</TableCell>
+                    <TableCell></TableCell>
+                  </TableRow>
+                </TableFooter>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Client Economics Summary */}
+        <Card className="bg-primary text-primary-foreground">
+          <CardHeader>
+            <CardTitle>Per-Client Economics</CardTitle>
+            <CardDescription className="text-primary-foreground/70">Calculated based on {projections?.[0]?.numClients} clients</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-primary-foreground/10 rounded-lg p-4">
+                  <div className="text-sm font-medium text-primary-foreground/80 mb-1">Monthly Cost/Client</div>
+                  <div className="text-2xl font-bold">{formatCurrency(summary?.totalMonthlyCostPerClient || 0)}</div>
+                </div>
+                <div className="bg-primary-foreground/10 rounded-lg p-4">
+                  <div className="text-sm font-medium text-primary-foreground/80 mb-1">Monthly Margin/Client</div>
+                  <div className="text-2xl font-bold">{formatCurrency(summary?.marginSarMonthly || 0)}</div>
+                </div>
+                <div className="bg-primary-foreground/20 rounded-lg p-4 col-span-2">
+                  <div className="text-sm font-medium text-primary-foreground/90 mb-1">Recommended Selling Price (Monthly, ex. VAT)</div>
+                  <div className="text-3xl font-bold">{formatCurrency(summary?.sellingPriceWithoutVat || 0)}</div>
+                  <div className="text-sm mt-2 text-primary-foreground/70">With 15% VAT: {formatCurrency(summary?.sellingPriceWithVatMonthly || 0)}</div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Section 3: Sales Support Resources */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <div>
+            <CardTitle>Sales Support & Managed Services</CardTitle>
+            <CardDescription>Add resources specific to client contracts with custom margins</CardDescription>
+          </div>
+          <Button size="sm" variant="secondary" onClick={handleAddSalesSupport}><Plus className="h-4 w-4 mr-2" /> Add Resource</Button>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[200px]">Title</TableHead>
+                  <TableHead className="w-[150px]">Country</TableHead>
+                  <TableHead className="w-[150px] text-right">Salary (SAR)</TableHead>
+                  <TableHead className="w-[100px] text-right">Months</TableHead>
+                  <TableHead className="w-[100px] text-right">Margin %</TableHead>
+                  <TableHead className="w-[150px] text-right">Total Cost</TableHead>
+                  <TableHead className="w-[150px] text-right">Selling Price</TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {salesSupport?.map((res) => (
+                  <TableRow key={res.id}>
+                    <TableCell className="p-2">
+                      <Input defaultValue={res.title} onBlur={(e) => handleUpdateSalesSupport(res.id, "title", e.target.value)} className="h-8 border-transparent hover:border-input focus:border-input bg-transparent" />
+                    </TableCell>
+                    <TableCell className="p-2">
+                      <Select defaultValue={res.country} onValueChange={(val) => handleUpdateSalesSupport(res.id, "country", val)}>
+                        <SelectTrigger className="h-8 border-transparent hover:border-input focus:border-input bg-transparent">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ctcRules?.map(r => (
+                            <SelectItem key={r.id} value={r.countryName}>{r.countryName}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell className="p-2">
+                      <Input type="number" defaultValue={res.salarySar} onBlur={(e) => handleUpdateSalesSupport(res.id, "salarySar", parseFloat(e.target.value))} className="h-8 border-transparent hover:border-input focus:border-input bg-transparent text-right" />
+                    </TableCell>
+                    <TableCell className="p-2">
+                      <Input type="number" step="0.5" defaultValue={res.months} onBlur={(e) => handleUpdateSalesSupport(res.id, "months", parseFloat(e.target.value))} className="h-8 border-transparent hover:border-input focus:border-input bg-transparent text-right" />
+                    </TableCell>
+                    <TableCell className="p-2">
+                      <Input type="number" step="0.1" defaultValue={res.marginPercent} onBlur={(e) => handleUpdateSalesSupport(res.id, "marginPercent", parseFloat(e.target.value))} className="h-8 border-transparent hover:border-input focus:border-input bg-transparent text-right" />
+                    </TableCell>
+                    <TableCell className="text-right font-medium p-2 text-muted-foreground">{formatCurrency(res.totalSalaryCost)}</TableCell>
+                    <TableCell className="text-right font-bold text-primary p-2">{formatCurrency(res.totalSalaryCost * (1 + res.marginPercent / 100))}</TableCell>
+                    <TableCell className="p-2 text-right">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteSalesSupport(res.id)}>
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {!salesSupport?.length && (
+                  <TableRow>
+                    <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">No sales support resources added.</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

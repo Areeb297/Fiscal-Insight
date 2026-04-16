@@ -1,22 +1,28 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Department Projection API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
-    description: Health operations
+  - name: projections
+  - name: employees
+  - name: subscriptions
+  - name: salesSupport
+  - name: quotations
+  - name: admin
+  - name: chat
+  - name: dashboard
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +30,738 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /projections:
+    get:
+      operationId: listProjections
+      tags: [projections]
+      summary: List all projections
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Projection"
+    post:
+      operationId: createProjection
+      tags: [projections]
+      summary: Create a projection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProjectionBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Projection"
+
+  /projections/{id}:
+    get:
+      operationId: getProjection
+      tags: [projections]
+      summary: Get a projection
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Projection"
+    put:
+      operationId: updateProjection
+      tags: [projections]
+      summary: Update projection settings
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProjectionBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Projection"
+
+  /projections/{id}/summary:
+    get:
+      operationId: getProjectionSummary
+      tags: [dashboard]
+      summary: Full computed projection summary
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectionSummary"
+
+  /projections/{projectionId}/employees:
+    get:
+      operationId: listEmployees
+      tags: [employees]
+      summary: List employees
+      parameters:
+        - name: projectionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Employee"
+    post:
+      operationId: createEmployee
+      tags: [employees]
+      summary: Add employee
+      parameters:
+        - name: projectionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEmployeeBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Employee"
+
+  /projections/{projectionId}/employees/{id}:
+    put:
+      operationId: updateEmployee
+      tags: [employees]
+      summary: Update employee
+      parameters:
+        - name: projectionId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateEmployeeBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Employee"
+    delete:
+      operationId: deleteEmployee
+      tags: [employees]
+      summary: Remove employee
+      parameters:
+        - name: projectionId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /projections/{projectionId}/subscriptions:
+    get:
+      operationId: listSubscriptions
+      tags: [subscriptions]
+      summary: List overheads
+      parameters:
+        - name: projectionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Subscription"
+    post:
+      operationId: createSubscription
+      tags: [subscriptions]
+      summary: Add subscription
+      parameters:
+        - name: projectionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSubscriptionBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+
+  /projections/{projectionId}/subscriptions/{id}:
+    put:
+      operationId: updateSubscription
+      tags: [subscriptions]
+      summary: Update subscription
+      parameters:
+        - name: projectionId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSubscriptionBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+    delete:
+      operationId: deleteSubscription
+      tags: [subscriptions]
+      summary: Remove subscription
+      parameters:
+        - name: projectionId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /projections/{projectionId}/sales-support:
+    get:
+      operationId: listSalesSupportResources
+      tags: [salesSupport]
+      summary: List sales support resources
+      parameters:
+        - name: projectionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SalesSupportResource"
+    post:
+      operationId: createSalesSupportResource
+      tags: [salesSupport]
+      summary: Add sales support resource
+      parameters:
+        - name: projectionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSalesSupportBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SalesSupportResource"
+
+  /projections/{projectionId}/sales-support/{id}:
+    put:
+      operationId: updateSalesSupportResource
+      tags: [salesSupport]
+      summary: Update sales support resource
+      parameters:
+        - name: projectionId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSalesSupportBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SalesSupportResource"
+    delete:
+      operationId: deleteSalesSupportResource
+      tags: [salesSupport]
+      summary: Remove sales support resource
+      parameters:
+        - name: projectionId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /quotations:
+    get:
+      operationId: listQuotations
+      tags: [quotations]
+      summary: List all quotations
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Quotation"
+    post:
+      operationId: createQuotation
+      tags: [quotations]
+      summary: Create a quotation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateQuotationBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuotationWithLineItems"
+
+  /quotations/{id}:
+    get:
+      operationId: getQuotation
+      tags: [quotations]
+      summary: Get quotation with line items
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuotationWithLineItems"
+    put:
+      operationId: updateQuotation
+      tags: [quotations]
+      summary: Update quotation header
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateQuotationBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuotationWithLineItems"
+    delete:
+      operationId: deleteQuotation
+      tags: [quotations]
+      summary: Delete quotation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /quotations/{quotationId}/line-items:
+    post:
+      operationId: createQuotationLineItem
+      tags: [quotations]
+      summary: Add line item
+      parameters:
+        - name: quotationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLineItemBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuotationLineItem"
+
+  /quotations/{quotationId}/line-items/{id}:
+    put:
+      operationId: updateQuotationLineItem
+      tags: [quotations]
+      summary: Update line item
+      parameters:
+        - name: quotationId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateLineItemBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuotationLineItem"
+    delete:
+      operationId: deleteQuotationLineItem
+      tags: [quotations]
+      summary: Remove line item
+      parameters:
+        - name: quotationId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /admin/currencies:
+    get:
+      operationId: listCurrencies
+      tags: [admin]
+      summary: List currencies
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Currency"
+    post:
+      operationId: createCurrency
+      tags: [admin]
+      summary: Add currency
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCurrencyBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Currency"
+
+  /admin/currencies/{id}:
+    put:
+      operationId: updateCurrency
+      tags: [admin]
+      summary: Update currency
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCurrencyBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Currency"
+    delete:
+      operationId: deleteCurrency
+      tags: [admin]
+      summary: Delete currency
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /admin/ctc-rules:
+    get:
+      operationId: listCtcRules
+      tags: [admin]
+      summary: List CTC rules
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CtcRule"
+    post:
+      operationId: createCtcRule
+      tags: [admin]
+      summary: Add CTC rule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCtcRuleBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CtcRule"
+
+  /admin/ctc-rules/{id}:
+    put:
+      operationId: updateCtcRule
+      tags: [admin]
+      summary: Update CTC rule
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCtcRuleBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CtcRule"
+    delete:
+      operationId: deleteCtcRule
+      tags: [admin]
+      summary: Delete CTC rule
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /admin/settings:
+    get:
+      operationId: getSystemSettings
+      tags: [admin]
+      summary: Get system settings
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemSettings"
+    put:
+      operationId: updateSystemSettings
+      tags: [admin]
+      summary: Update system settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSystemSettingsBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemSettings"
+
+  /chat:
+    post:
+      operationId: sendChatMessage
+      tags: [chat]
+      summary: Send message to AI chatbot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatMessageRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMessageResponse"
+
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Dashboard overview metrics
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +772,558 @@ components:
       required:
         - status
 
+    Projection:
+      type: object
+      properties:
+        id:
+          type: integer
+        yearLabel:
+          type: string
+        sarRate:
+          type: number
+        numClients:
+          type: integer
+        marginPercent:
+          type: number
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required: [id, yearLabel, sarRate, numClients, marginPercent, createdAt, updatedAt]
+
+    CreateProjectionBody:
+      type: object
+      properties:
+        yearLabel:
+          type: string
+        sarRate:
+          type: number
+        numClients:
+          type: integer
+        marginPercent:
+          type: number
+      required: [yearLabel]
+
+    UpdateProjectionBody:
+      type: object
+      properties:
+        yearLabel:
+          type: string
+        sarRate:
+          type: number
+        numClients:
+          type: integer
+        marginPercent:
+          type: number
+
+    Employee:
+      type: object
+      properties:
+        id:
+          type: integer
+        projectionId:
+          type: integer
+        name:
+          type: string
+        title:
+          type: string
+        country:
+          type: string
+        salarySar:
+          type: number
+        monthsFte:
+          type: integer
+        ctc:
+          type: number
+        totalYearlyCost:
+          type: number
+        createdAt:
+          type: string
+      required: [id, projectionId, name, title, country, salarySar, monthsFte, ctc, totalYearlyCost, createdAt]
+
+    CreateEmployeeBody:
+      type: object
+      properties:
+        name:
+          type: string
+        title:
+          type: string
+        country:
+          type: string
+        salarySar:
+          type: number
+        monthsFte:
+          type: integer
+      required: [name, title, country, salarySar]
+
+    UpdateEmployeeBody:
+      type: object
+      properties:
+        name:
+          type: string
+        title:
+          type: string
+        country:
+          type: string
+        salarySar:
+          type: number
+        monthsFte:
+          type: integer
+
+    Subscription:
+      type: object
+      properties:
+        id:
+          type: integer
+        projectionId:
+          type: integer
+        name:
+          type: string
+        currency:
+          type: string
+        originalPrice:
+          type: number
+        sarEquivalent:
+          type: number
+        yearlySar:
+          type: number
+        monthlySar:
+          type: number
+        createdAt:
+          type: string
+      required: [id, projectionId, name, currency, originalPrice, sarEquivalent, yearlySar, monthlySar, createdAt]
+
+    CreateSubscriptionBody:
+      type: object
+      properties:
+        name:
+          type: string
+        currency:
+          type: string
+        originalPrice:
+          type: number
+      required: [name, currency, originalPrice]
+
+    UpdateSubscriptionBody:
+      type: object
+      properties:
+        name:
+          type: string
+        currency:
+          type: string
+        originalPrice:
+          type: number
+
+    SalesSupportResource:
+      type: object
+      properties:
+        id:
+          type: integer
+        projectionId:
+          type: integer
+        title:
+          type: string
+        country:
+          type: string
+        salarySar:
+          type: number
+        months:
+          type: integer
+        marginPercent:
+          type: number
+        ctc:
+          type: number
+        totalSalaryCost:
+          type: number
+        createdAt:
+          type: string
+      required: [id, projectionId, title, country, salarySar, months, marginPercent, ctc, totalSalaryCost, createdAt]
+
+    CreateSalesSupportBody:
+      type: object
+      properties:
+        title:
+          type: string
+        country:
+          type: string
+        salarySar:
+          type: number
+        months:
+          type: integer
+        marginPercent:
+          type: number
+      required: [title, country, salarySar]
+
+    UpdateSalesSupportBody:
+      type: object
+      properties:
+        title:
+          type: string
+        country:
+          type: string
+        salarySar:
+          type: number
+        months:
+          type: integer
+        marginPercent:
+          type: number
+
+    Quotation:
+      type: object
+      properties:
+        id:
+          type: integer
+        projectionId:
+          type: integer
+          nullable: true
+        quotationNumber:
+          type: string
+        companyName:
+          type: string
+        clientName:
+          type: string
+        date:
+          type: string
+        status:
+          type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required: [id, quotationNumber, companyName, clientName, date, status, createdAt, updatedAt]
+
+    QuotationLineItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        quotationId:
+          type: integer
+        sortOrder:
+          type: integer
+        description:
+          type: string
+        quantity:
+          type: integer
+        unit:
+          type: string
+        priceMonthly:
+          type: number
+        totalMonths:
+          type: integer
+      required: [id, quotationId, sortOrder, description, quantity, unit, priceMonthly, totalMonths]
+
+    QuotationWithLineItems:
+      type: object
+      properties:
+        id:
+          type: integer
+        projectionId:
+          type: integer
+          nullable: true
+        quotationNumber:
+          type: string
+        companyName:
+          type: string
+        clientName:
+          type: string
+        date:
+          type: string
+        status:
+          type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        lineItems:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuotationLineItem"
+      required: [id, quotationNumber, companyName, clientName, date, status, createdAt, updatedAt, lineItems]
+
+    CreateQuotationBody:
+      type: object
+      properties:
+        projectionId:
+          type: integer
+          nullable: true
+        quotationNumber:
+          type: string
+        companyName:
+          type: string
+        clientName:
+          type: string
+        date:
+          type: string
+        status:
+          type: string
+      required: [quotationNumber, companyName, clientName, date]
+
+    UpdateQuotationBody:
+      type: object
+      properties:
+        quotationNumber:
+          type: string
+        companyName:
+          type: string
+        clientName:
+          type: string
+        date:
+          type: string
+        status:
+          type: string
+
+    CreateLineItemBody:
+      type: object
+      properties:
+        sortOrder:
+          type: integer
+        description:
+          type: string
+        quantity:
+          type: integer
+        unit:
+          type: string
+        priceMonthly:
+          type: number
+        totalMonths:
+          type: integer
+      required: [description]
+
+    UpdateLineItemBody:
+      type: object
+      properties:
+        sortOrder:
+          type: integer
+        description:
+          type: string
+        quantity:
+          type: integer
+        unit:
+          type: string
+        priceMonthly:
+          type: number
+        totalMonths:
+          type: integer
+
+    Currency:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        name:
+          type: string
+        symbol:
+          type: string
+        rateToSar:
+          type: number
+        isActive:
+          type: boolean
+        isBase:
+          type: boolean
+        updatedAt:
+          type: string
+      required: [id, code, name, symbol, rateToSar, isActive, isBase, updatedAt]
+
+    CreateCurrencyBody:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        symbol:
+          type: string
+        rateToSar:
+          type: number
+        isActive:
+          type: boolean
+        isBase:
+          type: boolean
+      required: [code, name, symbol, rateToSar]
+
+    UpdateCurrencyBody:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        symbol:
+          type: string
+        rateToSar:
+          type: number
+        isActive:
+          type: boolean
+
+    CtcRule:
+      type: object
+      properties:
+        id:
+          type: integer
+        countryName:
+          type: string
+        countryCode:
+          type: string
+        ctcMultiplier:
+          type: number
+        notes:
+          type: string
+          nullable: true
+        isActive:
+          type: boolean
+      required: [id, countryName, countryCode, ctcMultiplier, isActive]
+
+    CreateCtcRuleBody:
+      type: object
+      properties:
+        countryName:
+          type: string
+        countryCode:
+          type: string
+        ctcMultiplier:
+          type: number
+        notes:
+          type: string
+        isActive:
+          type: boolean
+      required: [countryName, countryCode, ctcMultiplier]
+
+    UpdateCtcRuleBody:
+      type: object
+      properties:
+        countryName:
+          type: string
+        countryCode:
+          type: string
+        ctcMultiplier:
+          type: number
+        notes:
+          type: string
+        isActive:
+          type: boolean
+
+    SystemSettings:
+      type: object
+      properties:
+        id:
+          type: integer
+        defaultMargin:
+          type: number
+        defaultNumClients:
+          type: integer
+        vatRate:
+          type: number
+        quotationPrefix:
+          type: string
+        companyName:
+          type: string
+        companyLogoUrl:
+          type: string
+          nullable: true
+        baseCurrencyCode:
+          type: string
+        updatedAt:
+          type: string
+      required: [id, defaultMargin, defaultNumClients, vatRate, quotationPrefix, companyName, baseCurrencyCode, updatedAt]
+
+    UpdateSystemSettingsBody:
+      type: object
+      properties:
+        defaultMargin:
+          type: number
+        defaultNumClients:
+          type: integer
+        vatRate:
+          type: number
+        quotationPrefix:
+          type: string
+        companyName:
+          type: string
+        companyLogoUrl:
+          type: string
+        baseCurrencyCode:
+          type: string
+
+    ChatMessageRequest:
+      type: object
+      properties:
+        message:
+          type: string
+        projectionId:
+          type: integer
+          nullable: true
+      required: [message]
+
+    ChatMessageResponse:
+      type: object
+      properties:
+        reply:
+          type: string
+        actionsTaken:
+          type: array
+          items:
+            type: object
+            properties:
+              action:
+                type: string
+              details:
+                type: string
+            required: [action, details]
+      required: [reply, actionsTaken]
+
+    ProjectionSummary:
+      type: object
+      properties:
+        projection:
+          $ref: "#/components/schemas/Projection"
+        totalDeptCostYearly:
+          type: number
+        costPerClientYearly:
+          type: number
+        costPerClientMonthly:
+          type: number
+        totalOverheadMonthly:
+          type: number
+        totalOverheadYearly:
+          type: number
+        totalMonthlyCostPerClient:
+          type: number
+        sellingPriceWithoutVat:
+          type: number
+        marginSarMonthly:
+          type: number
+        marginSarYearly:
+          type: number
+        sellingPriceWithVatMonthly:
+          type: number
+        sellingPriceWithVatYearly:
+          type: number
+        salesSupportTotalCost:
+          type: number
+        salesSupportSellingPrice:
+          type: number
+        employeeCount:
+          type: integer
+        subscriptionCount:
+          type: integer
+        salesSupportCount:
+          type: integer
+      required: [projection, totalDeptCostYearly, costPerClientYearly, costPerClientMonthly, totalOverheadMonthly, totalOverheadYearly, totalMonthlyCostPerClient, sellingPriceWithoutVat, marginSarMonthly, marginSarYearly, sellingPriceWithVatMonthly, sellingPriceWithVatYearly, salesSupportTotalCost, salesSupportSellingPrice, employeeCount, subscriptionCount, salesSupportCount]
+
+    DashboardSummary:
+      type: object
+      properties:
+        totalProjections:
+          type: integer
+        totalQuotations:
+          type: integer
+        recentProjection:
+          $ref: "#/components/schemas/ProjectionSummary"
+        recentQuotations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Quotation"
+      required: [totalProjections, totalQuotations, recentQuotations]
