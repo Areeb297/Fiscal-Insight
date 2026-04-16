@@ -1,11 +1,25 @@
 import { useEffect, useState } from "react";
 
+function useReducedMotion() {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduced(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setReduced(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  return reduced;
+}
+
 function FloatingShape({ className, delay }: { className: string; delay: number }) {
   const [visible, setVisible] = useState(false);
+  const reducedMotion = useReducedMotion();
   useEffect(() => {
+    if (reducedMotion) { setVisible(true); return; }
     const timer = setTimeout(() => setVisible(true), delay);
     return () => clearTimeout(timer);
-  }, [delay]);
+  }, [delay, reducedMotion]);
 
   return (
     <div
@@ -18,23 +32,23 @@ export function AuthDecorativePanel() {
   return (
     <div className="relative hidden lg:flex lg:w-1/2 overflow-hidden" style={{ background: "linear-gradient(135deg, #0E2841 0%, #156082 50%, #1a7a9e 100%)" }}>
       <FloatingShape
-        className="w-64 h-64 -top-12 -left-12"
+        className="w-64 h-64 -top-12 -left-12 bg-white/[0.06] blur-xl"
         delay={100}
       />
       <FloatingShape
-        className="w-48 h-48 top-1/4 right-8"
+        className="w-48 h-48 top-1/4 right-8 bg-white/[0.04] blur-lg"
         delay={300}
       />
       <FloatingShape
-        className="w-32 h-32 bottom-1/3 left-1/4"
+        className="w-32 h-32 bottom-1/3 left-1/4 bg-white/[0.05] blur-md"
         delay={500}
       />
       <FloatingShape
-        className="w-56 h-56 -bottom-16 -right-16"
+        className="w-56 h-56 -bottom-16 -right-16 bg-white/[0.07] blur-xl"
         delay={200}
       />
       <FloatingShape
-        className="w-20 h-20 top-1/2 left-12"
+        className="w-20 h-20 top-1/2 left-12 bg-white/[0.05] blur-sm"
         delay={600}
       />
 
