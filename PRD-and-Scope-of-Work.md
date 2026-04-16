@@ -70,6 +70,11 @@ This module captures all team members, their salaries, CTC, and how many months 
 - Rows can be added, edited, and deleted
 - Department cost data is scoped to a **projection year** (e.g. 2025-2026)
 
+> **Original Excel formula reference:**  
+> Normalized: `=IF(Country="Saudi", Salary*1.5, Salary*1)`  
+> Original cell notation: `=IF(E9="Saudi",F9*1.5,F9*1)` (where E9 = Country, F9 = Salary)  
+> This is the source formula from the original Excel workbook that the CTC calculation is based on.
+
 ---
 
 ### Module 2 — Client Projection
