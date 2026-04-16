@@ -92,7 +92,7 @@ export default function Projection() {
 
   const handleCreateInitialProjection = () => {
     createProjection.mutate(
-      { data: { yearLabel: new Date().getFullYear().toString(), sarRate: 3.75, numClients: 1, marginPercent: 20 } },
+      { data: { yearLabel: new Date().getFullYear().toString(), sarRate: 3.75, numClients: 1, marginPercent: 30 } },
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListProjectionsQueryKey() });
@@ -233,6 +233,12 @@ export default function Projection() {
   };
 
   const formatCurrency = (val: number) => new Intl.NumberFormat('en-SA', { style: 'currency', currency: 'SAR' }).format(val);
+
+  const computeSellingPrice = (cost: number, marginRaw: number) => {
+    if (!Number.isFinite(marginRaw) || marginRaw <= 0) return cost;
+    const frac = marginRaw > 1 ? marginRaw / 100 : marginRaw;
+    return frac < 1 ? cost / (1 - frac) : cost;
+  };
 
   if (isLoadingProjections) {
     return <div className="p-8 space-y-8"><Skeleton className="h-12 w-1/3" /><Skeleton className="h-[400px] w-full" /></div>;
@@ -502,13 +508,14 @@ export default function Projection() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[200px]">Title</TableHead>
-                  <TableHead className="w-[150px]">Country</TableHead>
-                  <TableHead className="w-[150px] text-right">Salary (SAR)</TableHead>
-                  <TableHead className="w-[100px] text-right">Months</TableHead>
-                  <TableHead className="w-[100px] text-right">Margin %</TableHead>
-                  <TableHead className="w-[150px] text-right">Total Cost</TableHead>
-                  <TableHead className="w-[150px] text-right">Selling Price</TableHead>
+                  <TableHead className="w-[180px]">Title</TableHead>
+                  <TableHead className="w-[140px]">Country</TableHead>
+                  <TableHead className="w-[130px] text-right">Salary (SAR)</TableHead>
+                  <TableHead className="w-[110px] text-right">CTC (SAR)</TableHead>
+                  <TableHead className="w-[90px] text-right">Months</TableHead>
+                  <TableHead className="w-[90px] text-right">Margin %</TableHead>
+                  <TableHead className="w-[140px] text-right">Total Cost</TableHead>
+                  <TableHead className="w-[140px] text-right">Selling Price</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -533,6 +540,7 @@ export default function Projection() {
                     <TableCell className="p-2">
                       <Input type="number" defaultValue={res.salarySar} onBlur={(e) => handleUpdateSalesSupport(res.id, "salarySar", parseFloat(e.target.value))} className="h-8 border-transparent hover:border-input focus:border-input bg-transparent text-right" />
                     </TableCell>
+                    <TableCell className="text-right font-mono text-xs p-2 text-muted-foreground">{formatCurrency(res.ctc)}</TableCell>
                     <TableCell className="p-2">
                       <Input type="number" step="0.5" defaultValue={res.months} onBlur={(e) => handleUpdateSalesSupport(res.id, "months", parseFloat(e.target.value))} className="h-8 border-transparent hover:border-input focus:border-input bg-transparent text-right" />
                     </TableCell>
@@ -540,7 +548,7 @@ export default function Projection() {
                       <Input type="number" step="0.1" defaultValue={res.marginPercent} onBlur={(e) => handleUpdateSalesSupport(res.id, "marginPercent", parseFloat(e.target.value))} className="h-8 border-transparent hover:border-input focus:border-input bg-transparent text-right" />
                     </TableCell>
                     <TableCell className="text-right font-medium p-2 text-muted-foreground">{formatCurrency(res.totalSalaryCost)}</TableCell>
-                    <TableCell className="text-right font-bold text-primary p-2">{formatCurrency(res.totalSalaryCost * (1 + res.marginPercent / 100))}</TableCell>
+                    <TableCell className="text-right font-bold text-primary p-2">{formatCurrency(computeSellingPrice(res.totalSalaryCost, res.marginPercent))}</TableCell>
                     <TableCell className="p-2 text-right">
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteSalesSupport(res.id)}>
                         <Trash className="h-4 w-4" />

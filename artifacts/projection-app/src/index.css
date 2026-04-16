@@ -198,3 +198,15 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 }
+
+@media print {
+  @page { margin: 1.2cm; }
+  body { background: white !important; }
+  .print\:hidden, [data-sidebar], nav, aside, button { display: none !important; }
+  .print-keep, .print-keep * { visibility: visible !important; }
+  header, footer { display: none !important; }
+  .no-print { display: none !important; }
+  main, [role="main"] { padding: 0 !important; }
+  .shadow, .shadow-sm, .shadow-md, .shadow-lg, .shadow-xl { box-shadow: none !important; }
+  .border { border-color: #e5e7eb !important; }
+}

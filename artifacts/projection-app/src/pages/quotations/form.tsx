@@ -90,30 +90,39 @@ export default function QuotationForm() {
   };
 
   const handleSaveHeader = async () => {
+    const projectionIdParsed =
+      headerData.projectionId && headerData.projectionId !== "none"
+        ? parseInt(headerData.projectionId)
+        : undefined;
+
+    const payload = {
+      quotationNumber: headerData.quotationNumber || `QT-${format(new Date(), "yyyyMMdd")}-01`,
+      companyName: headerData.companyName || "Your Company",
+      clientName: headerData.clientName || "Client Name",
+      date: headerData.date,
+      status: headerData.status,
+      projectionId: Number.isFinite(projectionIdParsed) ? projectionIdParsed : undefined,
+    };
+
     try {
       if (isNew) {
-        const result = await createQuotation.mutateAsync({
-          data: {
-            ...headerData,
-            projectionId: headerData.projectionId ? parseInt(headerData.projectionId) : undefined
-          }
-        });
+        const result = await createQuotation.mutateAsync({ data: payload });
+        queryClient.invalidateQueries({ queryKey: getListProjectionsQueryKey() });
         toast({ title: "Quotation created" });
         setLocation(`/quotations/${result.id}`);
       } else {
-        await updateQuotation.mutateAsync({
-          id: quotationId,
-          data: {
-            ...headerData,
-            projectionId: headerData.projectionId ? parseInt(headerData.projectionId) : undefined
-          }
-        });
+        await updateQuotation.mutateAsync({ id: quotationId, data: payload });
         queryClient.invalidateQueries({ queryKey: getGetQuotationQueryKey(quotationId) });
         toast({ title: "Quotation updated" });
       }
-    } catch (e) {
-      toast({ title: "Failed to save quotation", variant: "destructive" });
+    } catch (e: any) {
+      const msg = e?.response?.data?.error || e?.message || "Unknown error";
+      toast({ title: "Failed to save quotation", description: msg, variant: "destructive" });
     }
+  };
+
+  const handleExportPdf = () => {
+    window.print();
   };
 
   const handleAddLineItem = () => {
@@ -267,7 +276,7 @@ export default function QuotationForm() {
             <Save className="h-4 w-4 mr-2" /> Save Details
           </Button>
           {!isNew && (
-            <Button variant="default">
+            <Button variant="default" onClick={handleExportPdf}>
               <Download className="h-4 w-4 mr-2" /> Export PDF
             </Button>
           )}

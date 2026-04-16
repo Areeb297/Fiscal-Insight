@@ -27,8 +27,8 @@ async function seed() {
   if (existingSettings.length === 0) {
     await db.insert(systemSettingsTable).values({
       companyName: "Ebttikar",
-      vatRate: 0.15,
-      defaultMargin: 0.30,
+      vatRate: 15,
+      defaultMargin: 30,
       defaultNumClients: 6,
       quotationPrefix: "QT",
       baseCurrencyCode: "SAR",

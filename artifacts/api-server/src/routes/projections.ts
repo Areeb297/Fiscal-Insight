@@ -59,6 +59,11 @@ router.put("/projections/:id", async (req, res): Promise<void> => {
   res.json(projection);
 });
 
+function normalizeMarginToFraction(raw: number): number {
+  if (!Number.isFinite(raw) || raw <= 0) return 0;
+  return raw > 1 ? raw / 100 : raw;
+}
+
 async function getCtcMultiplier(country: string): Promise<number> {
   const rules = await db.select().from(ctcRulesTable).where(eq(ctcRulesTable.isActive, true));
   const rule = rules.find(r => r.countryCode.toLowerCase() === country.toLowerCase() || r.countryName.toLowerCase() === country.toLowerCase());
@@ -106,22 +111,22 @@ router.get("/projections/:id/summary", async (req, res): Promise<void> => {
 
   const overheadPerClient = projection.numClients > 0 ? totalOverheadMonthly / projection.numClients : 0;
   const totalMonthlyCostPerClient = costPerClientMonthly + overheadPerClient;
-  const marginPercent = projection.marginPercent;
-  const sellingPriceWithoutVat = marginPercent < 1 ? totalMonthlyCostPerClient / (1 - marginPercent) : totalMonthlyCostPerClient;
+  const marginFraction = normalizeMarginToFraction(projection.marginPercent);
+  const sellingPriceWithoutVat = marginFraction < 1 ? totalMonthlyCostPerClient / (1 - marginFraction) : totalMonthlyCostPerClient;
   const marginSarMonthly = sellingPriceWithoutVat - totalMonthlyCostPerClient;
   const marginSarYearly = marginSarMonthly * 12;
   const sellingPriceWithVatMonthly = sellingPriceWithoutVat * 1.15;
   const sellingPriceWithVatYearly = sellingPriceWithVatMonthly * 12;
 
   let salesSupportTotalCost = 0;
-  let salesSupportMargin = 0.30;
+  let salesSupportMarginFraction = 0.30;
   for (const r of salesResources) {
     const multiplier = await getCtcMultiplier(r.country);
     const ctc = r.salarySar * multiplier;
     salesSupportTotalCost += ctc * r.months;
-    salesSupportMargin = r.marginPercent;
+    salesSupportMarginFraction = normalizeMarginToFraction(r.marginPercent);
   }
-  const salesSupportSellingPrice = salesSupportMargin < 1 ? salesSupportTotalCost / (1 - salesSupportMargin) : salesSupportTotalCost;
+  const salesSupportSellingPrice = salesSupportMarginFraction < 1 ? salesSupportTotalCost / (1 - salesSupportMarginFraction) : salesSupportTotalCost;
 
   res.json({
     projection,
