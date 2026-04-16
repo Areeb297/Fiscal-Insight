@@ -1,0 +1,143 @@
+I want to create a projection sheet based on the below requirements, first understand my requirements and then generate a comprehensive prompt then i will use that you can create a comprehensive excel sheet or sheets that satisfy my requirements. 
+
+The requirements are:
+1. I want salaries with CTC
+2. I dont want CTC for Pakistan team, only for saudi team CTC applies.
+One column should show employee involvemenet in months for each project. Imran for example was 12 months as a solution architect, total year should be shown in calcualtion, also shwo gross below. 
+3. Yearly per person cost, and grand total of all employees.
+4. Projection sheet needed for 5 clients
+5. I require cost per client for 5 clients, cost per client per month. 
+6. I also need overheads, subscriptions such as Claude, GPT, Elevenlabs, the default currency is riyals always, if the subscriptun in in dollars pseicifed it shoudl automaitcaled be covnerted or shown in riyasl too and add in total
+7. Subscriptions yearly shonw and monthly shown.
+8. Also need to show total monthly cost per client, that includes: total monthly cost formula is: cost per client per month + overhead. 
+9. Overhead monthly + Cost per client per month = total monthly cost per client. 
+10. Margin option there, i can change, default hsould be 30%
+11. Selling price without VAT that will obv be calculated using the margin specified. 
+12. I need margin in saudi riyal per month and margin shown saudi riyal per year. 
+13. I need sellijng price with VAT monthly, also show yearly which will just be a straightforward calculation.
+14. I need to have sales support. 
+15. After sales support should be shown, i should be able to add resources,  their title, their salaeires, CTC, months fo invovlemet in sales support, total salary, then i need 30% margin to add, then i will caclulate their selling price. 
+16. When i generate quotation, i see: Serial number, line items, quantity, unit, price monthly, total month cost, total price withot vat, total vat, and total price with VAT. 
+17. Quotation can be in a separate sheet, their template and i can alwasy keep genrateing pdf as per the other sheets. 
+
+Now I have a thorough understanding of your existing template and all your requirements. Let me synthesize everything into a comprehensive prompt you can use.
+
+---
+
+## 📋 Comprehensive Prompt for Your 5-Client Projection Sheet
+
+Here's the structured prompt based on your requirements and the existing [Actual Projection](<citation:Actual Projection>) template:
+
+---
+
+### **Prompt:**
+
+> **Create a multi-sheet Excel projection model for a services company (Saudi Arabia + Pakistan team) with the following structure. Default currency is Saudi Riyals (SAR). Leave the existing "Actual Projection" sheet untouched and build everything on new sheets.**
+>
+> ---
+>
+> ### **Sheet 1: "Department Cost"**
+> - **Employee table** with columns: `Employee #`, `Name`, `Title/Role`, `Salary (SAR)`, `CTC`, `Months (FTE)`, `Total Yearly Cost`
+> - **CTC rules:**
+>   - **Saudi team**: CTC = Salary × 1.5 (to cover GOSI, housing, transport, etc.)
+>   - **Pakistan team**: CTC = Salary × 1.0 (no CTC markup — salary only)
+> - Add a **Country** column ("Saudi" or "Pakistan") so the CTC formula auto-switches: `=IF(Country="Saudi", Salary*1.5, Salary*1.0)`
+> - **Months (FTE)**: How many months each employee is involved in this project (e.g., Imran = 12 months as Solution Architect). This drives total yearly cost = CTC × Months
+> - **Total Yearly Cost per person** = CTC × Months
+> - **Grand Total (Gross)** = SUM of all employees' total yearly cost
+> - Show **yearly per-person cost** clearly and a **Grand Total** row at the bottom
+>
+> ---
+>
+> ### **Sheet 2: "Client Projection"**
+> *(Core projection for 5 clients)*
+> - **Input: # of Clients** = 5 (editable cell, blue text)
+> - **Cost per Client** = Grand Total ÷ # of Clients
+> - **Cost per Client per Month** = Cost per Client ÷ 12
+>
+> #### **Overheads & Subscriptions Section**
+> - Table with columns: `Subscription/Overhead Name`, `Original Currency`, `Original Price`, `SAR Equivalent`, `Yearly Cost (SAR)`, `Monthly Cost (SAR)`
+> - Pre-populate rows: Claude, GPT, ElevenLabs, Hosting + Integration + ZATCA, and blank rows for additions
+> - **USD → SAR conversion**: Include an editable exchange rate cell (default 3.75). If a subscription is in USD, auto-convert to SAR using this rate
+> - Show **Total Subscriptions Yearly** and **Total Subscriptions Monthly**
+> - **Overhead Monthly** = Total of all subscription/overhead monthly costs
+>
+> #### **Per-Client Economics**
+> - **Total Monthly Cost per Client** = Cost per Client per Month + Overhead Monthly
+> - **Margin %** = 30% (editable input cell, blue text — user can change)
+> - **Selling Price (without VAT)** = Total Monthly Cost ÷ (1 − Margin%)
+> - **Margin (SAR) per Month** = Selling Price − Total Monthly Cost
+> - **Margin (SAR) per Year** = Margin per Month × 12
+> - **Selling Price with VAT (Monthly)** = Selling Price × 1.15
+> - **Selling Price with VAT (Yearly)** = Selling Price with VAT × 12
+>
+> ---
+>
+> ### **Sheet 3: "Sales Support"**
+> *(After-deployment / managed services resources)*
+> - **Resource table** with columns: `#`, `Resource Title`, `Salary`, `CTC`, `Months of Involvement`, `Total Salary Cost`
+> - CTC follows the same Saudi/Pakistan rule
+> - Leave blank rows so I can add resources
+> - **Totals**: Sum of all resource costs
+> - **Margin**: 30% (editable)
+> - **Selling Price** = Total Cost ÷ (1 − Margin%)
+> - Show Cost, Margin %, and Selling Price clearly
+>
+> ---
+>
+> ### **Sheet 4: "Quotation"**
+> *(Client-facing quotation template)*
+> - **Header area**: Company name, client name, date, quotation number (all editable)
+> - **Line items table** with columns:
+>   - `Serial #`
+>   - `Line Item Description`
+>   - `Quantity`
+>   - `Unit` (e.g., Package, License Annual, Resources)
+>   - `Price (Monthly)`
+>   - `Total Months`
+>   - `Total Price (without VAT)`
+>   - `Total VAT (15%)`
+>   - `Total Price (with VAT)`
+> - Pre-populate rows pulling from the Client Projection and Sales Support sheets (e.g., "Licenses and Services", "Managed Services", etc.)
+> - **Summary rows at bottom**:
+>   - Total Price (without VAT)
+>   - VAT (15%)
+>   - **Total Price (with VAT)**
+> - Clean, professional formatting suitable for **PDF export**
+>
+> ---
+>
+> ### **Formatting & Standards**
+> - **Currency**: All in SAR unless explicitly USD (then show both with conversion)
+> - **Number format**: `#,##0.00` for currency, `0%` for percentages
+> - **Color scheme**: Match existing template — dark navy headers (#0E2841), teal accents (#156082), light blue alternating rows (#C0E6F5), white background
+> - **Editable inputs** (margin %, # clients, exchange rate, salaries): Blue text (#0000FF)
+> - **Formulas**: All calculations must be live formulas, no hardcoded results
+> - **Font**: Aptos Narrow throughout
+
+---
+
+### Summary of what this covers:
+
+| # | Requirement | Where |
+|---|---|---|
+| 1 | Salaries with CTC | Department Cost sheet |
+| 2 | CTC only for Saudi, not Pakistan | Country column + IF formula |
+| 3 | Yearly per-person cost + grand total | Department Cost sheet |
+| 4 | 5-client projection | Client Projection sheet |
+| 5 | Cost per client & per month | Client Projection sheet |
+| 6 | Overheads & subscriptions (USD→SAR) | Client Projection sheet |
+| 7 | Subscriptions yearly & monthly | Client Projection sheet |
+| 8–9 | Total monthly cost = cost + overhead | Client Projection sheet |
+| 10 | Editable margin (default 30%) | Client Projection sheet |
+| 11 | Selling price without VAT | Client Projection sheet |
+| 12 | Margin SAR monthly & yearly | Client Projection sheet |
+| 13 | Selling price with VAT monthly & yearly | Client Projection sheet |
+| 14–15 | Sales support resources + margin | Sales Support sheet |
+| 16 | Quotation with serial #, line items, VAT | Quotation sheet |
+| 17 | Separate quotation sheet for PDF | Quotation sheet |
+
+---
+
+Does this prompt capture everything correctly? Would you like me to adjust anything before I build it out? Once you confirm, I'll create all the sheets.
+

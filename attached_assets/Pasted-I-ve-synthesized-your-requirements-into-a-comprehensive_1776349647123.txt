@@ -1,0 +1,46 @@
+I've synthesized your requirements into a comprehensive prompt. Let me first read your existing sheet to make sure I understand the current template structure perfectly before you confirm.
+
+
+Read existing template structure, get all sheets and their dimensions
+It looks like the "Projection Sheet" is currently empty (your data was in a previous version or another file). I can see from your uploaded image exactly what the existing template looks like. Let me confirm my understanding:
+
+✅ Here's Your Comprehensive Prompt — Review & Confirm
+Create a multi-sheet Excel projection model for a services company (Saudi Arabia + Pakistan team) with these 4 sheets:
+
+Sheet 1: "Department Cost"
+Employee table: Employee #, Name, Title/Role, Country (Saudi/Pakistan), Salary (SAR), CTC, Months (FTE), Total Yearly Cost
+CTC Rule: Saudi team → CTC = Salary × 1.5 | Pakistan team → CTC = Salary (no markup)
+Months column = how many months each person is involved (e.g., Imran = 12 months as Solution Architect)
+Total Yearly Cost per person = CTC × Months
+Grand Total (Gross) row at the bottom = SUM of all employees
+Sheet 2: "Client Projection"
+# of Clients = 5 (editable, blue text)
+Cost per Client = Grand Total ÷ # of Clients
+Cost per Client per Month = Cost per Client ÷ 12
+Overheads & Subscriptions table: Name, Original Currency, Original Price, SAR Equivalent, Yearly (SAR), Monthly (SAR)
+Pre-populated: Claude, GPT, ElevenLabs, Hosting + Integration + ZATCA
+$ to SAR exchange rate cell (default 3.75, editable)
+USD items auto-convert to SAR
+Total Monthly Cost per Client = Cost per Client per Month + Overhead Monthly
+Margin % = 30% (editable, blue text)
+Selling Price (without VAT) = Total Monthly Cost ÷ (1 − Margin%)
+Margin (SAR) per Month & Margin (SAR) per Year
+Selling Price with VAT (Monthly) = Selling Price × 1.15
+Selling Price with VAT (Yearly) = Monthly × 12
+Sheet 3: "Sales Support"
+Resource table: #, Resource Title, Country, Salary, CTC, Months, Total Salary Cost
+Same CTC rule (Saudi/Pakistan)
+Blank rows for adding resources
+Total Cost → 30% Margin (editable) → Selling Price = Total ÷ (1 − Margin%)
+Sheet 4: "Quotation"
+Header: Company name, Client name, Date, Quotation #
+Line items: Serial #, Description, Quantity, Unit, Price (Monthly), Total Months, Total Price (without VAT)
+Summary: Total (without VAT), VAT (15%), Total (with VAT)
+Auto-pulls from Client Projection & Sales Support sheets
+Clean formatting for PDF export
+Formatting
+Default currency: SAR | USD shown with conversion
+Navy headers (#0E2841), teal accents (#156082), light blue rows (#C0E6F5)
+Editable inputs in blue text (#0000FF)
+All calculations as live formulas — no hardcoded results
+Font: Aptos Narrow
