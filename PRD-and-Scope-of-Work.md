@@ -62,8 +62,10 @@ This module captures all team members, their salaries, CTC, and how many months 
 #### 2.3 Business Rules
 
 - CTC is auto-calculated; user cannot manually override it
-- If Country = Saudi → CTC = Salary × 1.5 (covers GOSI, housing, transport, etc.)
-- If Country = Pakistan → CTC = Salary × 1.0 (no markup)
+- The CTC rule is based on **where the resource is physically working**, not their nationality:
+  - **Working in Saudi Arabia** (e.g. at the Ebttikar head office) → CTC = Salary × 1.5 (covers GOSI, housing, transport allowances, etc.)
+  - **Working remotely** (e.g. from Pakistan or any other location) → CTC = Salary × 1.0 (salary only, no markup applied)
+- The `Country` column on the employee row reflects the **work location**, not the employee's nationality
 - Months can be set between 1 and 12; default is 12
 - Rows can be added, edited, and deleted
 - Department cost data is scoped to a **projection year** (e.g. 2025-2026)
