@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { queryClient } from "./lib/queryClient";
+import { AuthContentWrapper } from "@/components/auth-panel";
 
 import Home from "@/pages/home";
 import Dashboard from "@/pages/dashboard";
@@ -29,23 +30,60 @@ if (!clerkPubKey) {
   throw new Error("Missing VITE_CLERK_PUBLISHABLE_KEY in .env file");
 }
 
+const clerkAppearance = {
+  elements: {
+    formButtonPrimary: "bg-[#156082] hover:bg-[#0E2841] text-white shadow-none",
+    card: "shadow-none border-0",
+    headerTitle: "text-foreground",
+    headerSubtitle: "text-muted-foreground",
+    socialButtonsBlockButton: "border border-border text-foreground hover:bg-accent",
+    formFieldInput: "border-border focus:ring-[#156082] focus:border-[#156082]",
+    footerActionLink: "text-[#156082] hover:text-[#0E2841]",
+    identityPreviewEditButton: "text-[#156082]",
+    internal: "shadow-none",
+    rootBox: "w-full",
+    cardBox: "w-full shadow-none",
+  },
+  layout: {
+    socialButtonsPlacement: "bottom" as const,
+  },
+};
+
 function SignInPage() {
-  // To update login providers, app branding, or OAuth settings use the Auth
-  // pane in the workspace toolbar. More information can be found in the Replit docs.
   return (
-    <div className="flex justify-center mt-8">
-      <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} />
-    </div>
+    <AuthContentWrapper>
+      <div className="space-y-4">
+        <div className="lg:hidden space-y-2 mb-6">
+          <p className="text-sm font-medium text-primary tracking-wide uppercase">Welcome back</p>
+          <h1 className="text-2xl font-bold text-foreground">Sign in to your account</h1>
+        </div>
+        <SignIn
+          routing="path"
+          path={`${basePath}/sign-in`}
+          signUpUrl={`${basePath}/sign-up`}
+          appearance={clerkAppearance}
+        />
+      </div>
+    </AuthContentWrapper>
   );
 }
 
 function SignUpPage() {
-  // To update login providers, app branding, or OAuth settings use the Auth
-  // pane in the workspace toolbar. More information can be found in the Replit docs.
   return (
-    <div className="flex justify-center mt-8">
-      <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} />
-    </div>
+    <AuthContentWrapper>
+      <div className="space-y-4">
+        <div className="lg:hidden space-y-2 mb-6">
+          <p className="text-sm font-medium text-primary tracking-wide uppercase">Get started</p>
+          <h1 className="text-2xl font-bold text-foreground">Create your account</h1>
+        </div>
+        <SignUp
+          routing="path"
+          path={`${basePath}/sign-up`}
+          signInUrl={`${basePath}/sign-in`}
+          appearance={clerkAppearance}
+        />
+      </div>
+    </AuthContentWrapper>
   );
 }
 
