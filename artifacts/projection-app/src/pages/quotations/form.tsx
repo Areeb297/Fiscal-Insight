@@ -115,8 +115,9 @@ export default function QuotationForm() {
         queryClient.invalidateQueries({ queryKey: getGetQuotationQueryKey(quotationId) });
         toast({ title: "Quotation updated" });
       }
-    } catch (e: any) {
-      const msg = e?.response?.data?.error || e?.message || "Unknown error";
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { error?: string } }; message?: string } | undefined;
+      const msg = err?.response?.data?.error ?? err?.message ?? "Unknown error";
       toast({ title: "Failed to save quotation", description: msg, variant: "destructive" });
     }
   };
