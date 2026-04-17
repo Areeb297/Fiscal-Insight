@@ -118,9 +118,19 @@ export default function Dashboard() {
                   className="h-[260px] w-full"
                   config={{ amount: { label: "SAR / mo", color: "hsl(var(--chart-1))" } } satisfies ChartConfig}
                 >
-                  <BarChart data={summary.charts.costBreakdown} margin={{ left: 12, right: 12 }}>
+                  <BarChart data={summary.charts.costBreakdown} margin={{ left: 12, right: 12, bottom: 40 }}>
                     <CartesianGrid vertical={false} />
-                    <XAxis dataKey="category" tickLine={false} axisLine={false} tickMargin={8} interval={0} />
+                    <XAxis
+                      dataKey="category"
+                      tickLine={false}
+                      axisLine={false}
+                      tickMargin={8}
+                      interval={0}
+                      angle={-25}
+                      textAnchor="end"
+                      height={60}
+                      tick={{ fontSize: 11 }}
+                    />
                     <YAxis tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} tickLine={false} axisLine={false} />
                     <ChartTooltip content={<ChartTooltipContent />} />
                     <Bar dataKey="amount" fill="var(--color-amount)" radius={6} />
