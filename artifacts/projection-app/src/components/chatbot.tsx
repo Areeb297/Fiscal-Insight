@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import DOMPurify from "dompurify";
-import { MessageSquare, X, Send, Loader2, Sparkles, ChevronDown } from "lucide-react";
+import { MessageSquare, X, Send, Loader2, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -12,7 +12,16 @@ type Message = {
   content: string;
   html?: string;
   expanded?: boolean;
+  isLongForm?: boolean;
+  collapsed?: boolean;
 };
+
+function firstSentence(text: string): string {
+  const trimmed = text.trim();
+  if (!trimmed) return "";
+  const match = trimmed.match(/^.*?[.!?](?=\s|$)/);
+  return (match ? match[0] : trimmed.split(/\n/)[0]).trim();
+}
 
 const STRUCTURAL_HTML_RE = /<(ul|ol|table|h3|h4|pre|blockquote)\b/i;
 
@@ -234,7 +243,12 @@ export default function Chatbot() {
         onSuccess: (response) => {
           setMessages((prev) => [
             ...prev,
-            { role: "assistant", content: response.reply, html: response.replyHtml },
+            {
+              role: "assistant",
+              content: response.reply,
+              html: response.replyHtml,
+              isLongForm: true,
+            },
           ]);
         },
         onError: () => {
@@ -248,6 +262,14 @@ export default function Chatbot() {
           ]);
         },
       },
+    );
+  };
+
+  const toggleCollapsed = (index: number) => {
+    setMessages((prev) =>
+      prev.map((m, i) =>
+        i === index && m.isLongForm ? { ...m, collapsed: !m.collapsed } : m,
+      ),
     );
   };
 
@@ -322,7 +344,13 @@ export default function Chatbot() {
                 >
                   {msg.role === "assistant" ? (
                     <>
-                      <AssistantMessage html={msg.html} content={msg.content} />
+                      {msg.isLongForm && msg.collapsed ? (
+                        <div className="text-sm whitespace-pre-wrap break-words text-muted-foreground italic">
+                          {firstSentence(msg.content) || "Long answer hidden."}
+                        </div>
+                      ) : (
+                        <AssistantMessage html={msg.html} content={msg.content} />
+                      )}
                       {i > 0 && isBriefAssistantMessage(msg) && (
                         <button
                           type="button"
@@ -333,6 +361,26 @@ export default function Chatbot() {
                         >
                           <ChevronDown className="h-3 w-3" />
                           Show full answer
+                        </button>
+                      )}
+                      {msg.isLongForm && (
+                        <button
+                          type="button"
+                          onClick={() => toggleCollapsed(i)}
+                          data-testid={`button-toggle-long-answer-${i}`}
+                          className="mt-2 inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full border border-border bg-background hover:bg-muted transition-colors text-foreground"
+                        >
+                          {msg.collapsed ? (
+                            <>
+                              <ChevronDown className="h-3 w-3" />
+                              Show again
+                            </>
+                          ) : (
+                            <>
+                              <ChevronUp className="h-3 w-3" />
+                              Hide details
+                            </>
+                          )}
                         </button>
                       )}
                     </>
