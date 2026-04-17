@@ -365,6 +365,7 @@ export const ListQuotationsResponseItem = zod.object({
   clientName: zod.string(),
   date: zod.string(),
   status: zod.string(),
+  termsText: zod.string().nullish(),
   createdAt: zod.string(),
   updatedAt: zod.string(),
 });
@@ -756,6 +757,7 @@ export const GetDashboardSummaryResponse = zod.object({
       clientName: zod.string(),
       date: zod.string(),
       status: zod.string(),
+      termsText: zod.string().nullish(),
       createdAt: zod.string(),
       updatedAt: zod.string(),
     }),

@@ -307,7 +307,30 @@ export default function QuotationForm() {
             </div>
           </div>
           <div className="space-y-2">
-            <Label>Terms &amp; Conditions</Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label>Terms &amp; Conditions</Label>
+              {(() => {
+                const current = (headerData.termsText ?? "").trim();
+                const def = (settings?.termsText ?? "").trim();
+                if (!current) {
+                  return (
+                    <span className="text-xs text-muted-foreground italic">No terms set</span>
+                  );
+                }
+                const isDefault = current === def;
+                return (
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                      isDefault
+                        ? "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
+                        : "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300"
+                    }`}
+                  >
+                    {isDefault ? "Default" : "Custom override"}
+                  </span>
+                );
+              })()}
+            </div>
             <Textarea
               rows={4}
               placeholder="Terms and conditions printed on the quotation PDF..."

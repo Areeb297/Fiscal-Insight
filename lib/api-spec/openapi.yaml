@@ -1033,6 +1033,9 @@ components:
           type: string
         status:
           type: string
+        termsText:
+          type: string
+          nullable: true
         createdAt:
           type: string
         updatedAt:

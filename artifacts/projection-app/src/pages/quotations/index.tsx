@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { format } from "date-fns";
-import { Plus, Edit2, FileText, MoreHorizontal, Trash } from "lucide-react";
-import { 
-  useListQuotations, 
+import { Plus, Edit2, FileText, MoreHorizontal, Trash, Eye } from "lucide-react";
+import {
+  useListQuotations,
   getListQuotationsQueryKey,
   useDeleteQuotation,
   useCreateQuotationFromProjection,
@@ -11,7 +11,10 @@ import {
   getListProjectionsQueryKey,
   useGetProjectionSummary,
   getGetProjectionSummaryQueryKey,
+  useGetSystemSettings,
+  getGetSystemSettingsQueryKey,
 } from "@workspace/api-client-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -60,6 +63,18 @@ export default function QuotationsList() {
   const { data: quotations, isLoading } = useListQuotations({
     query: { queryKey: getListQuotationsQueryKey() }
   });
+
+  const { data: settings } = useGetSystemSettings({
+    query: { queryKey: getGetSystemSettingsQueryKey() },
+  });
+  const defaultTermsText = settings?.termsText ?? "";
+
+  const normalize = (s: string | null | undefined) => (s ?? "").trim();
+  const getTermsState = (text: string | null | undefined) => {
+    const t = normalize(text);
+    if (!t) return "none" as const;
+    return normalize(defaultTermsText) === t ? "default" : "custom" as const;
+  };
 
   const deleteMutation = useDeleteQuotation();
   const createFromProjection = useCreateQuotationFromProjection();
@@ -174,6 +189,7 @@ export default function QuotationsList() {
                   <TableHead>Client</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Terms</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -185,6 +201,52 @@ export default function QuotationsList() {
                     <TableCell>{q.clientName}</TableCell>
                     <TableCell>{format(new Date(q.date), "MMM d, yyyy")}</TableCell>
                     <TableCell>{getStatusBadge(q.status)}</TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      {(() => {
+                        const state = getTermsState(q.termsText);
+                        if (state === "none") {
+                          return (
+                            <span className="text-xs text-muted-foreground italic">None</span>
+                          );
+                        }
+                        const label = state === "default" ? "Default" : "Custom";
+                        const badgeClasses =
+                          state === "default"
+                            ? "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
+                            : "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300";
+                        return (
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <button
+                                type="button"
+                                className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium hover:opacity-80 ${badgeClasses}`}
+                              >
+                                <Eye className="h-3 w-3" />
+                                {label}
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-96" align="start">
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <h4 className="text-sm font-semibold">Terms &amp; Conditions</h4>
+                                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${badgeClasses}`}>
+                                    {label}
+                                  </span>
+                                </div>
+                                <div className="max-h-64 overflow-y-auto rounded border bg-muted/30 p-2 text-xs whitespace-pre-wrap">
+                                  {normalize(q.termsText)}
+                                </div>
+                                {state === "custom" && normalize(defaultTermsText) && (
+                                  <p className="text-xs text-muted-foreground">
+                                    Differs from the default in Settings.
+                                  </p>
+                                )}
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        );
+                      })()}
+                    </TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>

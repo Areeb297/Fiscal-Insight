@@ -14,6 +14,7 @@ export interface Quotation {
   clientName: string;
   date: string;
   status: string;
+  termsText?: string | null;
   createdAt: string;
   updatedAt: string;
 }
