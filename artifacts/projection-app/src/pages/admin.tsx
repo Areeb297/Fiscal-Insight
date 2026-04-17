@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Trash, Save, Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { LogoCropper } from "@/components/logo-cropper";
 
 export default function Admin() {
   const { toast } = useToast();
@@ -35,6 +36,7 @@ export default function Admin() {
 
   const [localSettings, setLocalSettings] = useState<any>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const [cropperSrc, setCropperSrc] = useState<string | null>(null);
 
   const handleLogoFile = (file: File) => {
     if (!file.type.startsWith("image/")) {
@@ -47,7 +49,7 @@ export default function Admin() {
     }
     const reader = new FileReader();
     reader.onload = () => {
-      setLocalSettings({ ...localSettings, companyLogoUrl: reader.result as string });
+      setCropperSrc(reader.result as string);
     };
     reader.onerror = () => toast({ title: "Failed to read file", variant: "destructive" });
     reader.readAsDataURL(file);
@@ -379,6 +381,16 @@ export default function Admin() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <LogoCropper
+        open={!!cropperSrc}
+        imageSrc={cropperSrc}
+        onCancel={() => setCropperSrc(null)}
+        onConfirm={(dataUrl) => {
+          setLocalSettings({ ...localSettings, companyLogoUrl: dataUrl });
+          setCropperSrc(null);
+        }}
+      />
     </div>
   );
 }
