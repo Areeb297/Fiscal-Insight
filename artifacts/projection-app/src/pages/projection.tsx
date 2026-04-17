@@ -701,32 +701,32 @@ export default function Projection() {
         </CardHeader>
         <CardContent>
           <div className="rounded-md border overflow-x-auto">
-            <Table className="min-w-[1500px]">
+            <Table className="min-w-[1800px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[200px]">Title</TableHead>
-                  <TableHead className="w-[150px]">Country</TableHead>
-                  <TableHead className="w-[160px] text-right">Salary (SAR)</TableHead>
-                  <TableHead className="w-[140px] text-right">CTC (SAR)</TableHead>
-                  <TableHead className="w-[120px] text-right">Months</TableHead>
-                  <TableHead className="w-[120px] text-right">Alloc %</TableHead>
-                  <TableHead className="w-[220px]">Basis</TableHead>
-                  <TableHead className="w-[90px] text-center">In Totals</TableHead>
-                  <TableHead className="w-[120px] text-right">Margin %</TableHead>
-                  <TableHead className="w-[160px] text-right">Total Cost</TableHead>
-                  <TableHead className="w-[160px] text-right">Selling Price</TableHead>
+                  <TableHead className="w-[220px]">Title</TableHead>
+                  <TableHead className="w-[160px]">Country</TableHead>
+                  <TableHead className="w-[180px] text-right">Salary (SAR)</TableHead>
+                  <TableHead className="w-[160px] text-right">CTC (SAR)</TableHead>
+                  <TableHead className="w-[140px] text-right">Months</TableHead>
+                  <TableHead className="w-[140px] text-right">Alloc %</TableHead>
+                  <TableHead className="w-[260px]">Basis</TableHead>
+                  <TableHead className="w-[100px] text-center">In Totals</TableHead>
+                  <TableHead className="w-[140px] text-right">Margin %</TableHead>
+                  <TableHead className="w-[180px] text-right">Total Cost</TableHead>
+                  <TableHead className="w-[180px] text-right">Selling Price</TableHead>
                   <TableHead className="w-[60px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {salesSupport?.map((res) => (
                   <TableRow key={res.id}>
-                    <TableCell className="p-2">
-                      <Input defaultValue={res.title} onBlur={(e) => handleUpdateSalesSupport(res.id, "title", e.target.value)} className="h-9 border-transparent hover:border-input focus:border-input bg-transparent" />
+                    <TableCell className="p-2 align-middle">
+                      <Input defaultValue={res.title} onBlur={(e) => handleUpdateSalesSupport(res.id, "title", e.target.value)} className="h-10" />
                     </TableCell>
-                    <TableCell className="p-2">
+                    <TableCell className="p-2 align-middle">
                       <Select defaultValue={res.country} onValueChange={(val) => handleUpdateSalesSupport(res.id, "country", val)}>
-                        <SelectTrigger className="h-9 border-transparent hover:border-input focus:border-input bg-transparent">
+                        <SelectTrigger className="h-10">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -736,15 +736,38 @@ export default function Projection() {
                         </SelectContent>
                       </Select>
                     </TableCell>
-                    <TableCell className="p-2">
-                      <Input type="number" defaultValue={res.salarySar} onBlur={(e) => handleUpdateSalesSupport(res.id, "salarySar", parseFloat(e.target.value))} className="h-10 w-full border border-input bg-background text-right px-3" />
+                    <TableCell className="p-2 align-middle">
+                      <Input
+                        type="number"
+                        inputMode="decimal"
+                        defaultValue={res.salarySar}
+                        onBlur={(e) => handleUpdateSalesSupport(res.id, "salarySar", parseFloat(e.target.value))}
+                        className="h-10 text-right tabular-nums"
+                      />
                     </TableCell>
-                    <TableCell className="text-right font-mono text-xs p-2 text-muted-foreground whitespace-nowrap">{formatCurrency(res.ctc)}</TableCell>
-                    <TableCell className="p-2">
-                      <Input type="number" step="0.5" defaultValue={res.months} onBlur={(e) => handleUpdateSalesSupport(res.id, "months", parseFloat(e.target.value))} className="h-10 w-full border border-input bg-background text-right px-3" />
+                    <TableCell className="text-right font-mono text-sm p-2 text-muted-foreground whitespace-nowrap tabular-nums align-middle">{formatCurrency(res.ctc)}</TableCell>
+                    <TableCell className="p-2 align-middle">
+                      <Input
+                        type="number"
+                        inputMode="decimal"
+                        step="0.5"
+                        defaultValue={res.months}
+                        onBlur={(e) => handleUpdateSalesSupport(res.id, "months", parseFloat(e.target.value))}
+                        className="h-10 text-right tabular-nums"
+                      />
                     </TableCell>
-                    <TableCell className="p-2">
-                      <Input type="number" min="0" max="100" step="1" defaultValue={res.allocationPercent ?? 100} onBlur={(e) => handleUpdateSalesSupport(res.id, "allocationPercent", parseFloat(e.target.value))} className="h-10 w-full border border-input bg-background text-right px-3" title="Percentage of time this resource is involved (e.g. 10 = PM at 10%, 100 = full-time)" />
+                    <TableCell className="p-2 align-middle">
+                      <Input
+                        type="number"
+                        inputMode="numeric"
+                        min="0"
+                        max="100"
+                        step="1"
+                        defaultValue={res.allocationPercent ?? 100}
+                        onBlur={(e) => handleUpdateSalesSupport(res.id, "allocationPercent", parseFloat(e.target.value))}
+                        className="h-10 text-right tabular-nums"
+                        title="Percentage of time this resource is involved (e.g. 10 = PM at 10%, 100 = full-time)"
+                      />
                     </TableCell>
                     <TableCell className="p-2">
                       <div className="flex items-center gap-1">
