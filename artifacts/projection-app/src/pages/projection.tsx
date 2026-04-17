@@ -261,30 +261,54 @@ export default function Projection() {
   }
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8 pb-24">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="p-6 md:p-8 max-w-[1600px] mx-auto space-y-8 pb-24">
+      <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Projection Workspace</h1>
           <p className="text-muted-foreground mt-1">Manage departmental costs, margins, and client economics</p>
         </div>
-        {summary && (
-          <div className="flex items-stretch gap-0 bg-muted/50 rounded-lg border border-border overflow-hidden">
-            <div className="px-4 py-2 text-center">
-              <div className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Total Cost / Yr</div>
-              <div className="font-bold text-foreground tabular-nums">{formatCurrency(summary.totalDeptCostYearly)}</div>
+        {summary && (() => {
+          const totalCostMonthly = (summary.totalDeptCostYearly + summary.totalOverheadYearly) / 12;
+          const totalCostYearly = summary.totalDeptCostYearly + summary.totalOverheadYearly;
+          const vatMonthly = summary.sellingPriceWithVatMonthly - summary.sellingPriceWithoutVat;
+          const vatYearly = summary.sellingPriceWithVatYearly - summary.sellingPriceWithoutVatYearly;
+          return (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+              <Card className="border-l-4 border-l-slate-400 dark:border-l-slate-500">
+                <CardContent className="pt-5 pb-4">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Cost</div>
+                  <div className="mt-2 text-2xl font-bold tabular-nums">{formatCurrency(totalCostYearly)}</div>
+                  <div className="text-xs text-muted-foreground mt-1 tabular-nums">{formatCurrency(totalCostMonthly)} / month</div>
+                  <div className="text-[10px] text-muted-foreground mt-1">Team + overheads (full year)</div>
+                </CardContent>
+              </Card>
+              <Card className="border-l-4 border-l-primary">
+                <CardContent className="pt-5 pb-4">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Selling Price (Monthly)</div>
+                  <div className="mt-2 text-2xl font-bold text-primary tabular-nums">{formatCurrency(summary.sellingPriceWithoutVat * (projections?.[0]?.numClients || 1))}</div>
+                  <div className="text-xs text-muted-foreground mt-1 tabular-nums">{formatCurrency(summary.sellingPriceWithoutVat)} / client</div>
+                  <div className="text-[10px] text-muted-foreground mt-1">Excl. VAT · all clients</div>
+                </CardContent>
+              </Card>
+              <Card className="border-l-4 border-l-primary">
+                <CardContent className="pt-5 pb-4">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Selling Price (Yearly)</div>
+                  <div className="mt-2 text-2xl font-bold text-primary tabular-nums">{formatCurrency(summary.sellingPriceWithoutVatYearly * (projections?.[0]?.numClients || 1))}</div>
+                  <div className="text-xs text-muted-foreground mt-1 tabular-nums">{formatCurrency(summary.sellingPriceWithoutVatYearly)} / client</div>
+                  <div className="text-[10px] text-muted-foreground mt-1">Excl. VAT · all clients</div>
+                </CardContent>
+              </Card>
+              <Card className="border-l-4 border-l-amber-500">
+                <CardContent className="pt-5 pb-4">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">VAT (15%)</div>
+                  <div className="mt-2 text-2xl font-bold text-amber-600 dark:text-amber-400 tabular-nums">{formatCurrency(vatYearly * (projections?.[0]?.numClients || 1))}</div>
+                  <div className="text-xs text-muted-foreground mt-1 tabular-nums">{formatCurrency(vatMonthly * (projections?.[0]?.numClients || 1))} / month</div>
+                  <div className="text-[10px] text-muted-foreground mt-1">Total incl. VAT: <span className="tabular-nums">{formatCurrency(summary.sellingPriceWithVatYearly * (projections?.[0]?.numClients || 1))}</span> / yr</div>
+                </CardContent>
+              </Card>
             </div>
-            <div className="w-px bg-border"></div>
-            <div className="px-4 py-2 text-center">
-              <div className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Selling Price / Yr</div>
-              <div className="font-bold text-primary tabular-nums">{formatCurrency(summary.sellingPriceWithoutVatYearly)}</div>
-            </div>
-            <div className="w-px bg-border"></div>
-            <div className="px-4 py-2 text-center">
-              <div className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Margin / Yr</div>
-              <div className="font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">{formatCurrency(summary.marginSarYearly)}</div>
-            </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
 
       {/* Global Settings */}
