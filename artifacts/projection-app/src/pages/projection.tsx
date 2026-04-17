@@ -276,34 +276,34 @@ export default function Projection() {
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
               <Card className="border-l-4 border-l-slate-400 dark:border-l-slate-500">
                 <CardContent className="pt-5 pb-4">
-                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Cost</div>
-                  <div className="mt-2 text-2xl font-bold tabular-nums">{formatCurrency(totalCostYearly)}</div>
+                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Department Cost</div>
+                  <div className="mt-2 text-2xl font-bold tabular-nums">{formatCurrency(totalCostYearly)}<span className="text-xs font-medium text-muted-foreground ml-1">/ yr</span></div>
                   <div className="text-xs text-muted-foreground mt-1 tabular-nums">{formatCurrency(totalCostMonthly)} / month</div>
-                  <div className="text-[10px] text-muted-foreground mt-1">Team + overheads (full year)</div>
+                  <div className="text-[10px] text-muted-foreground mt-1.5">All team salaries + overheads (what we spend)</div>
                 </CardContent>
               </Card>
               <Card className="border-l-4 border-l-primary">
                 <CardContent className="pt-5 pb-4">
-                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Selling Price (Monthly)</div>
-                  <div className="mt-2 text-2xl font-bold text-primary tabular-nums">{formatCurrency(summary.sellingPriceWithoutVat * (projections?.[0]?.numClients || 1))}</div>
-                  <div className="text-xs text-muted-foreground mt-1 tabular-nums">{formatCurrency(summary.sellingPriceWithoutVat)} / client</div>
-                  <div className="text-[10px] text-muted-foreground mt-1">Excl. VAT · all clients</div>
+                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Revenue (Monthly)</div>
+                  <div className="mt-2 text-2xl font-bold text-primary tabular-nums">{formatCurrency(summary.sellingPriceWithoutVat * (projections?.[0]?.numClients || 1))}<span className="text-xs font-medium text-muted-foreground ml-1">/ mo</span></div>
+                  <div className="text-xs text-muted-foreground mt-1 tabular-nums">{formatCurrency(summary.sellingPriceWithoutVat)} × {projections?.[0]?.numClients} clients</div>
+                  <div className="text-[10px] text-muted-foreground mt-1.5">Selling price excl. VAT, all clients combined</div>
                 </CardContent>
               </Card>
               <Card className="border-l-4 border-l-primary">
                 <CardContent className="pt-5 pb-4">
-                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Selling Price (Yearly)</div>
-                  <div className="mt-2 text-2xl font-bold text-primary tabular-nums">{formatCurrency(summary.sellingPriceWithoutVatYearly * (projections?.[0]?.numClients || 1))}</div>
-                  <div className="text-xs text-muted-foreground mt-1 tabular-nums">{formatCurrency(summary.sellingPriceWithoutVatYearly)} / client</div>
-                  <div className="text-[10px] text-muted-foreground mt-1">Excl. VAT · all clients</div>
+                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Revenue (Yearly)</div>
+                  <div className="mt-2 text-2xl font-bold text-primary tabular-nums">{formatCurrency(summary.sellingPriceWithoutVatYearly * (projections?.[0]?.numClients || 1))}<span className="text-xs font-medium text-muted-foreground ml-1">/ yr</span></div>
+                  <div className="text-xs text-muted-foreground mt-1 tabular-nums">{formatCurrency(summary.sellingPriceWithoutVatYearly)} × {projections?.[0]?.numClients} clients</div>
+                  <div className="text-[10px] text-muted-foreground mt-1.5">Selling price excl. VAT, all clients combined</div>
                 </CardContent>
               </Card>
               <Card className="border-l-4 border-l-amber-500">
                 <CardContent className="pt-5 pb-4">
                   <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">VAT (15%)</div>
-                  <div className="mt-2 text-2xl font-bold text-amber-600 dark:text-amber-400 tabular-nums">{formatCurrency(vatYearly * (projections?.[0]?.numClients || 1))}</div>
+                  <div className="mt-2 text-2xl font-bold text-amber-600 dark:text-amber-400 tabular-nums">{formatCurrency(vatYearly * (projections?.[0]?.numClients || 1))}<span className="text-xs font-medium text-muted-foreground ml-1">/ yr</span></div>
                   <div className="text-xs text-muted-foreground mt-1 tabular-nums">{formatCurrency(vatMonthly * (projections?.[0]?.numClients || 1))} / month</div>
-                  <div className="text-[10px] text-muted-foreground mt-1">Total incl. VAT: <span className="tabular-nums">{formatCurrency(summary.sellingPriceWithVatYearly * (projections?.[0]?.numClients || 1))}</span> / yr</div>
+                  <div className="text-[10px] text-muted-foreground mt-1.5">Charge incl. VAT: <span className="tabular-nums font-medium">{formatCurrency(summary.sellingPriceWithVatYearly * (projections?.[0]?.numClients || 1))}</span> / yr</div>
                 </CardContent>
               </Card>
             </div>
