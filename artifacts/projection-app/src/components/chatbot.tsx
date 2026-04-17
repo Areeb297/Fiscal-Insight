@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import DOMPurify from "dompurify";
-import { MessageSquare, X, Send, Loader2, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
+import { MessageSquare, X, Send, Loader2, Sparkles, ChevronDown, ChevronUp, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -56,6 +56,33 @@ const MAX_WIDTH = 900;
 const DEFAULT_WIDTH = 480;
 const WIDTH_STORAGE_KEY = "chatbot:width";
 const OPEN_STORAGE_KEY = "chatbot:open";
+const MESSAGES_STORAGE_KEY = "chatbot:messages:v1";
+
+const INITIAL_MESSAGES: Message[] = [
+  {
+    role: "assistant",
+    content: "Hello — I can help you analyze your projection data, walk through the math, and answer 'what if' questions. What would you like to know?",
+    html: "<p>Hello — I can help you analyze your projection data, walk through the math, and answer <em>what if</em> questions.</p><p>Try asking about employee costs, margins, overheads, or per-client economics.</p>",
+  },
+];
+
+function loadStoredMessages(): Message[] {
+  if (typeof window === "undefined") return INITIAL_MESSAGES;
+  try {
+    const raw = window.localStorage.getItem(MESSAGES_STORAGE_KEY);
+    if (!raw) return INITIAL_MESSAGES;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || parsed.length === 0) return INITIAL_MESSAGES;
+    return parsed.filter(
+      (m): m is Message =>
+        m && typeof m === "object" &&
+        (m.role === "user" || m.role === "assistant") &&
+        typeof m.content === "string",
+    );
+  } catch {
+    return INITIAL_MESSAGES;
+  }
+}
 
 function AssistantMessage({ html, content }: { html?: string; content: string }) {
   const safeHtml = useMemo(() => {
@@ -85,13 +112,27 @@ export default function Chatbot() {
     window.localStorage.setItem(OPEN_STORAGE_KEY, isOpen ? "1" : "0");
   }, [isOpen]);
 
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "assistant",
-      content: "Hello — I can help you analyze your projection data, walk through the math, and answer 'what if' questions. What would you like to know?",
-      html: "<p>Hello — I can help you analyze your projection data, walk through the math, and answer <em>what if</em> questions.</p><p>Try asking about employee costs, margins, overheads, or per-client economics.</p>",
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>(() => loadStoredMessages());
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(MESSAGES_STORAGE_KEY, JSON.stringify(messages));
+    } catch {
+      // ignore quota errors
+    }
+  }, [messages]);
+
+  const clearConversation = () => {
+    setMessages(INITIAL_MESSAGES);
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.removeItem(MESSAGES_STORAGE_KEY);
+      } catch {
+        // ignore
+      }
+    }
+  };
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -323,9 +364,23 @@ export default function Chatbot() {
               <div className="text-xs text-muted-foreground truncate">Ask about your data</div>
             </div>
           </div>
-          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full shrink-0" onClick={() => setIsOpen(false)}>
-            <X className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1 shrink-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full"
+              onClick={clearConversation}
+              disabled={sendMessage.isPending || messages.length <= 1}
+              data-testid="button-clear-chat"
+              aria-label="Clear conversation"
+              title="Clear conversation"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => setIsOpen(false)} aria-label="Close">
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </CardHeader>
 
         <ScrollArea className="flex-1 min-w-0" ref={scrollRef}>
