@@ -1,9 +1,12 @@
-import { ClerkProvider, SignIn, SignUp, Show, useClerk } from "@clerk/react";
+import { ClerkProvider, SignIn, Show, useClerk } from "@clerk/react";
 import { Switch, Route, useLocation, Router as WouterRouter, Redirect } from "wouter";
 import { QueryClientProvider, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { queryClient } from "./lib/queryClient";
 import { AuthContentWrapper } from "@/components/auth-panel";
 
@@ -68,6 +71,87 @@ function SignInPage() {
   );
 }
 
+function CustomSignUpForm() {
+  const [, setLocation] = useLocation();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const apiBase = import.meta.env.BASE_URL.replace(/\/$/, "");
+      const res = await fetch(`${apiBase}/api/auth/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, firstName, lastName }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data?.error || "Could not create account.");
+        setLoading(false);
+        return;
+      }
+      setSuccess(true);
+      setTimeout(() => setLocation("/sign-in"), 1200);
+    } catch (err: any) {
+      setError(err?.message || "Network error.");
+      setLoading(false);
+    }
+  }
+
+  if (success) {
+    return (
+      <div className="text-center space-y-3 py-6">
+        <div className="text-2xl font-semibold text-foreground">Account created</div>
+        <p className="text-sm text-muted-foreground">Redirecting you to sign in…</p>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label htmlFor="firstName">First name</Label>
+          <Input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} className="h-10" />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="lastName">Last name</Label>
+          <Input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} className="h-10" />
+        </div>
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="email">Email</Label>
+        <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="h-10" />
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="password">Password</Label>
+        <Input id="password" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} className="h-10" />
+        <p className="text-xs text-muted-foreground">At least 8 characters. Avoid common or breached passwords.</p>
+      </div>
+      {error && <p className="text-sm text-destructive">{error}</p>}
+      <Button type="submit" disabled={loading} className="w-full bg-[#156082] hover:bg-[#0E2841] h-10">
+        {loading ? "Creating account..." : "Create account"}
+      </Button>
+      <p className="text-sm text-center text-muted-foreground">
+        Already have an account?{" "}
+        <a href={`${basePath}/sign-in`} className="text-[#156082] hover:text-[#0E2841] font-medium">Sign in</a>
+      </p>
+    </form>
+  );
+}
+
 function SignUpPage() {
   return (
     <AuthContentWrapper>
@@ -76,12 +160,7 @@ function SignUpPage() {
           <p className="text-sm font-medium text-primary tracking-wide uppercase">Get started</p>
           <h1 className="text-2xl font-bold text-foreground">Create your account</h1>
         </div>
-        <SignUp
-          routing="path"
-          path={`${basePath}/sign-up`}
-          signInUrl={`${basePath}/sign-in`}
-          appearance={clerkAppearance}
-        />
+        <CustomSignUpForm />
       </div>
     </AuthContentWrapper>
   );
