@@ -4,6 +4,7 @@ import { z } from "zod/v4";
 
 export const projectionsTable = pgTable("projections", {
   id: serial("id").primaryKey(),
+  name: text("name"),
   yearLabel: text("year_label").notNull(),
   sarRate: real("sar_rate").notNull().default(3.75),
   numClients: integer("num_clients").notNull().default(5),

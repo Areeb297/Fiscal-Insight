@@ -18,7 +18,7 @@ import Chatbot from "./chatbot";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/projection", label: "Projection", icon: Calculator },
+  { href: "/projection", label: "Projections", icon: Calculator },
   { href: "/quotations", label: "Quotations", icon: FileText },
   { href: "/admin", label: "Admin", icon: Settings },
 ];
@@ -139,8 +139,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         )}
 
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto">
-          {children}
+        <main className="flex-1 overflow-y-auto flex flex-col">
+          <div className="flex-1">{children}</div>
+          <footer className="shrink-0 border-t border-border bg-card/50 py-3 px-6 text-xs text-muted-foreground text-center">
+            © 2026 Onasi-CloudTech. All Rights Reserved.
+          </footer>
         </main>
       </div>
 

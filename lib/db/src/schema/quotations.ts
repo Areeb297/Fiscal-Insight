@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, real, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, real, timestamp, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { projectionsTable } from "./projections";
@@ -29,6 +29,7 @@ export const quotationLineItemsTable = pgTable("quotation_line_items", {
   unit: text("unit").notNull().default("Package"),
   priceMonthly: real("price_monthly").notNull().default(0),
   totalMonths: integer("total_months").notNull().default(12),
+  isExcluded: boolean("is_excluded").notNull().default(false),
 });
 
 export const insertQuotationLineItemSchema = createInsertSchema(quotationLineItemsTable).omit({ id: true });

@@ -7,6 +7,7 @@
  */
 
 export interface CreateProjectionBody {
+  name?: string | null;
   yearLabel: string;
   sarRate?: number;
   numClients?: number;

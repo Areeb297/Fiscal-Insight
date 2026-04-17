@@ -15,4 +15,5 @@ export interface QuotationLineItem {
   unit: string;
   priceMonthly: number;
   totalMonths: number;
+  isExcluded?: boolean;
 }

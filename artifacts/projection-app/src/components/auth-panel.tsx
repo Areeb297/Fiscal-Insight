@@ -125,13 +125,26 @@ export function AuthContentWrapper({ children }: { children: React.ReactNode }) 
   }, [reducedMotion]);
 
   return (
-    <div className="min-h-screen w-full flex">
-      <AuthDecorativePanel />
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-8 bg-background">
-        <div className={`w-full max-w-md transition-all duration-700 ease-out ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
-          {children}
+    <div className="min-h-screen w-full flex flex-col">
+      <div className="flex flex-1">
+        <AuthDecorativePanel />
+        <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-8 bg-background relative overflow-hidden">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 opacity-60"
+            style={{
+              background:
+                "radial-gradient(circle at 80% 0%, rgba(21,96,130,0.08) 0%, transparent 55%), radial-gradient(circle at 0% 100%, rgba(14,40,65,0.06) 0%, transparent 50%)",
+            }}
+          />
+          <div className={`relative w-full max-w-md transition-all duration-700 ease-out ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
+            {children}
+          </div>
         </div>
       </div>
+      <footer className="shrink-0 py-3 px-6 text-xs text-muted-foreground text-center bg-background border-t border-border">
+        © 2026 Onasi-CloudTech. All Rights Reserved.
+      </footer>
     </div>
   );
 }

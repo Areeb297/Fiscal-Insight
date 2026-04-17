@@ -10,6 +10,7 @@ import { AuthContentWrapper } from "@/components/auth-panel";
 import Home from "@/pages/home";
 import Dashboard from "@/pages/dashboard";
 import Projection from "@/pages/projection";
+import ProjectionsList from "@/pages/projections-list";
 import QuotationsList from "@/pages/quotations";
 import QuotationForm from "@/pages/quotations/form";
 import Admin from "@/pages/admin";
@@ -155,7 +156,8 @@ function ClerkProviderWithRoutes() {
             <Route path="/sign-up/*?" component={SignUpPage} />
             
             <Route path="/dashboard"><ProtectedRoute component={Dashboard} /></Route>
-            <Route path="/projection"><ProtectedRoute component={Projection} /></Route>
+            <Route path="/projection"><ProtectedRoute component={ProjectionsList} /></Route>
+            <Route path="/projection/:id"><ProtectedRoute component={Projection} /></Route>
             <Route path="/quotations"><ProtectedRoute component={QuotationsList} /></Route>
             <Route path="/quotations/new"><ProtectedRoute component={QuotationForm} /></Route>
             <Route path="/quotations/:id"><ProtectedRoute component={QuotationForm} /></Route>

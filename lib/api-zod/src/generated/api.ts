@@ -19,6 +19,7 @@ export const HealthCheckResponse = zod.object({
  */
 export const ListProjectionsResponseItem = zod.object({
   id: zod.number(),
+  name: zod.string().nullish(),
   yearLabel: zod.string(),
   sarRate: zod.number(),
   numClients: zod.number(),
@@ -32,6 +33,7 @@ export const ListProjectionsResponse = zod.array(ListProjectionsResponseItem);
  * @summary Create a projection
  */
 export const CreateProjectionBody = zod.object({
+  name: zod.string().nullish(),
   yearLabel: zod.string(),
   sarRate: zod.number().optional(),
   numClients: zod.number().optional(),
@@ -47,6 +49,7 @@ export const GetProjectionParams = zod.object({
 
 export const GetProjectionResponse = zod.object({
   id: zod.number(),
+  name: zod.string().nullish(),
   yearLabel: zod.string(),
   sarRate: zod.number(),
   numClients: zod.number(),
@@ -63,6 +66,7 @@ export const UpdateProjectionParams = zod.object({
 });
 
 export const UpdateProjectionBody = zod.object({
+  name: zod.string().nullish(),
   yearLabel: zod.string().optional(),
   sarRate: zod.number().optional(),
   numClients: zod.number().optional(),
@@ -71,12 +75,20 @@ export const UpdateProjectionBody = zod.object({
 
 export const UpdateProjectionResponse = zod.object({
   id: zod.number(),
+  name: zod.string().nullish(),
   yearLabel: zod.string(),
   sarRate: zod.number(),
   numClients: zod.number(),
   marginPercent: zod.number(),
   createdAt: zod.string(),
   updatedAt: zod.string(),
+});
+
+/**
+ * @summary Delete a projection (cascades to employees, subscriptions, sales-support)
+ */
+export const DeleteProjectionParams = zod.object({
+  id: zod.coerce.number(),
 });
 
 /**
@@ -89,6 +101,7 @@ export const GetProjectionSummaryParams = zod.object({
 export const GetProjectionSummaryResponse = zod.object({
   projection: zod.object({
     id: zod.number(),
+    name: zod.string().nullish(),
     yearLabel: zod.string(),
     sarRate: zod.number(),
     numClients: zod.number(),
@@ -405,6 +418,7 @@ export const GetQuotationResponse = zod.object({
       unit: zod.string(),
       priceMonthly: zod.number(),
       totalMonths: zod.number(),
+      isExcluded: zod.boolean().optional(),
     }),
   ),
 });
@@ -446,6 +460,7 @@ export const UpdateQuotationResponse = zod.object({
       unit: zod.string(),
       priceMonthly: zod.number(),
       totalMonths: zod.number(),
+      isExcluded: zod.boolean().optional(),
     }),
   ),
 });
@@ -488,6 +503,7 @@ export const UpdateQuotationLineItemBody = zod.object({
   unit: zod.string().optional(),
   priceMonthly: zod.number().optional(),
   totalMonths: zod.number().optional(),
+  isExcluded: zod.boolean().optional(),
 });
 
 export const UpdateQuotationLineItemResponse = zod.object({
@@ -499,6 +515,7 @@ export const UpdateQuotationLineItemResponse = zod.object({
   unit: zod.string(),
   priceMonthly: zod.number(),
   totalMonths: zod.number(),
+  isExcluded: zod.boolean().optional(),
 });
 
 /**
@@ -698,6 +715,7 @@ export const GetDashboardSummaryResponse = zod.object({
     .object({
       projection: zod.object({
         id: zod.number(),
+        name: zod.string().nullish(),
         yearLabel: zod.string(),
         sarRate: zod.number(),
         numClients: zod.number(),

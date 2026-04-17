@@ -7,6 +7,7 @@ import {
   UpdateProjectionParams,
   UpdateProjectionBody,
   GetProjectionSummaryParams,
+  DeleteProjectionParams,
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
@@ -74,6 +75,20 @@ async function getCurrencyRate(currencyCode: string): Promise<number> {
   const [currency] = await db.select().from(currenciesTable).where(eq(currenciesTable.code, currencyCode));
   return currency ? currency.rateToSar : 1.0;
 }
+
+router.delete("/projections/:id", async (req, res): Promise<void> => {
+  const params = DeleteProjectionParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+  const result = await db.delete(projectionsTable).where(eq(projectionsTable.id, params.data.id)).returning();
+  if (result.length === 0) {
+    res.status(404).json({ error: "Projection not found" });
+    return;
+  }
+  res.status(204).send();
+});
 
 router.get("/projections/:id/summary", async (req, res): Promise<void> => {
   const params = GetProjectionSummaryParams.safeParse(req.params);

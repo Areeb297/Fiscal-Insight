@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
+import { useParams, Link, useLocation } from "wouter";
 import { 
   useListProjections, 
   getListProjectionsQueryKey,
+  useGetProjection,
+  getGetProjectionQueryKey,
   useCreateProjection,
   useUpdateProjection,
   useGetProjectionSummary,
@@ -35,7 +38,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Trash, Save, Calculator } from "lucide-react";
+import { Plus, Trash, Save, Calculator, ArrowLeft } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
@@ -44,12 +47,23 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 export default function Projection() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const params = useParams();
+  const [, setLocation] = useLocation();
+
+  const routeId = params.id ? parseInt(params.id) : NaN;
+  const hasRouteId = Number.isFinite(routeId) && routeId > 0;
 
   const { data: projections, isLoading: isLoadingProjections } = useListProjections({
     query: { queryKey: getListProjectionsQueryKey() }
   });
 
-  const activeProjectionId = projections?.[0]?.id;
+  const { data: routeProjection, isLoading: isLoadingRouteProjection, isError: routeProjectionError } = useGetProjection(routeId, {
+    query: { enabled: hasRouteId, queryKey: getGetProjectionQueryKey(routeId), retry: false }
+  });
+
+  const routeNotFound = hasRouteId && !isLoadingRouteProjection && (routeProjectionError || !routeProjection);
+  const activeProjectionId = hasRouteId ? (routeProjection?.id) : projections?.[0]?.id;
+  const activeProjection = hasRouteId ? routeProjection : projections?.[0];
 
   const { data: summary, isLoading: isLoadingSummary } = useGetProjectionSummary(activeProjectionId || 0, {
     query: { enabled: !!activeProjectionId, queryKey: getGetProjectionSummaryQueryKey(activeProjectionId || 0) }
@@ -109,6 +123,7 @@ export default function Projection() {
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getGetProjectionSummaryQueryKey(activeProjectionId) });
+          queryClient.invalidateQueries({ queryKey: getGetProjectionQueryKey(activeProjectionId) });
           queryClient.invalidateQueries({ queryKey: getListProjectionsQueryKey() });
         }
       }
@@ -245,8 +260,19 @@ export default function Projection() {
     return raw > 1 ? raw / 100 : raw;
   };
 
-  if (isLoadingProjections) {
+  if (isLoadingProjections || (hasRouteId && isLoadingRouteProjection)) {
     return <div className="p-8 space-y-8"><Skeleton className="h-12 w-1/3" /><Skeleton className="h-[400px] w-full" /></div>;
+  }
+
+  if (routeNotFound) {
+    return (
+      <div className="p-8 flex flex-col items-center justify-center min-h-[80vh] text-center">
+        <Calculator className="h-16 w-16 text-muted-foreground mb-4 opacity-50" />
+        <h2 className="text-2xl font-bold mb-2">Projection Not Found</h2>
+        <p className="text-muted-foreground mb-6">This projection doesn't exist or has been deleted.</p>
+        <Button onClick={() => setLocation("/projection")} size="lg">Back to Projections</Button>
+      </div>
+    );
   }
 
   if (!activeProjectionId) {
@@ -255,17 +281,24 @@ export default function Projection() {
         <Calculator className="h-16 w-16 text-muted-foreground mb-4 opacity-50" />
         <h2 className="text-2xl font-bold mb-2">No Active Projection</h2>
         <p className="text-muted-foreground mb-6">Create a projection to start managing your department costs and margins.</p>
-        <Button onClick={handleCreateInitialProjection} size="lg">Create Projection</Button>
+        <Button onClick={() => setLocation("/projection")} size="lg">Go to Projections</Button>
       </div>
     );
   }
 
+  const headerName = activeProjection?.name?.trim() || `Projection ${activeProjection?.yearLabel ?? ""}`;
+
   return (
     <div className="p-6 md:p-8 max-w-[1600px] mx-auto space-y-8 pb-24">
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Projection Workspace</h1>
-          <p className="text-muted-foreground mt-1">Manage departmental costs, margins, and client economics</p>
+        <div className="flex items-start gap-4">
+          <Link href="/projection">
+            <Button variant="ghost" size="icon" className="mt-1"><ArrowLeft className="h-5 w-5" /></Button>
+          </Link>
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold tracking-tight">{headerName}</h1>
+            <p className="text-muted-foreground mt-1">Manage departmental costs, margins, and client economics</p>
+          </div>
         </div>
         {summary && (() => {
           const totalCostMonthly = (summary.totalDeptCostYearly + summary.totalOverheadYearly) / 12;
@@ -285,25 +318,25 @@ export default function Projection() {
               <Card className="border-l-4 border-l-primary">
                 <CardContent className="pt-5 pb-4">
                   <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Revenue (Monthly)</div>
-                  <div className="mt-2 text-2xl font-bold text-primary tabular-nums">{formatCurrency(summary.sellingPriceWithoutVat * (projections?.[0]?.numClients || 1))}<span className="text-xs font-medium text-muted-foreground ml-1">/ mo</span></div>
-                  <div className="text-xs text-muted-foreground mt-1 tabular-nums">{formatCurrency(summary.sellingPriceWithoutVat)} × {projections?.[0]?.numClients} clients</div>
+                  <div className="mt-2 text-2xl font-bold text-primary tabular-nums">{formatCurrency(summary.sellingPriceWithoutVat * (activeProjection?.numClients || 1))}<span className="text-xs font-medium text-muted-foreground ml-1">/ mo</span></div>
+                  <div className="text-xs text-muted-foreground mt-1 tabular-nums">{formatCurrency(summary.sellingPriceWithoutVat)} × {activeProjection?.numClients} clients</div>
                   <div className="text-[10px] text-muted-foreground mt-1.5">Selling price excl. VAT, all clients combined</div>
                 </CardContent>
               </Card>
               <Card className="border-l-4 border-l-primary">
                 <CardContent className="pt-5 pb-4">
                   <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Revenue (Yearly)</div>
-                  <div className="mt-2 text-2xl font-bold text-primary tabular-nums">{formatCurrency(summary.sellingPriceWithoutVatYearly * (projections?.[0]?.numClients || 1))}<span className="text-xs font-medium text-muted-foreground ml-1">/ yr</span></div>
-                  <div className="text-xs text-muted-foreground mt-1 tabular-nums">{formatCurrency(summary.sellingPriceWithoutVatYearly)} × {projections?.[0]?.numClients} clients</div>
+                  <div className="mt-2 text-2xl font-bold text-primary tabular-nums">{formatCurrency(summary.sellingPriceWithoutVatYearly * (activeProjection?.numClients || 1))}<span className="text-xs font-medium text-muted-foreground ml-1">/ yr</span></div>
+                  <div className="text-xs text-muted-foreground mt-1 tabular-nums">{formatCurrency(summary.sellingPriceWithoutVatYearly)} × {activeProjection?.numClients} clients</div>
                   <div className="text-[10px] text-muted-foreground mt-1.5">Selling price excl. VAT, all clients combined</div>
                 </CardContent>
               </Card>
               <Card className="border-l-4 border-l-amber-500">
                 <CardContent className="pt-5 pb-4">
                   <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">VAT (15%)</div>
-                  <div className="mt-2 text-2xl font-bold text-amber-600 dark:text-amber-400 tabular-nums">{formatCurrency(vatYearly * (projections?.[0]?.numClients || 1))}<span className="text-xs font-medium text-muted-foreground ml-1">/ yr</span></div>
-                  <div className="text-xs text-muted-foreground mt-1 tabular-nums">{formatCurrency(vatMonthly * (projections?.[0]?.numClients || 1))} / month</div>
-                  <div className="text-[10px] text-muted-foreground mt-1.5">Charge incl. VAT: <span className="tabular-nums font-medium">{formatCurrency(summary.sellingPriceWithVatYearly * (projections?.[0]?.numClients || 1))}</span> / yr</div>
+                  <div className="mt-2 text-2xl font-bold text-amber-600 dark:text-amber-400 tabular-nums">{formatCurrency(vatYearly * (activeProjection?.numClients || 1))}<span className="text-xs font-medium text-muted-foreground ml-1">/ yr</span></div>
+                  <div className="text-xs text-muted-foreground mt-1 tabular-nums">{formatCurrency(vatMonthly * (activeProjection?.numClients || 1))} / month</div>
+                  <div className="text-[10px] text-muted-foreground mt-1.5">Charge incl. VAT: <span className="tabular-nums font-medium">{formatCurrency(summary.sellingPriceWithVatYearly * (activeProjection?.numClients || 1))}</span> / yr</div>
                 </CardContent>
               </Card>
             </div>
@@ -325,7 +358,8 @@ export default function Projection() {
                 id="sarRate" 
                 type="number" 
                 step="0.01" 
-                defaultValue={projections?.[0]?.sarRate} 
+                key={`sar-${activeProjection?.id}`}
+                defaultValue={activeProjection?.sarRate} 
                 onBlur={(e) => handleUpdateProjectionSettings("sarRate", parseFloat(e.target.value))}
               />
             </div>
@@ -335,7 +369,8 @@ export default function Projection() {
                 id="numClients" 
                 type="number" 
                 min="1" 
-                defaultValue={projections?.[0]?.numClients} 
+                key={`nc-${activeProjection?.id}`}
+                defaultValue={activeProjection?.numClients} 
                 onBlur={(e) => handleUpdateProjectionSettings("numClients", parseInt(e.target.value))}
               />
             </div>
@@ -345,7 +380,8 @@ export default function Projection() {
                 id="marginPercent" 
                 type="number" 
                 step="0.1" 
-                defaultValue={projections?.[0]?.marginPercent} 
+                key={`mp-${activeProjection?.id}`}
+                defaultValue={activeProjection?.marginPercent} 
                 onBlur={(e) => handleUpdateProjectionSettings("marginPercent", parseFloat(e.target.value))}
               />
             </div>
@@ -526,7 +562,7 @@ export default function Projection() {
             <CardTitle className="flex items-center justify-between">
               <span>Per-Client Economics</span>
               <span className="text-xs font-medium px-2 py-1 rounded-full bg-primary-foreground/15 text-primary-foreground/90">
-                {projections?.[0]?.numClients} client{(projections?.[0]?.numClients || 0) === 1 ? "" : "s"} · {Math.round((normalizeMarginToFractionUI(projections?.[0]?.marginPercent || 0)) * 100)}% margin
+                {activeProjection?.numClients} client{(activeProjection?.numClients || 0) === 1 ? "" : "s"} · {Math.round((normalizeMarginToFractionUI(activeProjection?.marginPercent || 0)) * 100)}% margin
               </span>
             </CardTitle>
             <CardDescription className="text-primary-foreground/70">

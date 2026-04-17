@@ -471,6 +471,90 @@ export const useUpdateProjection = <
 };
 
 /**
+ * @summary Delete a projection (cascades to employees, subscriptions, sales-support)
+ */
+export const getDeleteProjectionUrl = (id: number) => {
+  return `/api/projections/${id}`;
+};
+
+export const deleteProjection = async (
+  id: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteProjectionUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteProjectionMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteProjection>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteProjection>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["deleteProjection"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteProjection>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteProjection(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteProjectionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteProjection>>
+>;
+
+export type DeleteProjectionMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Delete a projection (cascades to employees, subscriptions, sales-support)
+ */
+export const useDeleteProjection = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteProjection>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteProjection>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getDeleteProjectionMutationOptions(options));
+};
+
+/**
  * @summary Full computed projection summary
  */
 export const getGetProjectionSummaryUrl = (id: number) => {

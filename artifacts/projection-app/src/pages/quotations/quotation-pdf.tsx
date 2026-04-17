@@ -9,6 +9,7 @@ type LineItem = {
   unit: string;
   priceMonthly: number;
   totalMonths: number;
+  isExcluded?: boolean;
 };
 
 type QuotationPdfProps = {
@@ -145,7 +146,8 @@ const statusColor = (s: string) => {
 };
 
 export function QuotationPdfDocument(props: QuotationPdfProps) {
-  const { quotationNumber, companyName, clientName, date, status, lineItems, vatRate, termsText } = props;
+  const { quotationNumber, companyName, clientName, date, status, vatRate, termsText } = props;
+  const lineItems = props.lineItems.filter((item) => !item.isExcluded);
 
   const subtotal = lineItems.reduce(
     (acc, item) => acc + item.quantity * item.priceMonthly * item.totalMonths,
@@ -236,7 +238,7 @@ export function QuotationPdfDocument(props: QuotationPdfProps) {
         ) : null}
 
         <View style={styles.footer} fixed>
-          <Text>{companyName}</Text>
+          <Text>© 2026 Onasi-CloudTech. All Rights Reserved.</Text>
           <Text
             render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`}
           />

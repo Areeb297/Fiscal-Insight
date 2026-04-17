@@ -11,6 +11,7 @@ export interface HealthStatus {
 
 export interface Projection {
   id: number;
+  name?: string | null;
   yearLabel: string;
   sarRate: number;
   numClients: number;
@@ -20,6 +21,7 @@ export interface Projection {
 }
 
 export interface CreateProjectionBody {
+  name?: string | null;
   yearLabel: string;
   sarRate?: number;
   numClients?: number;
@@ -27,6 +29,7 @@ export interface CreateProjectionBody {
 }
 
 export interface UpdateProjectionBody {
+  name?: string | null;
   yearLabel?: string;
   sarRate?: number;
   numClients?: number;
@@ -139,6 +142,7 @@ export interface QuotationLineItem {
   unit: string;
   priceMonthly: number;
   totalMonths: number;
+  isExcluded?: boolean;
 }
 
 export interface QuotationWithLineItems {
@@ -190,6 +194,7 @@ export interface UpdateLineItemBody {
   unit?: string;
   priceMonthly?: number;
   totalMonths?: number;
+  isExcluded?: boolean;
 }
 
 export interface Currency {

@@ -7,6 +7,7 @@
  */
 
 export interface UpdateProjectionBody {
+  name?: string | null;
   yearLabel?: string;
   sarRate?: number;
   numClients?: number;

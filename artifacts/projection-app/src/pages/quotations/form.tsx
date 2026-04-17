@@ -22,7 +22,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Plus, Trash, Save, Download } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ArrowLeft, Plus, Trash, Save, Download, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { z } from "zod";
@@ -159,28 +160,28 @@ export default function QuotationForm() {
     }
   };
 
-  const handleAddLineItem = () => {
+  const handleAddLineItem = (preset: "recurring" | "one-time" = "recurring") => {
     if (isNew) {
       toast({ title: "Please save the quotation first before adding items", variant: "destructive" });
       return;
     }
-    
+    const isOneTime = preset === "one-time";
     createLineItem.mutate(
-      { 
-        quotationId, 
-        data: { 
-          description: "New Item", 
-          quantity: 1, 
-          unit: "month", 
-          priceMonthly: 0, 
-          totalMonths: 12,
-          sortOrder: (quotation?.lineItems?.length || 0) + 1
-        } 
+      {
+        quotationId,
+        data: {
+          description: isOneTime ? "One-Time Cost" : "New Item",
+          quantity: 1,
+          unit: isOneTime ? "one-time" : "month",
+          priceMonthly: 0,
+          totalMonths: isOneTime ? 1 : 12,
+          sortOrder: (quotation?.lineItems?.length || 0) + 1,
+        },
       },
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getGetQuotationQueryKey(quotationId) });
-        }
+        },
       }
     );
   };
@@ -214,16 +215,17 @@ export default function QuotationForm() {
   }
 
   const calculateTotals = () => {
-    if (!quotation?.lineItems) return { subtotal: 0, vat: 0, total: 0 };
-    
+    if (!quotation?.lineItems) return { subtotal: 0, vat: 0, total: 0, vatRate: 0.15 };
+
     const subtotal = quotation.lineItems.reduce((acc, item) => {
+      if (item.isExcluded) return acc;
       return acc + (item.quantity * item.priceMonthly * item.totalMonths);
     }, 0);
-    
+
     const vatRate = settings?.vatRate ?? 0.15;
     const vat = subtotal * vatRate;
     const total = subtotal + vat;
-    
+
     return { subtotal, vat, total, vatRate };
   };
 
@@ -331,27 +333,45 @@ export default function QuotationForm() {
 
       {!isNew && (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle>Line Items</CardTitle>
-            <Button size="sm" onClick={handleAddLineItem}><Plus className="h-4 w-4 mr-2" /> Add Item</Button>
+          <CardHeader className="flex flex-row items-center justify-between pb-2 flex-wrap gap-2">
+            <div>
+              <CardTitle>Line Items</CardTitle>
+              <p className="text-xs text-muted-foreground mt-1">Toggle the checkbox to exclude a line from totals and the PDF without deleting it.</p>
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => handleAddLineItem("one-time")}>
+                <Zap className="h-4 w-4 mr-2" /> Add One-Time Cost
+              </Button>
+              <Button size="sm" onClick={() => handleAddLineItem("recurring")}>
+                <Plus className="h-4 w-4 mr-2" /> Add Item
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="rounded-md border overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[300px]">Description</TableHead>
-                    <TableHead className="w-[100px] text-right">Qty</TableHead>
+                    <TableHead className="w-[40px]"></TableHead>
+                    <TableHead className="w-[280px]">Description</TableHead>
+                    <TableHead className="w-[80px] text-right">Qty</TableHead>
                     <TableHead className="w-[100px]">Unit</TableHead>
                     <TableHead className="w-[150px] text-right">Price/Unit</TableHead>
-                    <TableHead className="w-[100px] text-right">Months</TableHead>
+                    <TableHead className="w-[80px] text-right">Months</TableHead>
                     <TableHead className="w-[150px] text-right">Total</TableHead>
                     <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {quotation?.lineItems?.map((item) => (
-                    <TableRow key={item.id}>
+                    <TableRow key={item.id} className={item.isExcluded ? "opacity-50" : ""}>
+                      <TableCell className="p-2">
+                        <Checkbox
+                          checked={!item.isExcluded}
+                          onCheckedChange={(checked) => handleUpdateLineItem(item.id, "isExcluded", !checked)}
+                          aria-label="Include in quotation"
+                        />
+                      </TableCell>
                       <TableCell className="p-2">
                         <Input 
                           defaultValue={item.description} 

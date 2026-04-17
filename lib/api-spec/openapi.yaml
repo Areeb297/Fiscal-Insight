@@ -104,6 +104,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Projection"
+    delete:
+      operationId: deleteProjection
+      tags: [projections]
+      summary: Delete a projection (cascades to employees, subscriptions, sales-support)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
 
   /projections/{id}/summary:
     get:
@@ -796,6 +809,9 @@ components:
       properties:
         id:
           type: integer
+        name:
+          type: string
+          nullable: true
         yearLabel:
           type: string
         sarRate:
@@ -813,6 +829,9 @@ components:
     CreateProjectionBody:
       type: object
       properties:
+        name:
+          type: string
+          nullable: true
         yearLabel:
           type: string
         sarRate:
@@ -826,6 +845,9 @@ components:
     UpdateProjectionBody:
       type: object
       properties:
+        name:
+          type: string
+          nullable: true
         yearLabel:
           type: string
         sarRate:
@@ -1036,6 +1058,8 @@ components:
           type: number
         totalMonths:
           type: integer
+        isExcluded:
+          type: boolean
       required: [id, quotationId, sortOrder, description, quantity, unit, priceMonthly, totalMonths]
 
     QuotationWithLineItems:
@@ -1139,6 +1163,8 @@ components:
           type: number
         totalMonths:
           type: integer
+        isExcluded:
+          type: boolean
 
     Currency:
       type: object

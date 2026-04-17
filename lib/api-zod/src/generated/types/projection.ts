@@ -8,6 +8,7 @@
 
 export interface Projection {
   id: number;
+  name?: string | null;
   yearLabel: string;
   sarRate: number;
   numClients: number;

@@ -13,4 +13,5 @@ export interface UpdateLineItemBody {
   unit?: string;
   priceMonthly?: number;
   totalMonths?: number;
+  isExcluded?: boolean;
 }
