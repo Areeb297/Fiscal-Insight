@@ -25,6 +25,16 @@ function firstSentence(text: string): string {
 
 const STRUCTURAL_HTML_RE = /<(ul|ol|table|h3|h4|pre|blockquote)\b/i;
 
+const LONG_REPLY_CHAR_THRESHOLD = 500;
+
+function isLongAssistantReply(content: string, html?: string): boolean {
+  const text = content.trim();
+  if (!text) return false;
+  if (text.length > LONG_REPLY_CHAR_THRESHOLD) return true;
+  if (html && STRUCTURAL_HTML_RE.test(html) && text.length > 200) return true;
+  return false;
+}
+
 function isBriefAssistantMessage(msg: Message): boolean {
   if (msg.role !== "assistant") return false;
   if (msg.expanded) return false;
@@ -243,9 +253,16 @@ export default function Chatbot() {
       { data: { message: userMessage, history } },
       {
         onSuccess: (response) => {
+          const longForm = isLongAssistantReply(response.reply, response.replyHtml);
           setMessages((prev) => [
             ...prev,
-            { role: "assistant", content: response.reply, html: response.replyHtml },
+            {
+              role: "assistant",
+              content: response.reply,
+              html: response.replyHtml,
+              isLongForm: longForm || undefined,
+              collapsed: longForm || undefined,
+            },
           ]);
         },
         onError: () => {
