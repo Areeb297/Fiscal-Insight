@@ -1253,6 +1253,16 @@ components:
         baseCurrencyCode:
           type: string
 
+    ChatHistoryItem:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [user, assistant]
+        content:
+          type: string
+      required: [role, content]
+
     ChatMessageRequest:
       type: object
       properties:
@@ -1261,6 +1271,10 @@ components:
         projectionId:
           type: integer
           nullable: true
+        history:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChatHistoryItem"
       required: [message]
 
     ChatMessageResponse:
@@ -1268,17 +1282,9 @@ components:
       properties:
         reply:
           type: string
-        actionsTaken:
-          type: array
-          items:
-            type: object
-            properties:
-              action:
-                type: string
-              details:
-                type: string
-            required: [action, details]
-      required: [reply, actionsTaken]
+        replyHtml:
+          type: string
+      required: [reply, replyHtml]
 
     ProjectionSummary:
       type: object

@@ -5,9 +5,8 @@
  * Department Projection API
  * OpenAPI spec version: 0.1.0
  */
-import type { ChatMessageResponseActionsTakenItem } from "./chatMessageResponseActionsTakenItem";
 
 export interface ChatMessageResponse {
   reply: string;
-  actionsTaken: ChatMessageResponseActionsTakenItem[];
+  replyHtml: string;
 }

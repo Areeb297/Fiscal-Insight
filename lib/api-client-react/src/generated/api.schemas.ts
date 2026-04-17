@@ -264,19 +264,28 @@ export interface UpdateSystemSettingsBody {
   baseCurrencyCode?: string;
 }
 
+export type ChatHistoryItemRole =
+  (typeof ChatHistoryItemRole)[keyof typeof ChatHistoryItemRole];
+
+export const ChatHistoryItemRole = {
+  user: "user",
+  assistant: "assistant",
+} as const;
+
+export interface ChatHistoryItem {
+  role: ChatHistoryItemRole;
+  content: string;
+}
+
 export interface ChatMessageRequest {
   message: string;
   projectionId?: number | null;
+  history?: ChatHistoryItem[];
 }
-
-export type ChatMessageResponseActionsTakenItem = {
-  action: string;
-  details: string;
-};
 
 export interface ChatMessageResponse {
   reply: string;
-  actionsTaken: ChatMessageResponseActionsTakenItem[];
+  replyHtml: string;
 }
 
 export interface ProjectionSummary {

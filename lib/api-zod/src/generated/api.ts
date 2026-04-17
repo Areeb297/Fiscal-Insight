@@ -659,16 +659,19 @@ export const UpdateSystemSettingsResponse = zod.object({
 export const SendChatMessageBody = zod.object({
   message: zod.string(),
   projectionId: zod.number().nullish(),
+  history: zod
+    .array(
+      zod.object({
+        role: zod.enum(["user", "assistant"]),
+        content: zod.string(),
+      }),
+    )
+    .optional(),
 });
 
 export const SendChatMessageResponse = zod.object({
   reply: zod.string(),
-  actionsTaken: zod.array(
-    zod.object({
-      action: zod.string(),
-      details: zod.string(),
-    }),
-  ),
+  replyHtml: zod.string(),
 });
 
 /**

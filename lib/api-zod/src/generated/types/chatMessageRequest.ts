@@ -5,8 +5,10 @@
  * Department Projection API
  * OpenAPI spec version: 0.1.0
  */
+import type { ChatHistoryItem } from "./chatHistoryItem";
 
 export interface ChatMessageRequest {
   message: string;
   projectionId?: number | null;
+  history?: ChatHistoryItem[];
 }

@@ -6,9 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./chatHistoryItem";
+export * from "./chatHistoryItemRole";
 export * from "./chatMessageRequest";
 export * from "./chatMessageResponse";
-export * from "./chatMessageResponseActionsTakenItem";
 export * from "./createCtcRuleBody";
 export * from "./createCurrencyBody";
 export * from "./createEmployeeBody";
