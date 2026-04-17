@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { 
   useListCurrencies, getListCurrenciesQueryKey, useCreateCurrency, useUpdateCurrency, useDeleteCurrency,
   useListCtcRules, getListCtcRulesQueryKey, useCreateCtcRule, useUpdateCtcRule, useDeleteCtcRule,
@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Trash, Save } from "lucide-react";
+import { Plus, Trash, Save, Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Admin() {
@@ -34,6 +34,24 @@ export default function Admin() {
   const updateSettings = useUpdateSystemSettings();
 
   const [localSettings, setLocalSettings] = useState<any>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
+  const handleLogoFile = (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Please choose an image file", variant: "destructive" });
+      return;
+    }
+    if (file.size > 1024 * 1024) {
+      toast({ title: "Logo must be smaller than 1 MB", variant: "destructive" });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setLocalSettings({ ...localSettings, companyLogoUrl: reader.result as string });
+    };
+    reader.onerror = () => toast({ title: "Failed to read file", variant: "destructive" });
+    reader.readAsDataURL(file);
+  };
 
   useEffect(() => {
     if (settings) {
@@ -132,10 +150,48 @@ export default function Admin() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Company Logo URL</Label>
-                  <Input 
-                    value={localSettings?.companyLogoUrl || ""} 
-                    onChange={(e) => setLocalSettings({...localSettings, companyLogoUrl: e.target.value})} 
+                  <Label>Company Logo</Label>
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-24 rounded border bg-muted/30 flex items-center justify-center overflow-hidden shrink-0">
+                      {localSettings?.companyLogoUrl ? (
+                        <img
+                          src={localSettings.companyLogoUrl}
+                          alt="Company logo preview"
+                          className="max-h-full max-w-full object-contain"
+                        />
+                      ) : (
+                        <span className="text-xs text-muted-foreground">No logo</span>
+                      )}
+                    </div>
+                    <input
+                      ref={logoInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleLogoFile(file);
+                        e.target.value = "";
+                      }}
+                    />
+                    <Button type="button" variant="outline" size="sm" onClick={() => logoInputRef.current?.click()}>
+                      <Upload className="h-4 w-4 mr-2" /> Upload
+                    </Button>
+                    {localSettings?.companyLogoUrl && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setLocalSettings({ ...localSettings, companyLogoUrl: "" })}
+                      >
+                        <X className="h-4 w-4 mr-2" /> Remove
+                      </Button>
+                    )}
+                  </div>
+                  <Input
+                    placeholder="…or paste an image URL"
+                    value={localSettings?.companyLogoUrl?.startsWith("data:") ? "" : localSettings?.companyLogoUrl || ""}
+                    onChange={(e) => setLocalSettings({ ...localSettings, companyLogoUrl: e.target.value })}
                   />
                 </div>
               </div>

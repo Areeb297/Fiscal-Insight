@@ -161,11 +161,7 @@ export function QuotationPdfDocument(props: QuotationPdfProps) {
           <View style={styles.brand}>
             {props.logoUrl ? (
               <Image src={props.logoUrl} style={styles.logoImage} />
-            ) : (
-              <View style={styles.logoBox}>
-                <Text style={styles.logoBoxText}>LOGO</Text>
-              </View>
-            )}
+            ) : null}
             <Text style={styles.companyName}>{companyName}</Text>
           </View>
           <View style={styles.meta}>
