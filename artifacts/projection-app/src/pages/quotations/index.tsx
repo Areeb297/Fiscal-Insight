@@ -53,7 +53,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Sparkles } from "lucide-react";
+import { TermsDiffView, diffLines, diffSummary } from "./terms-diff";
 
 export default function QuotationsList() {
   const [, setLocation] = useLocation();
@@ -214,6 +216,12 @@ export default function QuotationsList() {
                           state === "default"
                             ? "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
                             : "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300";
+                        const customText = normalize(q.termsText);
+                        const defText = normalize(defaultTermsText);
+                        const showDiff = state === "custom" && defText.length > 0;
+                        const summary = showDiff
+                          ? diffSummary(diffLines(defText, customText))
+                          : { added: 0, removed: 0 };
                         return (
                           <Popover>
                             <PopoverTrigger asChild>
@@ -225,21 +233,54 @@ export default function QuotationsList() {
                                 {label}
                               </button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-96" align="start">
+                            <PopoverContent
+                              className={showDiff ? "w-[32rem]" : "w-96"}
+                              align="start"
+                            >
                               <div className="space-y-2">
-                                <div className="flex items-center justify-between">
+                                <div className="flex items-center justify-between gap-2">
                                   <h4 className="text-sm font-semibold">Terms &amp; Conditions</h4>
                                   <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${badgeClasses}`}>
                                     {label}
                                   </span>
                                 </div>
-                                <div className="max-h-64 overflow-y-auto rounded border bg-muted/30 p-2 text-xs whitespace-pre-wrap">
-                                  {normalize(q.termsText)}
-                                </div>
-                                {state === "custom" && normalize(defaultTermsText) && (
-                                  <p className="text-xs text-muted-foreground">
-                                    Differs from the default in Settings.
-                                  </p>
+                                {showDiff ? (
+                                  <>
+                                    <p className="text-xs text-muted-foreground">
+                                      <span className="text-green-700 dark:text-green-400 font-medium">+{summary.added}</span>
+                                      {" / "}
+                                      <span className="text-red-700 dark:text-red-400 font-medium">−{summary.removed}</span>
+                                      {" lines vs the default in Settings."}
+                                    </p>
+                                    <Tabs defaultValue="diff">
+                                      <TabsList className="grid w-full grid-cols-3 h-8">
+                                        <TabsTrigger value="diff" className="text-xs">Diff</TabsTrigger>
+                                        <TabsTrigger value="quote" className="text-xs">This quote</TabsTrigger>
+                                        <TabsTrigger value="default" className="text-xs">Default</TabsTrigger>
+                                      </TabsList>
+                                      <TabsContent value="diff">
+                                        <TermsDiffView
+                                          defaultText={defText}
+                                          customText={customText}
+                                          className="max-h-64 overflow-auto rounded border bg-muted/30 p-2"
+                                        />
+                                      </TabsContent>
+                                      <TabsContent value="quote">
+                                        <div className="max-h-64 overflow-auto rounded border bg-muted/30 p-2 text-xs whitespace-pre-wrap break-words">
+                                          {customText}
+                                        </div>
+                                      </TabsContent>
+                                      <TabsContent value="default">
+                                        <div className="max-h-64 overflow-auto rounded border bg-muted/30 p-2 text-xs whitespace-pre-wrap break-words">
+                                          {defText}
+                                        </div>
+                                      </TabsContent>
+                                    </Tabs>
+                                  </>
+                                ) : (
+                                  <div className="max-h-64 overflow-y-auto rounded border bg-muted/30 p-2 text-xs whitespace-pre-wrap break-words">
+                                    {customText}
+                                  </div>
                                 )}
                               </div>
                             </PopoverContent>

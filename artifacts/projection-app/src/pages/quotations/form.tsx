@@ -29,6 +29,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFoo
 import { z } from "zod";
 import { pdf } from "@react-pdf/renderer";
 import { QuotationPdfDocument } from "./quotation-pdf";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { TermsDiffView, diffLines, diffSummary } from "./terms-diff";
+import { Eye } from "lucide-react";
 
 export default function QuotationForm() {
   const [, setLocation] = useLocation();
@@ -318,7 +322,11 @@ export default function QuotationForm() {
                   );
                 }
                 const isDefault = current === def;
-                return (
+                const showDiff = !isDefault && def.length > 0;
+                const summary = showDiff
+                  ? diffSummary(diffLines(def, current))
+                  : { added: 0, removed: 0 };
+                const badge = (
                   <span
                     className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                       isDefault
@@ -328,6 +336,58 @@ export default function QuotationForm() {
                   >
                     {isDefault ? "Default" : "Custom override"}
                   </span>
+                );
+                if (!showDiff) return badge;
+                return (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      <span className="text-green-700 dark:text-green-400 font-medium">+{summary.added}</span>
+                      {" / "}
+                      <span className="text-red-700 dark:text-red-400 font-medium">−{summary.removed}</span>
+                    </span>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+                        >
+                          <Eye className="h-3 w-3" /> View diff
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[36rem]" align="end">
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <h4 className="text-sm font-semibold">Terms diff vs default</h4>
+                            {badge}
+                          </div>
+                          <Tabs defaultValue="diff">
+                            <TabsList className="grid w-full grid-cols-3 h-8">
+                              <TabsTrigger value="diff" className="text-xs">Diff</TabsTrigger>
+                              <TabsTrigger value="quote" className="text-xs">This quote</TabsTrigger>
+                              <TabsTrigger value="default" className="text-xs">Default</TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="diff">
+                              <TermsDiffView
+                                defaultText={def}
+                                customText={current}
+                                className="max-h-80 overflow-auto rounded border bg-muted/30 p-2"
+                              />
+                            </TabsContent>
+                            <TabsContent value="quote">
+                              <div className="max-h-80 overflow-auto rounded border bg-muted/30 p-2 text-xs whitespace-pre-wrap break-words">
+                                {current}
+                              </div>
+                            </TabsContent>
+                            <TabsContent value="default">
+                              <div className="max-h-80 overflow-auto rounded border bg-muted/30 p-2 text-xs whitespace-pre-wrap break-words">
+                                {def}
+                              </div>
+                            </TabsContent>
+                          </Tabs>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                 );
               })()}
             </div>
