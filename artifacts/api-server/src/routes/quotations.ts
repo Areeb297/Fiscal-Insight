@@ -147,7 +147,7 @@ router.post("/quotations/from-projection/:projectionId", async (req, res): Promi
     const marginFraction = normalizeMarginToFraction(r.marginPercent);
     const sellingMonthly = marginFraction < 1 ? monthlyCost / (1 - marginFraction) : monthlyCost;
     if (sellingMonthly <= 0) continue;
-    const allocationLabel = allocationPercent < 100 ? `, ${allocationPercent}% allocation` : "";
+    const allocationLabel = allocationPercent !== 100 ? `, ${allocationPercent}% allocation` : "";
     lineItems.push({
       quotationId: quotation.id,
       sortOrder: sortOrder++,
