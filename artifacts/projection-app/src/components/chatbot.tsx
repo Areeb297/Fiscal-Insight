@@ -31,6 +31,7 @@ const MIN_WIDTH = 360;
 const MAX_WIDTH = 900;
 const DEFAULT_WIDTH = 480;
 const WIDTH_STORAGE_KEY = "chatbot:width";
+const OPEN_STORAGE_KEY = "chatbot:open";
 
 function AssistantMessage({ html, content }: { html?: string; content: string }) {
   const safeHtml = useMemo(() => {
@@ -50,7 +51,16 @@ function AssistantMessage({ html, content }: { html?: string; content: string })
 }
 
 export default function Chatbot() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem(OPEN_STORAGE_KEY) === "1";
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(OPEN_STORAGE_KEY, isOpen ? "1" : "0");
+  }, [isOpen]);
+
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
