@@ -39,10 +39,10 @@ export default function Dashboard() {
   const formatCurrency = (val: number) => new Intl.NumberFormat('en-SA', { style: 'currency', currency: 'SAR' }).format(val);
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <div className="flex gap-3">
+    <div className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto space-y-6 md:space-y-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h1>
+        <div className="flex flex-wrap gap-2 sm:gap-3">
           <Link href="/projection">
             <Button variant="outline"><Calculator className="h-4 w-4 mr-2" /> Open Projection</Button>
           </Link>

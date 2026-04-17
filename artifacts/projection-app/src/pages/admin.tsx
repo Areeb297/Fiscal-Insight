@@ -125,7 +125,7 @@ export default function Admin() {
   };
 
   return (
-    <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-6 pb-24">
+    <div className="p-4 sm:p-6 md:p-8 max-w-5xl mx-auto space-y-6 pb-24">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Administration</h1>
         <p className="text-muted-foreground mt-1">Manage system settings, currencies, and calculation rules</p>
@@ -273,7 +273,7 @@ export default function Admin() {
         
         <TabsContent value="currencies" className="mt-6 space-y-6">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2">
               <div>
                 <CardTitle>Currencies</CardTitle>
                 <CardDescription>Manage exchange rates relative to base currency (SAR)</CardDescription>
@@ -281,7 +281,7 @@ export default function Admin() {
               <Button size="sm" onClick={handleAddCurrency}><Plus className="h-4 w-4 mr-2" /> Add Currency</Button>
             </CardHeader>
             <CardContent>
-              <div className="rounded-md border overflow-hidden">
+              <div className="rounded-md border overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -329,7 +329,7 @@ export default function Admin() {
         
         <TabsContent value="ctcrules" className="mt-6 space-y-6">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2">
               <div>
                 <CardTitle>CTC Rules</CardTitle>
                 <CardDescription>Cost to Company multipliers by country</CardDescription>
@@ -337,7 +337,7 @@ export default function Admin() {
               <Button size="sm" onClick={handleAddCtcRule}><Plus className="h-4 w-4 mr-2" /> Add Rule</Button>
             </CardHeader>
             <CardContent>
-              <div className="rounded-md border overflow-hidden">
+              <div className="rounded-md border overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>

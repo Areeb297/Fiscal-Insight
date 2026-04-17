@@ -300,7 +300,7 @@ export default function Projection() {
   const headerName = activeProjection?.name?.trim() || `Projection ${activeProjection?.yearLabel ?? ""}`;
 
   return (
-    <div className="p-6 md:p-8 max-w-[1600px] mx-auto space-y-8 pb-24">
+    <div className="p-4 sm:p-6 md:p-8 max-w-[1600px] mx-auto space-y-6 md:space-y-8 pb-24">
       <div className="space-y-6">
         <div className="flex items-start gap-4">
           <Link href="/projection">
@@ -404,15 +404,15 @@ export default function Projection() {
 
       {/* Section 1: Department Cost (Employees) */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2">
           <div>
             <CardTitle>Department Cost (Team)</CardTitle>
             <CardDescription>Manage your team and their associated costs</CardDescription>
           </div>
-          <Button size="sm" onClick={handleAddEmployee}><Plus className="h-4 w-4 mr-2" /> Add Employee</Button>
+          <Button size="sm" onClick={handleAddEmployee} className="self-start sm:self-auto"><Plus className="h-4 w-4 mr-2" /> Add Employee</Button>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border overflow-hidden">
+          <div className="rounded-md border overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -508,15 +508,15 @@ export default function Projection() {
       <div className="space-y-8">
         {/* Section 2: Overheads & Subscriptions */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2">
             <div>
               <CardTitle>Overheads & Subscriptions</CardTitle>
               <CardDescription>Software and operational expenses</CardDescription>
             </div>
-            <Button size="sm" variant="outline" onClick={handleAddSubscription}><Plus className="h-4 w-4 mr-2" /> Add Overhead</Button>
+            <Button size="sm" variant="outline" onClick={handleAddSubscription} className="self-start sm:self-auto"><Plus className="h-4 w-4 mr-2" /> Add Overhead</Button>
           </CardHeader>
           <CardContent>
-            <div className="rounded-md border overflow-hidden">
+            <div className="rounded-md border overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -622,7 +622,7 @@ export default function Projection() {
             </div>
 
             {/* Breakdown table */}
-            <div className="rounded-lg border border-primary-foreground/20 overflow-hidden text-sm">
+            <div className="rounded-lg border border-primary-foreground/20 overflow-x-auto text-sm">
               <div className="grid grid-cols-[1.4fr_1fr_1fr] bg-primary-foreground/10 text-[10px] font-bold uppercase tracking-wider text-primary-foreground/80">
                 <div className="px-3 py-2">Breakdown</div>
                 <div className="px-3 py-2 text-right">Monthly</div>
@@ -663,15 +663,15 @@ export default function Projection() {
 
       {/* Section 3: Sales Support Resources */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2">
           <div>
             <CardTitle>Sales Support & Managed Services</CardTitle>
             <CardDescription>Add resources specific to client contracts with custom margins</CardDescription>
           </div>
-          <Button size="sm" variant="secondary" onClick={handleAddSalesSupport}><Plus className="h-4 w-4 mr-2" /> Add Resource</Button>
+          <Button size="sm" variant="secondary" onClick={handleAddSalesSupport} className="self-start sm:self-auto"><Plus className="h-4 w-4 mr-2" /> Add Resource</Button>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border overflow-hidden">
+          <div className="rounded-md border overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>

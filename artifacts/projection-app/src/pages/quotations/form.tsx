@@ -315,7 +315,7 @@ export default function QuotationForm() {
   const totals = calculateTotals();
 
   return (
-    <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-6 pb-24">
+    <div className="p-4 sm:p-6 md:p-8 max-w-5xl mx-auto space-y-6 pb-24">
       <div className="flex items-center gap-4 mb-6">
         <Button variant="ghost" size="icon" onClick={() => setLocation("/quotations")}>
           <ArrowLeft className="h-5 w-5" />
@@ -539,7 +539,7 @@ export default function QuotationForm() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="rounded-md border overflow-hidden">
+            <div className="rounded-md border overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
