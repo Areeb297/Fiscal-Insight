@@ -316,13 +316,29 @@ export default function QuotationForm() {
               {(() => {
                 const current = (headerData.termsText ?? "").trim();
                 const def = (settings?.termsText ?? "").trim();
+                const hasDefault = def.length > 0;
+                const isDefault = hasDefault && current === def;
+                const canReset = hasDefault && !isDefault;
+                const resetButton = canReset ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-xs"
+                    onClick={() => handleHeaderChange("termsText", settings?.termsText ?? "")}
+                  >
+                    Reset to default
+                  </Button>
+                ) : null;
                 if (!current) {
                   return (
-                    <span className="text-xs text-muted-foreground italic">No terms set</span>
+                    <div className="flex items-center gap-2">
+                      {resetButton}
+                      <span className="text-xs text-muted-foreground italic">No terms set</span>
+                    </div>
                   );
                 }
-                const isDefault = current === def;
-                const showDiff = !isDefault && def.length > 0;
+                const showDiff = !isDefault && hasDefault;
                 const summary = showDiff
                   ? diffSummary(diffLines(def, current))
                   : { added: 0, removed: 0 };
@@ -337,9 +353,17 @@ export default function QuotationForm() {
                     {isDefault ? "Default" : "Custom override"}
                   </span>
                 );
-                if (!showDiff) return badge;
+                if (!showDiff) {
+                  return (
+                    <div className="flex items-center gap-2">
+                      {resetButton}
+                      {badge}
+                    </div>
+                  );
+                }
                 return (
                   <div className="flex items-center gap-2">
+                    {resetButton}
                     <span className="text-xs text-muted-foreground">
                       <span className="text-green-700 dark:text-green-400 font-medium">+{summary.added}</span>
                       {" / "}
