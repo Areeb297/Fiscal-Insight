@@ -1,0 +1,290 @@
+You should **divide shared cost by 4**, not multiply it by 4.
+
+From your current projection:
+
+* Team monthly cost is **SAR 5,001.00** for Atif over the engagement. 
+* Total overhead is **SAR 469.17 / month**. 
+* With **4 clients**, the app is currently showing **team cost / client = SAR 1,250.25** and **overhead / client = SAR 117.29**, which is exactly the shared-cost approach. 
+* That leads to **total cost / client = SAR 1,367.54** and then **recommended selling price = SAR 1,953.63 / client / month** at **30% margin**.
+
+So the correct logic for **shared department costs** is:
+
+* First calculate total monthly shared cost
+* Then divide by number of clients
+* Then apply margin to get per-client selling price
+* Then multiply selling price by number of clients to get total revenue
+
+In your case, the shared-cost math is:
+
+* Shared monthly cost = **5,001.00 + 469.17 = 5,470.17**.
+* Per-client cost = **5,470.17 ÷ 4 = 1,367.54**
+* Per-client sell price at 30% margin = **1,367.54 ÷ 0.70 = 1,953.63**
+* Total monthly revenue = **1,953.63 × 4 = 7,814.52**, which matches your card.
+
+So for the main department/team section, the current behavior is conceptually right.
+
+Where you **would multiply by 4** is only when the resource is **per client**, not shared.
+
+Use this rule:
+
+* **Shared resource**: divide across all clients
+* **Dedicated per-client resource**: multiply by client count
+* **Partially shared / partially dedicated**: split by allocation basis
+
+A simple example:
+
+* One account manager serving all 4 clients → shared → divide by 4
+* One support engineer needed for each client → per client → multiply by 4
+* PM at 10% across all clients → shared → divide by 4 after applying allocation
+* Dedicated .NET resource for one client only → assign only to that client, do not spread equally
+
+That is the main design improvement your app still needs: every cost row should have an **allocation basis**.
+
+## What to add to the model
+
+For each employee or managed-service resource, add:
+
+* `Allocation %`
+* `Cost Basis`
+
+  * Shared across all clients
+  * Per client
+  * Assigned clients count
+  * Specific client
+* `Billable %` if needed
+* `Start month`
+* `End month` or duration
+
+Then formulas become:
+
+### Shared department resource
+
+`allocated_monthly_cost = monthly_ctc × alloc_percent`
+
+`per_client_cost = allocated_monthly_cost ÷ active_clients`
+
+### Per-client resource
+
+`allocated_monthly_cost = monthly_ctc × alloc_percent × assigned_clients`
+
+### Selling price
+
+`selling_price_per_client = per_client_cost ÷ (1 - margin_percent)`
+
+## What I would change in your current app
+
+### 1. Separate two buckets clearly
+
+Right now the projection mixes shared cost and managed-service cost conceptually.
+
+Use these sections:
+
+* **Shared Department Cost**
+* **Client-Specific Managed Services**
+* **Overheads**
+* **One-Time Costs**
+* **Per-Client Economics**
+
+### 2. Do not let Sales Support sit outside the main economics without a clear rule
+
+Your summary shows:
+
+* Sales Support Cost = **SAR 29,328 yearly**
+* Sales Support Selling Price = **SAR 36,660 yearly**. 
+
+That suggests managed services is being calculated separately from the shared per-client economics. That is okay, but only if the app labels it clearly as:
+
+* optional add-on
+* dedicated resource block
+* included or excluded from quoted selling price
+
+Otherwise users will not know whether it is already included in the revenue cards.
+
+### 3. Add a toggle per managed-service row
+
+Each row should have:
+
+* Included in projection totals: yes/no
+* Shared vs dedicated: dropdown
+* Number of assigned clients
+* Allocation %
+
+That will solve most of the confusion.
+
+## Recharts dashboard ideas
+
+Your current dashboard already has monthly cost breakdown, headcount by country, cost vs revenue, margin trend, and quotation status.
+To make it genuinely useful, I would add these with **shadcn + Recharts**:
+
+### Bar chart
+
+**Monthly Cost Composition**
+
+* X: Team, Recurring Overhead, One-time Amortized, Managed Services
+* Y: SAR
+* Stacked bars by category
+* Use to see what is driving monthly run-rate
+
+### Area chart
+
+**Revenue vs Cost over 12 months**
+
+* X: Month 1 to 12
+* Areas:
+
+  * total cost
+  * total revenue ex VAT
+  * total revenue incl VAT
+* Helps show runway and engagement trend
+
+### Line chart
+
+**Margin Trend by Scenario**
+
+* X: scenario or month
+* Y: gross margin %
+* Compare Base / Conservative / Aggressive
+
+### Donut chart
+
+**Cost Allocation Basis**
+
+* Shared
+* Per client
+* One-time
+* Managed services
+* Helps finance understand what is pooled vs client-specific
+
+### Another donut
+
+**Headcount by Country**
+You already have this. Keep it, but also add:
+
+* headcount
+* monthly cost share by country
+
+### Horizontal bar chart
+
+**Per-Client Price Waterfall**
+
+* Team share
+* Overhead share
+* Managed services share
+* Margin uplift
+* VAT
+  This is one of the most useful commercial charts.
+
+### Scatter or bubble chart
+
+**Projection comparison**
+
+* X: monthly cost
+* Y: monthly revenue
+* Bubble size: client count
+* Bubble color: margin band
+
+### Line/area combo
+
+**Utilization and Billability**
+
+* resource allocation %
+* billable %
+* realized price coverage
+  This becomes important once you add managed-service allocation.
+
+## shadcn card ideas
+
+Build dashboard cards like:
+
+* Total Shared Cost / month
+* Total Dedicated Client Cost / month
+* Cost per Client
+* Selling Price per Client
+* Gross Margin %
+* Total Revenue ex VAT
+* VAT
+* Total Revenue incl VAT
+* Break-even Clients
+* Unallocated Cost Warning
+
+## Tests you should define
+
+You asked to make sure tests are defined. I would make them explicit in the PRD and scope.
+
+### Unit tests for formula engine
+
+Test these cases:
+
+* 1 shared employee, 4 clients → per-client cost is divided by 4
+* 1 dedicated per-client employee, 4 clients → total cost is multiplied by 4
+* one-time overhead amortized over 12 months
+* recurring overhead monthly to annual conversion
+* 30% margin pricing formula
+* VAT calculation
+* allocation % less than 100
+* zero clients guardrail
+* one client case
+* mixed shared + dedicated resources
+* managed service included vs excluded from total revenue
+
+### Integration tests
+
+* Editing salary updates totals instantly
+* Editing clients updates per-client economics
+* Changing margin updates sell price and margin figures
+* Toggling managed-service include/exclude updates cards and charts
+* Quotation preview matches projection totals
+* Dashboard charts reflect saved projection values
+
+### UI tests
+
+* Add employee row
+* Add overhead row
+* Add managed service row
+* Delete row
+* Validation error on negative values
+* Validation error on allocation > 100
+* Proper currency formatting
+* Charts render with empty state and populated state
+
+### Regression tests
+
+* Shared-cost projection remains unchanged after adding managed-service module
+* Previous projection loads with defaults if new fields are missing
+* Old projections migrate safely to new allocation-basis model
+
+## PRD additions I would explicitly add
+
+### Financial logic rules
+
+* Shared department costs are divided across active clients
+* Dedicated client costs are multiplied by assigned clients
+* One-time costs can be amortized or quoted separately
+* Managed services can be included or excluded from quoted totals
+* Margin is applied after all included costs are allocated
+
+### Dashboard requirements
+
+* Recharts-based analytics using bar, area, line, and donut charts
+* shadcn cards, tables, badges, tabs, dialogs, and tooltips
+* Every chart must support empty, loading, and populated states
+* Every major metric must show formula tooltip or breakdown modal
+
+### Auditability
+
+* Show “how calculated” on hover or click
+* Save assumptions snapshot with each projection
+* Keep scenario history
+
+## My recommendation on your exact question
+
+For **Atif’s SAR 5,001/month**, if he is one shared department resource serving all 4 clients, then:
+
+* **do not multiply his cost by 4**
+* keep total monthly team cost at **SAR 5,001**
+* divide by **4 clients**
+* recover his cost through per-client pricing
+
+That is the whole point of this app: make sure shared costs are covered collectively by the portfolio, while still showing profit per client and in total. Your current per-client math appears aligned with that approach.
+
+The next real improvement is not changing divide vs multiply globally. It is adding a **cost basis model** so each row knows whether it is shared, per-client, or partially allocated.
