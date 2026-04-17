@@ -106,6 +106,7 @@ router.post("/quotations/from-projection/:projectionId", async (req, res): Promi
     clientName: `Client (${projection.yearLabel})`,
     date: today,
     status: "draft",
+    termsText: settings?.termsText ?? null,
   }).returning();
 
   const lineItems: Array<{

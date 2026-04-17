@@ -149,6 +149,7 @@ export interface QuotationWithLineItems {
   clientName: string;
   date: string;
   status: string;
+  termsText?: string | null;
   createdAt: string;
   updatedAt: string;
   lineItems: QuotationLineItem[];
@@ -161,6 +162,7 @@ export interface CreateQuotationBody {
   clientName: string;
   date: string;
   status?: string;
+  termsText?: string | null;
 }
 
 export interface UpdateQuotationBody {
@@ -169,6 +171,7 @@ export interface UpdateQuotationBody {
   clientName?: string;
   date?: string;
   status?: string;
+  termsText?: string | null;
 }
 
 export interface CreateLineItemBody {

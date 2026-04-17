@@ -1056,6 +1056,9 @@ components:
           type: string
         status:
           type: string
+        termsText:
+          type: string
+          nullable: true
         createdAt:
           type: string
         updatedAt:
@@ -1082,6 +1085,9 @@ components:
           type: string
         status:
           type: string
+        termsText:
+          type: string
+          nullable: true
       required: [quotationNumber, companyName, clientName, date]
 
     UpdateQuotationBody:
@@ -1097,6 +1103,9 @@ components:
           type: string
         status:
           type: string
+        termsText:
+          type: string
+          nullable: true
 
     CreateLineItemBody:
       type: object

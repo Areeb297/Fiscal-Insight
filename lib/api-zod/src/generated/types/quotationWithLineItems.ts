@@ -15,6 +15,7 @@ export interface QuotationWithLineItems {
   clientName: string;
   date: string;
   status: string;
+  termsText?: string | null;
   createdAt: string;
   updatedAt: string;
   lineItems: QuotationLineItem[];

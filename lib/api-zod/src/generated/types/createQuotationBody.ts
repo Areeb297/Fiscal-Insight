@@ -13,4 +13,5 @@ export interface CreateQuotationBody {
   clientName: string;
   date: string;
   status?: string;
+  termsText?: string | null;
 }

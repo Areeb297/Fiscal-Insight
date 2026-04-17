@@ -11,6 +11,7 @@ export const quotationsTable = pgTable("quotations", {
   clientName: text("client_name").notNull().default("Client Name"),
   date: text("date").notNull(),
   status: text("status").notNull().default("draft"),
+  termsText: text("terms_text"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

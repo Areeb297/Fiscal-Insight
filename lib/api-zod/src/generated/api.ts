@@ -367,6 +367,7 @@ export const CreateQuotationBody = zod.object({
   clientName: zod.string(),
   date: zod.string(),
   status: zod.string().optional(),
+  termsText: zod.string().nullish(),
 });
 
 /**
@@ -391,6 +392,7 @@ export const GetQuotationResponse = zod.object({
   clientName: zod.string(),
   date: zod.string(),
   status: zod.string(),
+  termsText: zod.string().nullish(),
   createdAt: zod.string(),
   updatedAt: zod.string(),
   lineItems: zod.array(
@@ -420,6 +422,7 @@ export const UpdateQuotationBody = zod.object({
   clientName: zod.string().optional(),
   date: zod.string().optional(),
   status: zod.string().optional(),
+  termsText: zod.string().nullish(),
 });
 
 export const UpdateQuotationResponse = zod.object({
@@ -430,6 +433,7 @@ export const UpdateQuotationResponse = zod.object({
   clientName: zod.string(),
   date: zod.string(),
   status: zod.string(),
+  termsText: zod.string().nullish(),
   createdAt: zod.string(),
   updatedAt: zod.string(),
   lineItems: zod.array(

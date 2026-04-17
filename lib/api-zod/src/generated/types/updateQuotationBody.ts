@@ -12,4 +12,5 @@ export interface UpdateQuotationBody {
   clientName?: string;
   date?: string;
   status?: string;
+  termsText?: string | null;
 }

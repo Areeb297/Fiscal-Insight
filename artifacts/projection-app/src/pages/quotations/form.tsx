@@ -18,6 +18,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -61,7 +62,8 @@ export default function QuotationForm() {
     clientName: "",
     date: format(new Date(), "yyyy-MM-dd"),
     status: "draft",
-    projectionId: ""
+    projectionId: "",
+    termsText: "",
   });
 
   useEffect(() => {
@@ -69,7 +71,8 @@ export default function QuotationForm() {
       setHeaderData(prev => ({
         ...prev,
         quotationNumber: `${settings.quotationPrefix}-${format(new Date(), "yyyyMMdd")}-01`,
-        companyName: settings.companyName
+        companyName: settings.companyName,
+        termsText: prev.termsText || settings.termsText || "",
       }));
     }
   }, [isNew, settings]);
@@ -82,7 +85,8 @@ export default function QuotationForm() {
         clientName: quotation.clientName,
         date: format(new Date(quotation.date), "yyyy-MM-dd"),
         status: quotation.status,
-        projectionId: quotation.projectionId ? quotation.projectionId.toString() : ""
+        projectionId: quotation.projectionId ? quotation.projectionId.toString() : "",
+        termsText: quotation.termsText ?? "",
       });
     }
   }, [quotation, isNew]);
@@ -104,6 +108,7 @@ export default function QuotationForm() {
       date: headerData.date,
       status: headerData.status,
       projectionId: Number.isFinite(projectionIdParsed) ? projectionIdParsed : undefined,
+      termsText: headerData.termsText || null,
     };
 
     try {
@@ -137,7 +142,7 @@ export default function QuotationForm() {
           lineItems={quotation.lineItems ?? []}
           vatRate={settings?.vatRate ?? 15}
           logoUrl={settings?.companyLogoUrl ?? null}
-          termsText={settings?.termsText ?? null}
+          termsText={headerData.termsText ? headerData.termsText : null}
         />,
       ).toBlob();
       const url = URL.createObjectURL(blob);
@@ -298,6 +303,18 @@ export default function QuotationForm() {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Terms &amp; Conditions</Label>
+            <Textarea
+              rows={4}
+              placeholder="Terms and conditions printed on the quotation PDF..."
+              value={headerData.termsText}
+              onChange={(e) => handleHeaderChange("termsText", e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Pre-filled from the default in Settings. Edit to override for this quotation.
+            </p>
           </div>
         </CardContent>
         <CardFooter className="flex justify-end gap-2 border-t p-4 bg-muted/20">
