@@ -239,6 +239,11 @@ router.post("/quotations/:quotationId/line-items", async (req, res): Promise<voi
     res.status(400).json({ error: parsed.error.message });
     return;
   }
+  const [parent] = await db.select({ id: quotationsTable.id }).from(quotationsTable).where(eq(quotationsTable.id, params.data.quotationId));
+  if (!parent) {
+    res.status(404).json({ error: "Quotation not found" });
+    return;
+  }
   const [item] = await db.insert(quotationLineItemsTable).values({ ...parsed.data, quotationId: params.data.quotationId }).returning();
   res.status(201).json(item);
 });
