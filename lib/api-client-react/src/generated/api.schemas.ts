@@ -354,9 +354,41 @@ export interface ProjectionSummary {
   salesSupportCount: number;
 }
 
+export type DashboardSummaryChartsCostBreakdownItem = {
+  category: string;
+  amount: number;
+};
+
+export type DashboardSummaryChartsHeadcountByCountryItem = {
+  country: string;
+  headcount: number;
+  cost: number;
+};
+
+export type DashboardSummaryChartsProjectionTrendItem = {
+  label: string;
+  monthlyCost: number;
+  monthlyRevenue: number;
+  marginPercent: number;
+};
+
+export type DashboardSummaryChartsQuotationsByStatusItem = {
+  status: string;
+  count: number;
+  total: number;
+};
+
+export type DashboardSummaryCharts = {
+  costBreakdown: DashboardSummaryChartsCostBreakdownItem[];
+  headcountByCountry: DashboardSummaryChartsHeadcountByCountryItem[];
+  projectionTrend: DashboardSummaryChartsProjectionTrendItem[];
+  quotationsByStatus: DashboardSummaryChartsQuotationsByStatusItem[];
+};
+
 export interface DashboardSummary {
   totalProjections: number;
   totalQuotations: number;
   recentProjection?: ProjectionSummary;
   recentQuotations: Quotation[];
+  charts?: DashboardSummaryCharts;
 }

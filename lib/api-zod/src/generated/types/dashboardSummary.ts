@@ -5,6 +5,7 @@
  * Department Projection API
  * OpenAPI spec version: 0.1.0
  */
+import type { DashboardSummaryCharts } from "./dashboardSummaryCharts";
 import type { ProjectionSummary } from "./projectionSummary";
 import type { Quotation } from "./quotation";
 
@@ -13,4 +14,5 @@ export interface DashboardSummary {
   totalQuotations: number;
   recentProjection?: ProjectionSummary;
   recentQuotations: Quotation[];
+  charts?: DashboardSummaryCharts;
 }

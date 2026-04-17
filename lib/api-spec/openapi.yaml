@@ -1441,4 +1441,44 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Quotation"
+        charts:
+          type: object
+          properties:
+            costBreakdown:
+              type: array
+              items:
+                type: object
+                properties:
+                  category: { type: string }
+                  amount: { type: number }
+                required: [category, amount]
+            headcountByCountry:
+              type: array
+              items:
+                type: object
+                properties:
+                  country: { type: string }
+                  headcount: { type: integer }
+                  cost: { type: number }
+                required: [country, headcount, cost]
+            projectionTrend:
+              type: array
+              items:
+                type: object
+                properties:
+                  label: { type: string }
+                  monthlyCost: { type: number }
+                  monthlyRevenue: { type: number }
+                  marginPercent: { type: number }
+                required: [label, monthlyCost, monthlyRevenue, marginPercent]
+            quotationsByStatus:
+              type: array
+              items:
+                type: object
+                properties:
+                  status: { type: string }
+                  count: { type: integer }
+                  total: { type: number }
+                required: [status, count, total]
+          required: [costBreakdown, headcountByCountry, projectionTrend, quotationsByStatus]
       required: [totalProjections, totalQuotations, recentQuotations]

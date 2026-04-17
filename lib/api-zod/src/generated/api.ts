@@ -842,4 +842,36 @@ export const GetDashboardSummaryResponse = zod.object({
       updatedAt: zod.string(),
     }),
   ),
+  charts: zod
+    .object({
+      costBreakdown: zod.array(
+        zod.object({
+          category: zod.string(),
+          amount: zod.number(),
+        }),
+      ),
+      headcountByCountry: zod.array(
+        zod.object({
+          country: zod.string(),
+          headcount: zod.number(),
+          cost: zod.number(),
+        }),
+      ),
+      projectionTrend: zod.array(
+        zod.object({
+          label: zod.string(),
+          monthlyCost: zod.number(),
+          monthlyRevenue: zod.number(),
+          marginPercent: zod.number(),
+        }),
+      ),
+      quotationsByStatus: zod.array(
+        zod.object({
+          status: zod.string(),
+          count: zod.number(),
+          total: zod.number(),
+        }),
+      ),
+    })
+    .optional(),
 });

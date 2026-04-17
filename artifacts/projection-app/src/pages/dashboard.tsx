@@ -1,13 +1,35 @@
 import { Link } from "wouter";
-import { 
-  useGetDashboardSummary, 
-  getGetDashboardSummaryQueryKey 
+import {
+  useGetDashboardSummary,
+  getGetDashboardSummaryQueryKey,
 } from "@workspace/api-client-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { Plus, ArrowRight, FileText, Calculator } from "lucide-react";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Area,
+  AreaChart,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  Cell,
+} from "recharts";
 
 export default function Dashboard() {
   const { data: summary, isLoading } = useGetDashboardSummary({
@@ -81,6 +103,154 @@ export default function Dashboard() {
             </Link>
           </CardContent>
         </Card>
+      )}
+
+      {summary?.charts && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {summary.charts.costBreakdown && summary.charts.costBreakdown.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Monthly Cost Breakdown</CardTitle>
+                <CardDescription>Where your monthly run-rate goes (recent projection)</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer
+                  className="h-[260px] w-full"
+                  config={{ amount: { label: "SAR / mo", color: "hsl(var(--chart-1))" } } satisfies ChartConfig}
+                >
+                  <BarChart data={summary.charts.costBreakdown} margin={{ left: 12, right: 12 }}>
+                    <CartesianGrid vertical={false} />
+                    <XAxis dataKey="category" tickLine={false} axisLine={false} tickMargin={8} interval={0} />
+                    <YAxis tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} tickLine={false} axisLine={false} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Bar dataKey="amount" fill="var(--color-amount)" radius={6} />
+                  </BarChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          )}
+
+          {summary.charts.headcountByCountry && summary.charts.headcountByCountry.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Headcount by Country</CardTitle>
+                <CardDescription>Team distribution across regions</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer
+                  className="h-[260px] w-full"
+                  config={Object.fromEntries(
+                    summary.charts.headcountByCountry.map((row, i) => [
+                      row.country,
+                      { label: row.country, color: `hsl(var(--chart-${(i % 5) + 1}))` },
+                    ]),
+                  ) satisfies ChartConfig}
+                >
+                  <PieChart>
+                    <ChartTooltip content={<ChartTooltipContent nameKey="country" />} />
+                    <Pie
+                      data={summary.charts.headcountByCountry}
+                      dataKey="headcount"
+                      nameKey="country"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={2}
+                    >
+                      {summary.charts.headcountByCountry.map((row, i) => (
+                        <Cell key={row.country} fill={`hsl(var(--chart-${(i % 5) + 1}))`} />
+                      ))}
+                    </Pie>
+                    <ChartLegend content={<ChartLegendContent nameKey="country" />} />
+                  </PieChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          )}
+
+          {summary.charts.projectionTrend && summary.charts.projectionTrend.length > 0 && (
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle>Cost vs Revenue Across Projections</CardTitle>
+                <CardDescription>Monthly cost and projected revenue per scenario</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer
+                  className="h-[280px] w-full"
+                  config={{
+                    monthlyCost: { label: "Monthly Cost", color: "hsl(var(--chart-1))" },
+                    monthlyRevenue: { label: "Monthly Revenue", color: "hsl(var(--chart-2))" },
+                  } satisfies ChartConfig}
+                >
+                  <AreaChart data={summary.charts.projectionTrend} margin={{ left: 12, right: 12 }}>
+                    <defs>
+                      <linearGradient id="fillCost" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="var(--color-monthlyCost)" stopOpacity={0.6} />
+                        <stop offset="95%" stopColor="var(--color-monthlyCost)" stopOpacity={0.05} />
+                      </linearGradient>
+                      <linearGradient id="fillRevenue" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="var(--color-monthlyRevenue)" stopOpacity={0.6} />
+                        <stop offset="95%" stopColor="var(--color-monthlyRevenue)" stopOpacity={0.05} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid vertical={false} />
+                    <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} />
+                    <YAxis tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} tickLine={false} axisLine={false} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <ChartLegend content={<ChartLegendContent />} />
+                    <Area type="monotone" dataKey="monthlyCost" stroke="var(--color-monthlyCost)" fill="url(#fillCost)" strokeWidth={2} />
+                    <Area type="monotone" dataKey="monthlyRevenue" stroke="var(--color-monthlyRevenue)" fill="url(#fillRevenue)" strokeWidth={2} />
+                  </AreaChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          )}
+
+          {summary.charts.projectionTrend && summary.charts.projectionTrend.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Margin Trend</CardTitle>
+                <CardDescription>Margin % across projections</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer
+                  className="h-[240px] w-full"
+                  config={{ marginPercent: { label: "Margin %", color: "hsl(var(--chart-3))" } } satisfies ChartConfig}
+                >
+                  <LineChart data={summary.charts.projectionTrend} margin={{ left: 12, right: 12 }}>
+                    <CartesianGrid vertical={false} />
+                    <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} />
+                    <YAxis tickFormatter={(v) => `${v}%`} tickLine={false} axisLine={false} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Line type="monotone" dataKey="marginPercent" stroke="var(--color-marginPercent)" strokeWidth={2} dot={{ r: 4 }} />
+                  </LineChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          )}
+
+          {summary.charts.quotationsByStatus && summary.charts.quotationsByStatus.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Quotations by Status</CardTitle>
+                <CardDescription>Pipeline mix and totals</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer
+                  className="h-[240px] w-full"
+                  config={{ count: { label: "Count", color: "hsl(var(--chart-4))" } } satisfies ChartConfig}
+                >
+                  <BarChart data={summary.charts.quotationsByStatus} margin={{ left: 12, right: 12 }}>
+                    <CartesianGrid vertical={false} />
+                    <XAxis dataKey="status" tickLine={false} axisLine={false} tickMargin={8} />
+                    <YAxis allowDecimals={false} tickLine={false} axisLine={false} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Bar dataKey="count" fill="var(--color-count)" radius={6} />
+                  </BarChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
