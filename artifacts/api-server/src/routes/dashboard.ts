@@ -14,7 +14,7 @@ import { computeScenario } from "../lib/summary";
 
 const router: IRouter = Router();
 
-router.get("/dashboard", async (_req, res): Promise<void> => {
+router.get("/dashboard/summary", async (_req, res): Promise<void> => {
   const projections = await db.select().from(projectionsTable).orderBy(desc(projectionsTable.createdAt));
   const allEmployees = await db.select().from(employeesTable);
   const allSubs = await db.select().from(subscriptionsTable);
