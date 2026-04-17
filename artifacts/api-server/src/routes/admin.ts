@@ -176,6 +176,58 @@ router.put("/admin/users/:id/role", async (req, res): Promise<void> => {
   }
 });
 
+router.post("/admin/users", async (req, res): Promise<void> => {
+  const ctx = await requireAdmin(req, res);
+  if (!ctx) return;
+  const { email, password, firstName, lastName, role } = req.body ?? {};
+  if (!email || !password || typeof password !== "string" || password.length < 8) {
+    res.status(400).json({ error: "Email and a password of at least 8 characters are required" });
+    return;
+  }
+  try {
+    const created = await clerkClient.users.createUser({
+      emailAddress: [email],
+      password,
+      firstName: firstName || undefined,
+      lastName: lastName || undefined,
+      skipPasswordChecks: true,
+      publicMetadata: role === "admin" ? { role: "admin" } : {},
+    });
+    res.status(201).json({
+      id: created.id,
+      email: created.primaryEmailAddress?.emailAddress ?? null,
+      firstName: created.firstName,
+      lastName: created.lastName,
+      role: role === "admin" ? "admin" : "user",
+    });
+  } catch (e: any) {
+    const msg = e?.errors?.[0]?.longMessage || e?.errors?.[0]?.message || e?.message || "Failed to create user";
+    res.status(400).json({ error: msg });
+  }
+});
+
+router.post("/admin/users/:id/reset-password", async (req, res): Promise<void> => {
+  const ctx = await requireAdmin(req, res);
+  if (!ctx) return;
+  const id = req.params["id"];
+  const { password, signOutOtherSessions } = req.body ?? {};
+  if (!id || !password || typeof password !== "string" || password.length < 8) {
+    res.status(400).json({ error: "Password must be at least 8 characters" });
+    return;
+  }
+  try {
+    await clerkClient.users.updateUser(id, {
+      password,
+      skipPasswordChecks: true,
+      signOutOfOtherSessions: signOutOtherSessions !== false,
+    });
+    res.json({ id, ok: true });
+  } catch (e: any) {
+    const msg = e?.errors?.[0]?.longMessage || e?.errors?.[0]?.message || e?.message || "Failed to reset password";
+    res.status(400).json({ error: msg });
+  }
+});
+
 router.delete("/admin/users/:id", async (req, res): Promise<void> => {
   const ctx = await requireAdmin(req, res);
   if (!ctx) return;

@@ -416,6 +416,13 @@ function UsersPanel() {
   const queryClient = useQueryClient();
   const apiBase = import.meta.env.BASE_URL.replace(/\/$/, "");
   const usersUrl = `${apiBase}/api/admin/users`;
+  const [showCreate, setShowCreate] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [newFirst, setNewFirst] = useState("");
+  const [newLast, setNewLast] = useState("");
+  const [newRole, setNewRole] = useState<"user" | "admin">("user");
+  const [creating, setCreating] = useState(false);
 
   const { data: users, isLoading, error } = useQuery<AdminUser[]>({
     queryKey: [usersUrl],
@@ -441,6 +448,56 @@ function UsersPanel() {
     queryClient.invalidateQueries({ queryKey: [usersUrl] });
   }
 
+  async function resetPassword(id: string, email: string | null) {
+    const pw = window.prompt(`Set a new password for ${email ?? id}\n\n(minimum 8 characters; the user will be signed out of all other devices)`);
+    if (!pw) return;
+    if (pw.length < 8) {
+      toast({ title: "Password must be at least 8 characters", variant: "destructive" });
+      return;
+    }
+    const r = await fetch(`${apiBase}/api/admin/users/${id}/reset-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ password: pw, signOutOtherSessions: true }),
+    });
+    if (!r.ok) {
+      toast({ title: "Failed to reset password", description: (await r.json()).error, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Password reset", description: `Share the new password securely with ${email ?? id}.` });
+  }
+
+  async function createUser(e: React.FormEvent) {
+    e.preventDefault();
+    if (newPassword.length < 8) {
+      toast({ title: "Password must be at least 8 characters", variant: "destructive" });
+      return;
+    }
+    setCreating(true);
+    const r = await fetch(usersUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        email: newEmail,
+        password: newPassword,
+        firstName: newFirst,
+        lastName: newLast,
+        role: newRole,
+      }),
+    });
+    setCreating(false);
+    if (!r.ok) {
+      toast({ title: "Failed to create user", description: (await r.json()).error, variant: "destructive" });
+      return;
+    }
+    toast({ title: "User created", description: `${newEmail} can now sign in.` });
+    setNewEmail(""); setNewPassword(""); setNewFirst(""); setNewLast(""); setNewRole("user");
+    setShowCreate(false);
+    queryClient.invalidateQueries({ queryKey: [usersUrl] });
+  }
+
   async function removeUser(id: string, email: string | null) {
     if (!confirm(`Delete user ${email ?? id}? This cannot be undone.`)) return;
     const r = await fetch(`${apiBase}/api/admin/users/${id}`, {
@@ -457,13 +514,55 @@ function UsersPanel() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Users & Permissions</CardTitle>
-        <CardDescription>
-          Each person sees only the projections they create. Admins see and manage everyone's projections.
-        </CardDescription>
+      <CardHeader className="flex flex-row items-start justify-between gap-4">
+        <div>
+          <CardTitle>Users & Permissions</CardTitle>
+          <CardDescription>
+            Each person sees only the projections they create. Admins see and manage everyone's projections.
+          </CardDescription>
+        </div>
+        <Button onClick={() => setShowCreate((v) => !v)} variant={showCreate ? "outline" : "default"}>
+          {showCreate ? <X className="h-4 w-4 mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+          {showCreate ? "Cancel" : "Add user"}
+        </Button>
       </CardHeader>
       <CardContent>
+        {showCreate && (
+          <form onSubmit={createUser} className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-3 p-4 border rounded-lg bg-muted/30">
+            <div className="space-y-1">
+              <Label>First name</Label>
+              <Input value={newFirst} onChange={(e) => setNewFirst(e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label>Last name</Label>
+              <Input value={newLast} onChange={(e) => setNewLast(e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label>Email *</Label>
+              <Input type="email" required value={newEmail} onChange={(e) => setNewEmail(e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label>Temporary password * (min 8)</Label>
+              <Input type="text" required minLength={8} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label>Role</Label>
+              <select
+                className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                value={newRole}
+                onChange={(e) => setNewRole(e.target.value as "user" | "admin")}
+              >
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div className="flex items-end">
+              <Button type="submit" disabled={creating} className="w-full md:w-auto">
+                {creating ? "Creating…" : "Create user"}
+              </Button>
+            </div>
+          </form>
+        )}
         {isLoading && <div className="text-muted-foreground">Loading users…</div>}
         {error && (
           <div className="text-destructive text-sm">
@@ -498,7 +597,10 @@ function UsersPanel() {
                       {u.role}
                     </span>
                   </TableCell>
-                  <TableCell className="text-right space-x-2">
+                  <TableCell className="text-right space-x-2 whitespace-nowrap">
+                    <Button size="sm" variant="outline" onClick={() => resetPassword(u.id, u.email)}>
+                      Reset password
+                    </Button>
                     {u.role === "admin" ? (
                       <Button size="sm" variant="outline" onClick={() => setRole(u.id, "user")}>
                         Revoke admin
