@@ -137,6 +137,7 @@ export default function QuotationForm() {
           lineItems={quotation.lineItems ?? []}
           vatRate={settings?.vatRate ?? 15}
           logoUrl={settings?.companyLogoUrl ?? null}
+          termsText={settings?.termsText ?? null}
         />,
       ).toBlob();
       const url = URL.createObjectURL(blob);

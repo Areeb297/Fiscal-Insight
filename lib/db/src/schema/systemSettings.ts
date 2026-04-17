@@ -10,6 +10,7 @@ export const systemSettingsTable = pgTable("system_settings", {
   quotationPrefix: text("quotation_prefix").notNull().default("Q-"),
   companyName: text("company_name").notNull().default("Your Company"),
   companyLogoUrl: text("company_logo_url"),
+  termsText: text("terms_text"),
   baseCurrencyCode: text("base_currency_code").notNull().default("SAR"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

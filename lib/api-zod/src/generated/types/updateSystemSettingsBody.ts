@@ -13,5 +13,6 @@ export interface UpdateSystemSettingsBody {
   quotationPrefix?: string;
   companyName?: string;
   companyLogoUrl?: string;
+  termsText?: string;
   baseCurrencyCode?: string;
 }

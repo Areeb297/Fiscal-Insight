@@ -631,6 +631,7 @@ export const GetSystemSettingsResponse = zod.object({
   quotationPrefix: zod.string(),
   companyName: zod.string(),
   companyLogoUrl: zod.string().nullish(),
+  termsText: zod.string().nullish(),
   baseCurrencyCode: zod.string(),
   updatedAt: zod.string(),
 });
@@ -645,6 +646,7 @@ export const UpdateSystemSettingsBody = zod.object({
   quotationPrefix: zod.string().optional(),
   companyName: zod.string().optional(),
   companyLogoUrl: zod.string().optional(),
+  termsText: zod.string().optional(),
   baseCurrencyCode: zod.string().optional(),
 });
 
@@ -656,6 +658,7 @@ export const UpdateSystemSettingsResponse = zod.object({
   quotationPrefix: zod.string(),
   companyName: zod.string(),
   companyLogoUrl: zod.string().nullish(),
+  termsText: zod.string().nullish(),
   baseCurrencyCode: zod.string(),
   updatedAt: zod.string(),
 });

@@ -8,6 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -137,6 +138,15 @@ export default function Admin() {
                     onChange={(e) => setLocalSettings({...localSettings, companyLogoUrl: e.target.value})} 
                   />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Quotation Terms &amp; Conditions</Label>
+                <Textarea
+                  rows={4}
+                  placeholder="Default terms and conditions printed on every quotation PDF..."
+                  value={localSettings?.termsText || ""}
+                  onChange={(e) => setLocalSettings({...localSettings, termsText: e.target.value})}
+                />
               </div>
             </CardContent>
           </Card>

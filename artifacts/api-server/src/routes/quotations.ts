@@ -76,7 +76,18 @@ router.post("/quotations/from-projection/:projectionId", async (req, res): Promi
   ]);
 
   const settings = settingsRows[0];
-  const scenario = computeScenario({ projection, employees, subscriptions, salesResources, ctcRules, currencies });
+  // Compute the scenario WITHOUT one-time subscriptions so the per-client
+  // managed services price excludes one-time costs. One-time costs are
+  // surfaced as their own line items below to avoid double-billing.
+  const recurringSubs = subscriptions.filter((s) => !s.isOneTime);
+  const scenario = computeScenario({
+    projection,
+    employees,
+    subscriptions: recurringSubs,
+    salesResources,
+    ctcRules,
+    currencies,
+  });
 
   const now = new Date();
   const yyyy = now.getUTCFullYear();

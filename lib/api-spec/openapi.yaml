@@ -1248,6 +1248,9 @@ components:
         companyLogoUrl:
           type: string
           nullable: true
+        termsText:
+          type: string
+          nullable: true
         baseCurrencyCode:
           type: string
         updatedAt:
@@ -1268,6 +1271,8 @@ components:
         companyName:
           type: string
         companyLogoUrl:
+          type: string
+        termsText:
           type: string
         baseCurrencyCode:
           type: string

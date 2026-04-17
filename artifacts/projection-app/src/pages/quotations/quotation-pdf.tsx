@@ -1,4 +1,4 @@
-import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
 import { format } from "date-fns";
 
 type LineItem = {
@@ -44,6 +44,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   logoBoxText: { fontSize: 7, color: "#999" },
+  logoImage: { width: 100, height: 40, objectFit: "contain", marginBottom: 6 },
   meta: { flexDirection: "column", alignItems: "flex-end" },
   metaTitle: { fontSize: 22, fontWeight: 700, letterSpacing: 2, color: "#222" },
   metaRow: { flexDirection: "row", marginTop: 4 },
@@ -158,9 +159,13 @@ export function QuotationPdfDocument(props: QuotationPdfProps) {
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
           <View style={styles.brand}>
-            <View style={styles.logoBox}>
-              <Text style={styles.logoBoxText}>LOGO</Text>
-            </View>
+            {props.logoUrl ? (
+              <Image src={props.logoUrl} style={styles.logoImage} />
+            ) : (
+              <View style={styles.logoBox}>
+                <Text style={styles.logoBoxText}>LOGO</Text>
+              </View>
+            )}
             <Text style={styles.companyName}>{companyName}</Text>
           </View>
           <View style={styles.meta}>

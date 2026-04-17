@@ -250,6 +250,7 @@ export interface SystemSettings {
   quotationPrefix: string;
   companyName: string;
   companyLogoUrl?: string | null;
+  termsText?: string | null;
   baseCurrencyCode: string;
   updatedAt: string;
 }
@@ -261,6 +262,7 @@ export interface UpdateSystemSettingsBody {
   quotationPrefix?: string;
   companyName?: string;
   companyLogoUrl?: string;
+  termsText?: string;
   baseCurrencyCode?: string;
 }
 
