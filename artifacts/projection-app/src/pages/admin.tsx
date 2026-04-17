@@ -103,8 +103,16 @@ export default function Admin() {
 
   const handleSaveSettings = () => {
     if (!localSettings) return;
+    const payload = {
+      ...localSettings,
+      vatRate:
+        localSettings.vatRatePercent !== undefined && localSettings.vatRatePercent !== null && localSettings.vatRatePercent !== ""
+          ? Number(localSettings.vatRatePercent) / 100
+          : localSettings.vatRate,
+    };
+    delete payload.vatRatePercent;
     updateSettings.mutate(
-      { data: localSettings },
+      { data: payload },
       { 
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getGetSystemSettingsQueryKey() });
@@ -233,11 +241,17 @@ export default function Admin() {
                 </div>
                 <div className="space-y-2">
                   <Label>VAT Rate (%)</Label>
-                  <Input 
-                    type="number" 
-                    step="0.1" 
-                    value={localSettings?.vatRate || 15} 
-                    onChange={(e) => setLocalSettings({...localSettings, vatRate: parseFloat(e.target.value)})} 
+                  <Input
+                    type="number"
+                    step="0.1"
+                    value={
+                      localSettings?.vatRatePercent !== undefined
+                        ? localSettings.vatRatePercent
+                        : localSettings?.vatRate !== undefined && localSettings?.vatRate !== null
+                          ? Number((Number(localSettings.vatRate) * 100).toFixed(4))
+                          : 15
+                    }
+                    onChange={(e) => setLocalSettings({ ...localSettings, vatRatePercent: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
