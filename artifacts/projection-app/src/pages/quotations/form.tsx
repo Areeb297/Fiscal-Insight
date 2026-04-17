@@ -23,8 +23,13 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Plus, Trash, Save, Download, Zap, FileText, Loader2 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { ArrowLeft, Plus, Trash, Save, Download, Zap, FileText, ArrowDownToLine, Loader2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { z } from "zod";
@@ -61,6 +66,19 @@ export default function QuotationForm() {
   const createLineItem = useCreateQuotationLineItem();
   const updateLineItem = useUpdateQuotationLineItem();
   const deleteLineItem = useDeleteQuotationLineItem();
+
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewPageCount, setPreviewPageCount] = useState<number>(1);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewTargetPage, setPreviewTargetPage] = useState<number>(1);
+  const [iframeKey, setIframeKey] = useState(0);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
   const [headerData, setHeaderData] = useState({
     quotationNumber: "",
@@ -135,10 +153,6 @@ export default function QuotationForm() {
     }
   };
 
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
-
   const buildPdfBlob = async () => {
     if (!quotation) return null;
     return await pdf(
@@ -155,6 +169,16 @@ export default function QuotationForm() {
         defaultTermsText={settings?.termsText ?? null}
       />,
     ).toBlob();
+  };
+
+  const countPdfPages = async (blob: Blob): Promise<number> => {
+    try {
+      const text = await blob.text();
+      const matches = text.match(/\/Type\s*\/Page(?![s])/g);
+      return matches?.length ?? 1;
+    } catch {
+      return 1;
+    }
   };
 
   const handleExportPdf = async () => {
@@ -176,41 +200,48 @@ export default function QuotationForm() {
     }
   };
 
-  const handlePreviewPdf = async () => {
+  const handleOpenPreview = async () => {
     if (!quotation) return;
+    setPreviewLoading(true);
     setPreviewOpen(true);
-    setIsPreviewLoading(true);
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(null);
-    }
     try {
       const blob = await buildPdfBlob();
       if (!blob) return;
+      const pages = await countPdfPages(blob);
       const url = URL.createObjectURL(blob);
-      setPreviewUrl(url);
+      setPreviewUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return url;
+      });
+      setPreviewPageCount(pages);
+      setPreviewTargetPage(1);
+      setIframeKey((k) => k + 1);
     } catch (e) {
       const err = e as { message?: string } | undefined;
       toast({ title: "Failed to render preview", description: err?.message ?? "Unknown error", variant: "destructive" });
       setPreviewOpen(false);
     } finally {
-      setIsPreviewLoading(false);
+      setPreviewLoading(false);
     }
   };
 
-  const handlePreviewOpenChange = (open: boolean) => {
+  const handleClosePreview = (open: boolean) => {
     setPreviewOpen(open);
-    if (!open && previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(null);
+    if (!open) {
+      setPreviewUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return null;
+      });
     }
   };
 
-  useEffect(() => {
-    return () => {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-    };
-  }, [previewUrl]);
+  const previewDiff = (() => {
+    const current = (headerData.termsText ?? "").trim();
+    const def = (settings?.termsText ?? "").trim();
+    const showDiff = def.length > 0 && current.length > 0 && current !== def;
+    if (!showDiff) return null;
+    return diffSummary(diffLines(def, current));
+  })();
 
   const handleAddLineItem = (preset: "recurring" | "one-time" = "recurring") => {
     if (isNew) {
@@ -480,8 +511,8 @@ export default function QuotationForm() {
           </Button>
           {!isNew && (
             <>
-              <Button variant="outline" onClick={handlePreviewPdf}>
-                <FileText className="h-4 w-4 mr-2" /> Preview PDF
+              <Button variant="outline" onClick={handleOpenPreview}>
+                <Eye className="h-4 w-4 mr-2" /> Preview PDF
               </Button>
               <Button variant="default" onClick={handleExportPdf}>
                 <Download className="h-4 w-4 mr-2" /> Export PDF
@@ -612,37 +643,77 @@ export default function QuotationForm() {
         </Card>
       )}
 
-      <Dialog open={previewOpen} onOpenChange={handlePreviewOpenChange}>
-        <DialogContent className="max-w-5xl w-[95vw] h-[90vh] flex flex-col p-0 gap-0">
-          <DialogHeader className="p-4 border-b">
-            <DialogTitle className="flex items-center gap-2">
-              <FileText className="h-4 w-4" /> PDF Preview
-              <span className="text-xs font-normal text-muted-foreground ml-2">
-                Includes the terms diff appendix when terms differ from the default.
-              </span>
-            </DialogTitle>
+      <Dialog open={previewOpen} onOpenChange={handleClosePreview}>
+        <DialogContent className="max-w-5xl w-[90vw] h-[90vh] flex flex-col p-0 gap-0">
+          <DialogHeader className="px-4 py-3 border-b flex-row items-center justify-between gap-3 space-y-0">
+            <div className="flex items-center gap-3 min-w-0">
+              <FileText className="h-5 w-5 text-muted-foreground shrink-0" />
+              <DialogTitle className="truncate">
+                {headerData.quotationNumber || "Quotation"} — Preview
+              </DialogTitle>
+              {previewDiff ? (
+                <span
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300 shrink-0"
+                  title="Terms differ from the default in Settings"
+                  data-testid="preview-diff-summary"
+                >
+                  <span className="text-green-700 dark:text-green-400">+{previewDiff.added}</span>
+                  <span className="text-red-700 dark:text-red-400">−{previewDiff.removed}</span>
+                  <span className="text-muted-foreground/80">terms</span>
+                </span>
+              ) : null}
+            </div>
+            <div className="flex items-center gap-2 shrink-0 mr-6">
+              {previewDiff && previewPageCount > 1 ? (
+                previewTargetPage === previewPageCount ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setPreviewTargetPage(1);
+                      setIframeKey((k) => k + 1);
+                    }}
+                    data-testid="preview-back-top"
+                    title="Back to first page"
+                  >
+                    Back to Top
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setPreviewTargetPage(previewPageCount);
+                      setIframeKey((k) => k + 1);
+                    }}
+                    data-testid="preview-jump-diff"
+                    title={`Jump to diff appendix (page ${previewPageCount})`}
+                  >
+                    <ArrowDownToLine className="h-4 w-4 mr-2" />
+                    Jump to Diff
+                  </Button>
+                )
+              ) : null}
+              <Button size="sm" variant="default" onClick={handleExportPdf}>
+                <Download className="h-4 w-4 mr-2" /> Download
+              </Button>
+            </div>
           </DialogHeader>
-          <div className="flex-1 bg-muted/30 overflow-hidden relative">
-            {isPreviewLoading || !previewUrl ? (
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground gap-2">
-                <Loader2 className="h-6 w-6 animate-spin" />
-                <span className="text-sm">Rendering preview…</span>
+          <div className="flex-1 bg-muted/40 overflow-hidden">
+            {previewLoading && !previewUrl ? (
+              <div className="h-full w-full flex items-center justify-center text-sm text-muted-foreground gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Rendering preview…</span>
               </div>
-            ) : (
+            ) : previewUrl ? (
               <iframe
-                key={previewUrl}
-                src={previewUrl}
+                key={iframeKey}
                 title="Quotation PDF preview"
-                className="w-full h-full border-0"
+                src={`${previewUrl}#page=${previewTargetPage}`}
+                className="w-full h-full border-0 bg-white"
               />
-            )}
+            ) : null}
           </div>
-          <DialogFooter className="p-4 border-t bg-muted/20">
-            <Button variant="outline" onClick={() => handlePreviewOpenChange(false)}>Close</Button>
-            <Button onClick={handleExportPdf} disabled={isPreviewLoading}>
-              <Download className="h-4 w-4 mr-2" /> Export PDF
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
