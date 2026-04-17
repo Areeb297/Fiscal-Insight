@@ -5,6 +5,7 @@
  * Department Projection API
  * OpenAPI spec version: 0.1.0
  */
+import type { UpdateEmployeeBodyCostBasis } from "./updateEmployeeBodyCostBasis";
 
 export interface UpdateEmployeeBody {
   name?: string;
@@ -17,4 +18,6 @@ export interface UpdateEmployeeBody {
    * @maximum 100
    */
   allocationPercent?: number;
+  costBasis?: UpdateEmployeeBodyCostBasis;
+  assignedClientCount?: number | null;
 }

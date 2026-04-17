@@ -5,6 +5,7 @@
  * Department Projection API
  * OpenAPI spec version: 0.1.0
  */
+import type { CreateSalesSupportBodyCostBasis } from "./createSalesSupportBodyCostBasis";
 
 export interface CreateSalesSupportBody {
   title: string;
@@ -17,4 +18,7 @@ export interface CreateSalesSupportBody {
    * @maximum 100
    */
   allocationPercent?: number;
+  costBasis?: CreateSalesSupportBodyCostBasis;
+  assignedClientCount?: number | null;
+  includeInTotals?: boolean;
 }

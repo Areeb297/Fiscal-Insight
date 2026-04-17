@@ -9,6 +9,7 @@ import {
   GetProjectionSummaryParams,
   DeleteProjectionParams,
 } from "@workspace/api-zod";
+import { computeScenario } from "../lib/summary";
 
 const router: IRouter = Router();
 
@@ -60,11 +61,6 @@ router.put("/projections/:id", async (req, res): Promise<void> => {
   res.json(projection);
 });
 
-function normalizeMarginToFraction(raw: number): number {
-  if (!Number.isFinite(raw) || raw <= 0) return 0;
-  return raw > 1 ? raw / 100 : raw;
-}
-
 async function getCtcMultiplier(country: string): Promise<number> {
   const rules = await db.select().from(ctcRulesTable).where(eq(ctcRulesTable.isActive, true));
   const rule = rules.find(r => r.countryCode.toLowerCase() === country.toLowerCase() || r.countryName.toLowerCase() === country.toLowerCase());
@@ -103,91 +99,24 @@ router.get("/projections/:id/summary", async (req, res): Promise<void> => {
     return;
   }
 
-  const employees = await db.select().from(employeesTable).where(eq(employeesTable.projectionId, params.data.id));
-  const subs = await db.select().from(subscriptionsTable).where(eq(subscriptionsTable.projectionId, params.data.id));
-  const salesResources = await db.select().from(salesSupportResourcesTable).where(eq(salesSupportResourcesTable.projectionId, params.data.id));
+  const [employees, subs, salesResources, ctcRules, currencies] = await Promise.all([
+    db.select().from(employeesTable).where(eq(employeesTable.projectionId, params.data.id)),
+    db.select().from(subscriptionsTable).where(eq(subscriptionsTable.projectionId, params.data.id)),
+    db.select().from(salesSupportResourcesTable).where(eq(salesSupportResourcesTable.projectionId, params.data.id)),
+    db.select().from(ctcRulesTable),
+    db.select().from(currenciesTable),
+  ]);
 
-  let totalDeptCostMonthly = 0;
-  let totalDeptCostYearly = 0;
-  let maxEmployeeMonths = 0;
-  for (const emp of employees) {
-    const multiplier = await getCtcMultiplier(emp.country);
-    const ctc = emp.salarySar * multiplier;
-    const allocFraction = (emp.allocationPercent ?? 100) / 100;
-    totalDeptCostMonthly += ctc * allocFraction;
-    totalDeptCostYearly += ctc * emp.monthsFte * allocFraction;
-    if (emp.monthsFte > maxEmployeeMonths) maxEmployeeMonths = emp.monthsFte;
-  }
-  const engagementMonths = maxEmployeeMonths > 0 ? maxEmployeeMonths : 12;
-
-  const costPerClientMonthly = projection.numClients > 0 ? totalDeptCostMonthly / projection.numClients : 0;
-  const costPerClientYearly = projection.numClients > 0 ? totalDeptCostYearly / projection.numClients : 0;
-
-  let recurringOverheadMonthly = 0;
-  let oneTimeCostsTotal = 0;
-  for (const sub of subs) {
-    const rate = sub.currency === "SAR" ? 1.0 : await getCurrencyRate(sub.currency);
-    const sarAmount = sub.originalPrice * rate;
-    if (sub.isOneTime) {
-      oneTimeCostsTotal += sarAmount;
-    } else {
-      recurringOverheadMonthly += sarAmount;
-    }
-  }
-  const totalOverheadMonthly =
-    recurringOverheadMonthly + (engagementMonths > 0 ? oneTimeCostsTotal / engagementMonths : 0);
-  const totalOverheadYearly = recurringOverheadMonthly * engagementMonths + oneTimeCostsTotal;
-
-  const overheadPerClientMonthly = projection.numClients > 0 ? totalOverheadMonthly / projection.numClients : 0;
-  const overheadPerClientYearly = projection.numClients > 0 ? totalOverheadYearly / projection.numClients : 0;
-  const totalMonthlyCostPerClient = costPerClientMonthly + overheadPerClientMonthly;
-  const totalYearlyCostPerClient = costPerClientYearly + overheadPerClientYearly;
-  const marginFraction = normalizeMarginToFraction(projection.marginPercent);
-  const sellingPriceWithoutVat = marginFraction < 1 ? totalMonthlyCostPerClient / (1 - marginFraction) : totalMonthlyCostPerClient;
-  const sellingPriceWithoutVatYearly = marginFraction < 1 ? totalYearlyCostPerClient / (1 - marginFraction) : totalYearlyCostPerClient;
-  const marginSarMonthly = sellingPriceWithoutVat - totalMonthlyCostPerClient;
-  const marginSarYearly = sellingPriceWithoutVatYearly - totalYearlyCostPerClient;
-  const sellingPriceWithVatMonthly = sellingPriceWithoutVat * 1.15;
-  const sellingPriceWithVatYearly = sellingPriceWithoutVatYearly * 1.15;
-
-  let salesSupportTotalCost = 0;
-  let salesSupportMarginFraction = 0.30;
-  for (const r of salesResources) {
-    const multiplier = await getCtcMultiplier(r.country);
-    const ctc = r.salarySar * multiplier;
-    const allocFraction = (r.allocationPercent ?? 100) / 100;
-    salesSupportTotalCost += ctc * r.months * allocFraction;
-    salesSupportMarginFraction = normalizeMarginToFraction(r.marginPercent);
-  }
-  const salesSupportSellingPrice = salesSupportMarginFraction < 1 ? salesSupportTotalCost / (1 - salesSupportMarginFraction) : salesSupportTotalCost;
-
-  res.json({
+  const scenario = computeScenario({
     projection,
-    totalDeptCostMonthly,
-    totalDeptCostYearly,
-    engagementMonths,
-    costPerClientYearly,
-    costPerClientMonthly,
-    totalOverheadMonthly,
-    totalOverheadYearly,
-    totalMonthlyCostPerClient,
-    overheadPerClientMonthly,
-    overheadPerClientYearly,
-    totalYearlyCostPerClient,
-    oneTimeCostsTotal,
-    recurringOverheadMonthly,
-    sellingPriceWithoutVat,
-    sellingPriceWithoutVatYearly,
-    marginSarMonthly,
-    marginSarYearly,
-    sellingPriceWithVatMonthly,
-    sellingPriceWithVatYearly,
-    salesSupportTotalCost,
-    salesSupportSellingPrice,
-    employeeCount: employees.length,
-    subscriptionCount: subs.length,
-    salesSupportCount: salesResources.length,
+    employees,
+    subscriptions: subs,
+    salesResources,
+    ctcRules,
+    currencies,
   });
+
+  res.json({ projection, ...scenario });
 });
 
 export default router;

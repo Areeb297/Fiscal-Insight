@@ -1,4 +1,4 @@
-import { pgTable, serial, text, real, integer, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, real, integer, timestamp, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { projectionsTable } from "./projections";
@@ -12,6 +12,9 @@ export const salesSupportResourcesTable = pgTable("sales_support_resources", {
   months: integer("months").notNull().default(6),
   marginPercent: real("margin_percent").notNull().default(0.30),
   allocationPercent: real("allocation_percent").notNull().default(100),
+  costBasis: text("cost_basis").notNull().default("shared"),
+  assignedClientCount: integer("assigned_client_count"),
+  includeInTotals: boolean("include_in_totals").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

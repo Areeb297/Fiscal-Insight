@@ -36,6 +36,17 @@ export interface UpdateProjectionBody {
   marginPercent?: number;
 }
 
+/**
+ * How this cost is allocated. "shared" = pooled across all clients (cost ÷ N). "per_client" = cost is incurred for each assigned client (cost × N).
+ */
+export type EmployeeCostBasis =
+  (typeof EmployeeCostBasis)[keyof typeof EmployeeCostBasis];
+
+export const EmployeeCostBasis = {
+  shared: "shared",
+  per_client: "per_client",
+} as const;
+
 export interface Employee {
   id: number;
   projectionId: number;
@@ -46,10 +57,22 @@ export interface Employee {
   monthsFte: number;
   /** Percentage allocation 0-100 (e.g. 10 = 10% involvement, 100 = full-time). Cost is multiplied by this fraction. */
   allocationPercent: number;
+  /** How this cost is allocated. "shared" = pooled across all clients (cost ÷ N). "per_client" = cost is incurred for each assigned client (cost × N). */
+  costBasis: EmployeeCostBasis;
+  /** When costBasis is "per_client", number of clients this resource is assigned to. Defaults to projection's numClients when null. */
+  assignedClientCount?: number | null;
   ctc: number;
   totalYearlyCost: number;
   createdAt: string;
 }
+
+export type CreateEmployeeBodyCostBasis =
+  (typeof CreateEmployeeBodyCostBasis)[keyof typeof CreateEmployeeBodyCostBasis];
+
+export const CreateEmployeeBodyCostBasis = {
+  shared: "shared",
+  per_client: "per_client",
+} as const;
 
 export interface CreateEmployeeBody {
   name: string;
@@ -62,7 +85,17 @@ export interface CreateEmployeeBody {
    * @maximum 100
    */
   allocationPercent?: number;
+  costBasis?: CreateEmployeeBodyCostBasis;
+  assignedClientCount?: number | null;
 }
+
+export type UpdateEmployeeBodyCostBasis =
+  (typeof UpdateEmployeeBodyCostBasis)[keyof typeof UpdateEmployeeBodyCostBasis];
+
+export const UpdateEmployeeBodyCostBasis = {
+  shared: "shared",
+  per_client: "per_client",
+} as const;
 
 export interface UpdateEmployeeBody {
   name?: string;
@@ -75,6 +108,8 @@ export interface UpdateEmployeeBody {
    * @maximum 100
    */
   allocationPercent?: number;
+  costBasis?: UpdateEmployeeBodyCostBasis;
+  assignedClientCount?: number | null;
 }
 
 export interface Subscription {
@@ -104,6 +139,17 @@ export interface UpdateSubscriptionBody {
   isOneTime?: boolean;
 }
 
+/**
+ * How this cost is allocated. "shared" = pooled across all clients. "per_client" = cost × assignedClientCount.
+ */
+export type SalesSupportResourceCostBasis =
+  (typeof SalesSupportResourceCostBasis)[keyof typeof SalesSupportResourceCostBasis];
+
+export const SalesSupportResourceCostBasis = {
+  shared: "shared",
+  per_client: "per_client",
+} as const;
+
 export interface SalesSupportResource {
   id: number;
   projectionId: number;
@@ -114,10 +160,23 @@ export interface SalesSupportResource {
   marginPercent: number;
   /** Percentage allocation 0-100 (e.g. 10 = 10% involvement, 100 = full-time). Cost is multiplied by this fraction. */
   allocationPercent: number;
+  /** How this cost is allocated. "shared" = pooled across all clients. "per_client" = cost × assignedClientCount. */
+  costBasis: SalesSupportResourceCostBasis;
+  assignedClientCount?: number | null;
+  /** When true, this managed-services row is folded into per-client economics. When false (default), it is shown as an optional add-on with its own selling price. */
+  includeInTotals: boolean;
   ctc: number;
   totalSalaryCost: number;
   createdAt: string;
 }
+
+export type CreateSalesSupportBodyCostBasis =
+  (typeof CreateSalesSupportBodyCostBasis)[keyof typeof CreateSalesSupportBodyCostBasis];
+
+export const CreateSalesSupportBodyCostBasis = {
+  shared: "shared",
+  per_client: "per_client",
+} as const;
 
 export interface CreateSalesSupportBody {
   title: string;
@@ -130,7 +189,18 @@ export interface CreateSalesSupportBody {
    * @maximum 100
    */
   allocationPercent?: number;
+  costBasis?: CreateSalesSupportBodyCostBasis;
+  assignedClientCount?: number | null;
+  includeInTotals?: boolean;
 }
+
+export type UpdateSalesSupportBodyCostBasis =
+  (typeof UpdateSalesSupportBodyCostBasis)[keyof typeof UpdateSalesSupportBodyCostBasis];
+
+export const UpdateSalesSupportBodyCostBasis = {
+  shared: "shared",
+  per_client: "per_client",
+} as const;
 
 export interface UpdateSalesSupportBody {
   title?: string;
@@ -143,6 +213,9 @@ export interface UpdateSalesSupportBody {
    * @maximum 100
    */
   allocationPercent?: number;
+  costBasis?: UpdateSalesSupportBodyCostBasis;
+  assignedClientCount?: number | null;
+  includeInTotals?: boolean;
 }
 
 export interface Quotation {
@@ -378,11 +451,30 @@ export type DashboardSummaryChartsQuotationsByStatusItem = {
   total: number;
 };
 
+export type DashboardSummaryChartsCostAllocationBreakdownItem = {
+  basis: string;
+  amount: number;
+};
+
+export type DashboardSummaryChartsPriceWaterfallItem = {
+  component: string;
+  amount: number;
+};
+
+export type DashboardSummaryChartsRevenueVsCostByMonthItem = {
+  month: string;
+  cost: number;
+  revenue: number;
+};
+
 export type DashboardSummaryCharts = {
   costBreakdown: DashboardSummaryChartsCostBreakdownItem[];
   headcountByCountry: DashboardSummaryChartsHeadcountByCountryItem[];
   projectionTrend: DashboardSummaryChartsProjectionTrendItem[];
   quotationsByStatus: DashboardSummaryChartsQuotationsByStatusItem[];
+  costAllocationBreakdown?: DashboardSummaryChartsCostAllocationBreakdownItem[];
+  priceWaterfall?: DashboardSummaryChartsPriceWaterfallItem[];
+  revenueVsCostByMonth?: DashboardSummaryChartsRevenueVsCostByMonthItem[];
 };
 
 export interface DashboardSummary {

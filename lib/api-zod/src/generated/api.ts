@@ -167,6 +167,17 @@ export const ListEmployeesResponseItem = zod.object({
     .describe(
       "Percentage allocation 0-100 (e.g. 10 = 10% involvement, 100 = full-time). Cost is multiplied by this fraction.",
     ),
+  costBasis: zod
+    .enum(["shared", "per_client"])
+    .describe(
+      'How this cost is allocated. \"shared\" = pooled across all clients (cost ÷ N). \"per_client\" = cost is incurred for each assigned client (cost × N).',
+    ),
+  assignedClientCount: zod
+    .number()
+    .nullish()
+    .describe(
+      'When costBasis is \"per_client\", number of clients this resource is assigned to. Defaults to projection\'s numClients when null.',
+    ),
   ctc: zod.number(),
   totalYearlyCost: zod.number(),
   createdAt: zod.string(),
@@ -194,6 +205,8 @@ export const CreateEmployeeBody = zod.object({
     .min(createEmployeeBodyAllocationPercentMin)
     .max(createEmployeeBodyAllocationPercentMax)
     .optional(),
+  costBasis: zod.enum(["shared", "per_client"]).optional(),
+  assignedClientCount: zod.number().nullish(),
 });
 
 /**
@@ -218,6 +231,8 @@ export const UpdateEmployeeBody = zod.object({
     .min(updateEmployeeBodyAllocationPercentMin)
     .max(updateEmployeeBodyAllocationPercentMax)
     .optional(),
+  costBasis: zod.enum(["shared", "per_client"]).optional(),
+  assignedClientCount: zod.number().nullish(),
 });
 
 export const UpdateEmployeeResponse = zod.object({
@@ -232,6 +247,17 @@ export const UpdateEmployeeResponse = zod.object({
     .number()
     .describe(
       "Percentage allocation 0-100 (e.g. 10 = 10% involvement, 100 = full-time). Cost is multiplied by this fraction.",
+    ),
+  costBasis: zod
+    .enum(["shared", "per_client"])
+    .describe(
+      'How this cost is allocated. \"shared\" = pooled across all clients (cost ÷ N). \"per_client\" = cost is incurred for each assigned client (cost × N).',
+    ),
+  assignedClientCount: zod
+    .number()
+    .nullish()
+    .describe(
+      'When costBasis is \"per_client\", number of clients this resource is assigned to. Defaults to projection\'s numClients when null.',
     ),
   ctc: zod.number(),
   totalYearlyCost: zod.number(),
@@ -339,6 +365,17 @@ export const ListSalesSupportResourcesResponseItem = zod.object({
     .describe(
       "Percentage allocation 0-100 (e.g. 10 = 10% involvement, 100 = full-time). Cost is multiplied by this fraction.",
     ),
+  costBasis: zod
+    .enum(["shared", "per_client"])
+    .describe(
+      'How this cost is allocated. \"shared\" = pooled across all clients. \"per_client\" = cost × assignedClientCount.',
+    ),
+  assignedClientCount: zod.number().nullish(),
+  includeInTotals: zod
+    .boolean()
+    .describe(
+      "When true, this managed-services row is folded into per-client economics. When false (default), it is shown as an optional add-on with its own selling price.",
+    ),
   ctc: zod.number(),
   totalSalaryCost: zod.number(),
   createdAt: zod.string(),
@@ -368,6 +405,9 @@ export const CreateSalesSupportResourceBody = zod.object({
     .min(createSalesSupportResourceBodyAllocationPercentMin)
     .max(createSalesSupportResourceBodyAllocationPercentMax)
     .optional(),
+  costBasis: zod.enum(["shared", "per_client"]).optional(),
+  assignedClientCount: zod.number().nullish(),
+  includeInTotals: zod.boolean().optional(),
 });
 
 /**
@@ -392,6 +432,9 @@ export const UpdateSalesSupportResourceBody = zod.object({
     .min(updateSalesSupportResourceBodyAllocationPercentMin)
     .max(updateSalesSupportResourceBodyAllocationPercentMax)
     .optional(),
+  costBasis: zod.enum(["shared", "per_client"]).optional(),
+  assignedClientCount: zod.number().nullish(),
+  includeInTotals: zod.boolean().optional(),
 });
 
 export const UpdateSalesSupportResourceResponse = zod.object({
@@ -406,6 +449,17 @@ export const UpdateSalesSupportResourceResponse = zod.object({
     .number()
     .describe(
       "Percentage allocation 0-100 (e.g. 10 = 10% involvement, 100 = full-time). Cost is multiplied by this fraction.",
+    ),
+  costBasis: zod
+    .enum(["shared", "per_client"])
+    .describe(
+      'How this cost is allocated. \"shared\" = pooled across all clients. \"per_client\" = cost × assignedClientCount.',
+    ),
+  assignedClientCount: zod.number().nullish(),
+  includeInTotals: zod
+    .boolean()
+    .describe(
+      "When true, this managed-services row is folded into per-client economics. When false (default), it is shown as an optional add-on with its own selling price.",
     ),
   ctc: zod.number(),
   totalSalaryCost: zod.number(),
@@ -872,6 +926,31 @@ export const GetDashboardSummaryResponse = zod.object({
           total: zod.number(),
         }),
       ),
+      costAllocationBreakdown: zod
+        .array(
+          zod.object({
+            basis: zod.string(),
+            amount: zod.number(),
+          }),
+        )
+        .optional(),
+      priceWaterfall: zod
+        .array(
+          zod.object({
+            component: zod.string(),
+            amount: zod.number(),
+          }),
+        )
+        .optional(),
+      revenueVsCostByMonth: zod
+        .array(
+          zod.object({
+            month: zod.string(),
+            cost: zod.number(),
+            revenue: zod.number(),
+          }),
+        )
+        .optional(),
     })
     .optional(),
 });

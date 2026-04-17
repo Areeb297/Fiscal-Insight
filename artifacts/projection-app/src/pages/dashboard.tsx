@@ -228,6 +228,108 @@ export default function Dashboard() {
             </Card>
           )}
 
+          {summary.charts.priceWaterfall && summary.charts.priceWaterfall.length > 0 && (
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle>Per-Client Price Waterfall</CardTitle>
+                <CardDescription>How each component builds up the monthly price per client</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer
+                  className="h-[260px] w-full"
+                  config={{ amount: { label: "SAR / client / mo", color: "hsl(var(--chart-2))" } } satisfies ChartConfig}
+                >
+                  <BarChart
+                    data={summary.charts.priceWaterfall}
+                    layout="vertical"
+                    margin={{ left: 16, right: 16 }}
+                  >
+                    <CartesianGrid horizontal={false} />
+                    <XAxis type="number" tickFormatter={(v) => `${(v / 1000).toFixed(1)}k`} tickLine={false} axisLine={false} />
+                    <YAxis dataKey="component" type="category" tickLine={false} axisLine={false} width={130} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Bar dataKey="amount" fill="var(--color-amount)" radius={6} />
+                  </BarChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          )}
+
+          {summary.charts.costAllocationBreakdown && summary.charts.costAllocationBreakdown.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Cost by Allocation Basis</CardTitle>
+                <CardDescription>Where each SAR of monthly cost actually sits</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer
+                  className="h-[260px] w-full"
+                  config={Object.fromEntries(
+                    summary.charts.costAllocationBreakdown.map((row, i) => [
+                      row.basis,
+                      { label: row.basis, color: `hsl(var(--chart-${(i % 5) + 1}))` },
+                    ]),
+                  ) satisfies ChartConfig}
+                >
+                  <PieChart>
+                    <ChartTooltip content={<ChartTooltipContent nameKey="basis" />} />
+                    <Pie
+                      data={summary.charts.costAllocationBreakdown}
+                      dataKey="amount"
+                      nameKey="basis"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={2}
+                    >
+                      {summary.charts.costAllocationBreakdown.map((row, i) => (
+                        <Cell key={row.basis} fill={`hsl(var(--chart-${(i % 5) + 1}))`} />
+                      ))}
+                    </Pie>
+                    <ChartLegend content={<ChartLegendContent nameKey="basis" />} />
+                  </PieChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          )}
+
+          {summary.charts.revenueVsCostByMonth && summary.charts.revenueVsCostByMonth.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Revenue vs Cost (Engagement)</CardTitle>
+                <CardDescription>Monthly cost (incl. one-time at M1) vs revenue across the engagement</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer
+                  className="h-[260px] w-full"
+                  config={{
+                    cost: { label: "Cost", color: "hsl(var(--chart-1))" },
+                    revenue: { label: "Revenue", color: "hsl(var(--chart-2))" },
+                  } satisfies ChartConfig}
+                >
+                  <AreaChart data={summary.charts.revenueVsCostByMonth} margin={{ left: 12, right: 12 }}>
+                    <defs>
+                      <linearGradient id="fillEngCost" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="var(--color-cost)" stopOpacity={0.6} />
+                        <stop offset="95%" stopColor="var(--color-cost)" stopOpacity={0.05} />
+                      </linearGradient>
+                      <linearGradient id="fillEngRev" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="var(--color-revenue)" stopOpacity={0.6} />
+                        <stop offset="95%" stopColor="var(--color-revenue)" stopOpacity={0.05} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid vertical={false} />
+                    <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
+                    <YAxis tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} tickLine={false} axisLine={false} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <ChartLegend content={<ChartLegendContent />} />
+                    <Area type="monotone" dataKey="cost" stroke="var(--color-cost)" fill="url(#fillEngCost)" strokeWidth={2} />
+                    <Area type="monotone" dataKey="revenue" stroke="var(--color-revenue)" fill="url(#fillEngRev)" strokeWidth={2} />
+                  </AreaChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          )}
+
           {summary.charts.quotationsByStatus && summary.charts.quotationsByStatus.length > 0 && (
             <Card>
               <CardHeader>

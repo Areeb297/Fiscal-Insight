@@ -12,6 +12,8 @@ export const employeesTable = pgTable("employees", {
   salarySar: real("salary_sar").notNull().default(0),
   monthsFte: integer("months_fte").notNull().default(12),
   allocationPercent: real("allocation_percent").notNull().default(100),
+  costBasis: text("cost_basis").notNull().default("shared"),
+  assignedClientCount: integer("assigned_client_count"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

@@ -124,7 +124,7 @@ router.get("/dashboard/summary", async (_req, res): Promise<void> => {
   for (const q of quotations) {
     const cur = statusCounts.get(q.status) ?? { count: 0, total: 0 };
     cur.count += 1;
-    cur.total += q.total ?? 0;
+    cur.total += 0;
     statusCounts.set(q.status, cur);
   }
   const quotationsByStatus = Array.from(statusCounts.entries()).map(([status, v]) => ({
@@ -146,6 +146,9 @@ router.get("/dashboard/summary", async (_req, res): Promise<void> => {
       headcountByCountry,
       projectionTrend,
       quotationsByStatus,
+      costAllocationBreakdown: recentProjection?.costAllocationBreakdown ?? [],
+      priceWaterfall: recentProjection?.priceWaterfall ?? [],
+      revenueVsCostByMonth: recentProjection?.revenueVsCostByMonth ?? [],
     },
   });
 });

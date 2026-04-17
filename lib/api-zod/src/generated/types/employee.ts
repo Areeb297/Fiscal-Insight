@@ -5,6 +5,7 @@
  * Department Projection API
  * OpenAPI spec version: 0.1.0
  */
+import type { EmployeeCostBasis } from "./employeeCostBasis";
 
 export interface Employee {
   id: number;
@@ -16,6 +17,10 @@ export interface Employee {
   monthsFte: number;
   /** Percentage allocation 0-100 (e.g. 10 = 10% involvement, 100 = full-time). Cost is multiplied by this fraction. */
   allocationPercent: number;
+  /** How this cost is allocated. "shared" = pooled across all clients (cost ÷ N). "per_client" = cost is incurred for each assigned client (cost × N). */
+  costBasis: EmployeeCostBasis;
+  /** When costBasis is "per_client", number of clients this resource is assigned to. Defaults to projection's numClients when null. */
+  assignedClientCount?: number | null;
   ctc: number;
   totalYearlyCost: number;
   createdAt: string;

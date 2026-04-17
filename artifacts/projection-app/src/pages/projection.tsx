@@ -37,6 +37,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Trash, Save, Calculator, ArrowLeft } from "lucide-react";
@@ -422,6 +423,7 @@ export default function Projection() {
                   <TableHead className="w-[150px]">Salary (SAR)</TableHead>
                   <TableHead className="w-[100px]">Months</TableHead>
                   <TableHead className="w-[110px] text-right">Alloc %</TableHead>
+                  <TableHead className="w-[160px]">Basis</TableHead>
                   <TableHead className="w-[100px] text-right">CTC</TableHead>
                   <TableHead className="w-[150px] text-right">Total</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
@@ -456,6 +458,33 @@ export default function Projection() {
                     </TableCell>
                     <TableCell className="p-2">
                       <Input type="number" min="0" max="100" step="1" defaultValue={emp.allocationPercent ?? 100} onBlur={(e) => handleUpdateEmployee(emp.id, "allocationPercent", parseFloat(e.target.value))} className="h-8 border-transparent hover:border-input focus:border-input bg-transparent text-right" title="Percentage of time this person is allocated (e.g. 10 = 10%, 100 = full-time)" />
+                    </TableCell>
+                    <TableCell className="p-2">
+                      <div className="flex items-center gap-1">
+                        <Select
+                          value={emp.costBasis ?? "shared"}
+                          onValueChange={(val) => handleUpdateEmployee(emp.id, "costBasis", val)}
+                        >
+                          <SelectTrigger className="h-8 border-transparent hover:border-input focus:border-input bg-transparent text-xs px-2" title="Shared = pooled across all clients (cost ÷ N). Per-client = cost is incurred per assigned client (cost × N).">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="shared">Shared</SelectItem>
+                            <SelectItem value="per_client">Per-client</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {emp.costBasis === "per_client" && (
+                          <Input
+                            type="number"
+                            min="0"
+                            step="1"
+                            defaultValue={emp.assignedClientCount ?? activeProjection?.numClients ?? 0}
+                            onBlur={(e) => handleUpdateEmployee(emp.id, "assignedClientCount", parseInt(e.target.value) || null)}
+                            className="h-8 w-14 border-transparent hover:border-input focus:border-input bg-transparent text-right text-xs"
+                            title="Number of clients this resource is assigned to. Defaults to total client count."
+                          />
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-right font-mono text-xs p-2">{emp.ctc}</TableCell>
                     <TableCell className="text-right font-medium p-2">
@@ -681,6 +710,8 @@ export default function Projection() {
                   <TableHead className="w-[110px] text-right">CTC (SAR)</TableHead>
                   <TableHead className="w-[90px] text-right">Months</TableHead>
                   <TableHead className="w-[100px] text-right">Alloc %</TableHead>
+                  <TableHead className="w-[160px]">Basis</TableHead>
+                  <TableHead className="w-[80px] text-center">In Totals</TableHead>
                   <TableHead className="w-[90px] text-right">Margin %</TableHead>
                   <TableHead className="w-[140px] text-right">Total Cost</TableHead>
                   <TableHead className="w-[140px] text-right">Selling Price</TableHead>
@@ -714,6 +745,41 @@ export default function Projection() {
                     </TableCell>
                     <TableCell className="p-2">
                       <Input type="number" min="0" max="100" step="1" defaultValue={res.allocationPercent ?? 100} onBlur={(e) => handleUpdateSalesSupport(res.id, "allocationPercent", parseFloat(e.target.value))} className="h-8 border-transparent hover:border-input focus:border-input bg-transparent text-right" title="Percentage of time this resource is involved (e.g. 10 = PM at 10%, 100 = full-time)" />
+                    </TableCell>
+                    <TableCell className="p-2">
+                      <div className="flex items-center gap-1">
+                        <Select
+                          value={res.costBasis ?? "shared"}
+                          onValueChange={(val) => handleUpdateSalesSupport(res.id, "costBasis", val)}
+                        >
+                          <SelectTrigger className="h-8 border-transparent hover:border-input focus:border-input bg-transparent text-xs px-2" title="Shared = pooled across all clients. Per-client = cost is incurred per assigned client.">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="shared">Shared</SelectItem>
+                            <SelectItem value="per_client">Per-client</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {res.costBasis === "per_client" && (
+                          <Input
+                            type="number"
+                            min="0"
+                            step="1"
+                            defaultValue={res.assignedClientCount ?? activeProjection?.numClients ?? 0}
+                            onBlur={(e) => handleUpdateSalesSupport(res.id, "assignedClientCount", parseInt(e.target.value) || null)}
+                            className="h-8 w-14 border-transparent hover:border-input focus:border-input bg-transparent text-right text-xs"
+                            title="Number of clients this resource is assigned to."
+                          />
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="p-2 text-center">
+                      <Checkbox
+                        checked={!!res.includeInTotals}
+                        onCheckedChange={(checked) => handleUpdateSalesSupport(res.id, "includeInTotals", checked === true)}
+                        title="When checked, this row's amortized monthly cost folds into per-client economics. When unchecked, it stays as an optional add-on with its own selling price."
+                        aria-label="Include in totals"
+                      />
                     </TableCell>
                     <TableCell className="p-2">
                       <Input type="number" step="0.1" defaultValue={res.marginPercent} onBlur={(e) => handleUpdateSalesSupport(res.id, "marginPercent", parseFloat(e.target.value))} className="h-8 border-transparent hover:border-input focus:border-input bg-transparent text-right" />

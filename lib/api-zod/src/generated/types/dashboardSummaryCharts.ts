@@ -5,14 +5,20 @@
  * Department Projection API
  * OpenAPI spec version: 0.1.0
  */
+import type { DashboardSummaryChartsCostAllocationBreakdownItem } from "./dashboardSummaryChartsCostAllocationBreakdownItem";
 import type { DashboardSummaryChartsCostBreakdownItem } from "./dashboardSummaryChartsCostBreakdownItem";
 import type { DashboardSummaryChartsHeadcountByCountryItem } from "./dashboardSummaryChartsHeadcountByCountryItem";
+import type { DashboardSummaryChartsPriceWaterfallItem } from "./dashboardSummaryChartsPriceWaterfallItem";
 import type { DashboardSummaryChartsProjectionTrendItem } from "./dashboardSummaryChartsProjectionTrendItem";
 import type { DashboardSummaryChartsQuotationsByStatusItem } from "./dashboardSummaryChartsQuotationsByStatusItem";
+import type { DashboardSummaryChartsRevenueVsCostByMonthItem } from "./dashboardSummaryChartsRevenueVsCostByMonthItem";
 
 export type DashboardSummaryCharts = {
   costBreakdown: DashboardSummaryChartsCostBreakdownItem[];
   headcountByCountry: DashboardSummaryChartsHeadcountByCountryItem[];
   projectionTrend: DashboardSummaryChartsProjectionTrendItem[];
   quotationsByStatus: DashboardSummaryChartsQuotationsByStatusItem[];
+  costAllocationBreakdown?: DashboardSummaryChartsCostAllocationBreakdownItem[];
+  priceWaterfall?: DashboardSummaryChartsPriceWaterfallItem[];
+  revenueVsCostByMonth?: DashboardSummaryChartsRevenueVsCostByMonthItem[];
 };

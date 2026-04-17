@@ -877,13 +877,21 @@ components:
         allocationPercent:
           type: number
           description: Percentage allocation 0-100 (e.g. 10 = 10% involvement, 100 = full-time). Cost is multiplied by this fraction.
+        costBasis:
+          type: string
+          enum: [shared, per_client]
+          description: How this cost is allocated. "shared" = pooled across all clients (cost ÷ N). "per_client" = cost is incurred for each assigned client (cost × N).
+        assignedClientCount:
+          type: integer
+          nullable: true
+          description: When costBasis is "per_client", number of clients this resource is assigned to. Defaults to projection's numClients when null.
         ctc:
           type: number
         totalYearlyCost:
           type: number
         createdAt:
           type: string
-      required: [id, projectionId, name, title, country, salarySar, monthsFte, allocationPercent, ctc, totalYearlyCost, createdAt]
+      required: [id, projectionId, name, title, country, salarySar, monthsFte, allocationPercent, costBasis, ctc, totalYearlyCost, createdAt]
 
     CreateEmployeeBody:
       type: object
@@ -902,6 +910,12 @@ components:
           type: number
           minimum: 0
           maximum: 100
+        costBasis:
+          type: string
+          enum: [shared, per_client]
+        assignedClientCount:
+          type: integer
+          nullable: true
       required: [name, title, country, salarySar]
 
     UpdateEmployeeBody:
@@ -921,6 +935,12 @@ components:
           type: number
           minimum: 0
           maximum: 100
+        costBasis:
+          type: string
+          enum: [shared, per_client]
+        assignedClientCount:
+          type: integer
+          nullable: true
 
     Subscription:
       type: object
@@ -992,13 +1012,23 @@ components:
         allocationPercent:
           type: number
           description: Percentage allocation 0-100 (e.g. 10 = 10% involvement, 100 = full-time). Cost is multiplied by this fraction.
+        costBasis:
+          type: string
+          enum: [shared, per_client]
+          description: How this cost is allocated. "shared" = pooled across all clients. "per_client" = cost × assignedClientCount.
+        assignedClientCount:
+          type: integer
+          nullable: true
+        includeInTotals:
+          type: boolean
+          description: When true, this managed-services row is folded into per-client economics. When false (default), it is shown as an optional add-on with its own selling price.
         ctc:
           type: number
         totalSalaryCost:
           type: number
         createdAt:
           type: string
-      required: [id, projectionId, title, country, salarySar, months, marginPercent, allocationPercent, ctc, totalSalaryCost, createdAt]
+      required: [id, projectionId, title, country, salarySar, months, marginPercent, allocationPercent, costBasis, includeInTotals, ctc, totalSalaryCost, createdAt]
 
     CreateSalesSupportBody:
       type: object
@@ -1017,6 +1047,14 @@ components:
           type: number
           minimum: 0
           maximum: 100
+        costBasis:
+          type: string
+          enum: [shared, per_client]
+        assignedClientCount:
+          type: integer
+          nullable: true
+        includeInTotals:
+          type: boolean
       required: [title, country, salarySar]
 
     UpdateSalesSupportBody:
@@ -1036,6 +1074,14 @@ components:
           type: number
           minimum: 0
           maximum: 100
+        costBasis:
+          type: string
+          enum: [shared, per_client]
+        assignedClientCount:
+          type: integer
+          nullable: true
+        includeInTotals:
+          type: boolean
 
     Quotation:
       type: object
@@ -1480,5 +1526,30 @@ components:
                   count: { type: integer }
                   total: { type: number }
                 required: [status, count, total]
+            costAllocationBreakdown:
+              type: array
+              items:
+                type: object
+                properties:
+                  basis: { type: string }
+                  amount: { type: number }
+                required: [basis, amount]
+            priceWaterfall:
+              type: array
+              items:
+                type: object
+                properties:
+                  component: { type: string }
+                  amount: { type: number }
+                required: [component, amount]
+            revenueVsCostByMonth:
+              type: array
+              items:
+                type: object
+                properties:
+                  month: { type: string }
+                  cost: { type: number }
+                  revenue: { type: number }
+                required: [month, cost, revenue]
           required: [costBreakdown, headcountByCountry, projectionTrend, quotationsByStatus]
       required: [totalProjections, totalQuotations, recentQuotations]
