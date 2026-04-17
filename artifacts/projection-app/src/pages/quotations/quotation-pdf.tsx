@@ -151,7 +151,7 @@ export function QuotationPdfDocument(props: QuotationPdfProps) {
     (acc, item) => acc + item.quantity * item.priceMonthly * item.totalMonths,
     0,
   );
-  const vat = subtotal * (vatRate / 100);
+  const vat = subtotal * vatRate;
   const grandTotal = subtotal + vat;
 
   return (
@@ -222,7 +222,7 @@ export function QuotationPdfDocument(props: QuotationPdfProps) {
               <Text style={styles.num}>SAR {fmt(subtotal)}</Text>
             </View>
             <View style={styles.totalsRow}>
-              <Text style={styles.totalsLabel}>VAT ({vatRate}%)</Text>
+              <Text style={styles.totalsLabel}>VAT ({+(vatRate * 100).toFixed(2)}%)</Text>
               <Text style={styles.num}>SAR {fmt(vat)}</Text>
             </View>
             <View style={styles.grandTotalRow}>

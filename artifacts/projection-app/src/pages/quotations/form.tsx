@@ -140,7 +140,7 @@ export default function QuotationForm() {
           date={headerData.date || quotation.date}
           status={headerData.status || quotation.status}
           lineItems={quotation.lineItems ?? []}
-          vatRate={settings?.vatRate ?? 15}
+          vatRate={settings?.vatRate ?? 0.15}
           logoUrl={settings?.companyLogoUrl ?? null}
           termsText={headerData.termsText ? headerData.termsText : null}
         />,
@@ -220,8 +220,8 @@ export default function QuotationForm() {
       return acc + (item.quantity * item.priceMonthly * item.totalMonths);
     }, 0);
     
-    const vatRate = settings?.vatRate || 15;
-    const vat = subtotal * (vatRate / 100);
+    const vatRate = settings?.vatRate ?? 0.15;
+    const vat = subtotal * vatRate;
     const total = subtotal + vat;
     
     return { subtotal, vat, total, vatRate };
@@ -417,7 +417,7 @@ export default function QuotationForm() {
                     <span className="font-medium">{formatCurrency(totals.subtotal)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">VAT ({totals.vatRate}%):</span>
+                    <span className="text-muted-foreground">VAT ({+(totals.vatRate * 100).toFixed(2)}%):</span>
                     <span className="font-medium">{formatCurrency(totals.vat)}</span>
                   </div>
                   <div className="h-px bg-border my-2"></div>
