@@ -1,0 +1,99 @@
+Yes — the numbers are internally consistent **only if** the system is treating the SAR 10,000 as a yearly total and then spreading it across 12 months.
+
+Here is what it is doing now:
+
+* Atif: SAR 5,000 for 1 month
+* Areeb: SAR 5,000 for 1 month
+* Total entered cost = SAR 10,000
+
+Then the app appears to do this:
+
+* **Yearly department cost** = SAR 10,000
+* **Monthly cost** = 10,000 ÷ 12 = **SAR 833.33**
+* With 30% target margin:
+
+  * Required revenue = 833.33 ÷ (1 - 0.30) = **SAR 1,190.48**
+* VAT 15% on yearly revenue:
+
+  * 14,285.71 × 0.15 = **SAR 2,142.86**
+
+So the math is correct **for that logic**.
+
+But your concern is valid, because the logic itself likely does **not** match what you intend.
+
+## Why it feels wrong
+
+You entered:
+
+* Salary = 5000
+* Months = 1
+
+That usually means:
+
+* this employee costs **SAR 5,000 for 1 month**
+* two employees together cost **SAR 10,000 for that month**
+
+So for **1 client for 1 month**, the expected numbers would more likely be:
+
+* **Monthly total team cost** = SAR 10,000
+* **Per client monthly cost** = SAR 10,000
+* At 30% margin:
+
+  * Selling price ex. VAT = 10,000 ÷ 0.70 = **SAR 14,285.71 / month**
+* VAT 15% = **SAR 2,142.86 / month**
+* Selling price incl. VAT = **SAR 16,428.57 / month**
+
+## The likely bug
+
+The app is probably doing this:
+
+* `employee total = salary × months`
+* summing all employee totals
+* treating that sum as a **yearly figure**
+* then dividing by 12 again
+
+That is only correct if:
+
+* the input represents **annual total cost**, or
+* the employee rows are meant to build a 12-month plan already
+
+It is **not** correct if `Months = 1` means “this cost applies for one actual month of service.”
+
+## What the logic should be
+
+You need to decide what **Months** means.
+
+### Option 1: Months means contract duration in months
+
+Then:
+
+* Employee total = `salary × months`
+* Projection total cost = sum of employee totals
+* If the whole plan duration is also 1 month, then:
+
+  * monthly cost = total cost
+* If plan duration is 12 months, then:
+
+  * monthly average = total cost ÷ 12 only when appropriate
+
+### Option 2: Salary is already monthly salary
+
+Then for “1 month” rows:
+
+* monthly team cost should be computed directly from monthly salaries
+* yearly should be `monthly × 12` only if those employees are intended for all 12 months
+
+## For your exact example
+
+If this projection is really for **1 month, 1 client**, then the more sensible result is:
+
+* **Total department cost (monthly): SAR 10,000**
+* **Recommended selling price ex. VAT: SAR 14,285.71 / client / month**
+* **VAT: SAR 2,142.86 / month**
+* **Total incl. VAT: SAR 16,428.57 / month**
+
+## In one sentence
+
+The arithmetic is consistent, but the app is almost certainly **annualizing a 1-month cost**, which makes the displayed monthly and per-client values too low by a factor of 12.
+
+Send me the calculation code or formula next, and I’ll pinpoint the exact line that is wrong.

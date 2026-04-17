@@ -1,0 +1,215 @@
+ased on the values you shared, the current dashboard is still calculating Managed Services / Sales Support as full-cost line items, not as allocation-based resources.
+
+So yes, your observation is correct: the system needs a new feature layer.
+
+What is missing now
+
+Right now each managed service resource appears to have:
+
+salary
+
+months
+
+margin
+
+total cost
+
+selling price
+
+But it does not have:
+
+involvement percentage
+
+billable percentage
+
+client allocation percentage
+
+role-based utilization across the contract duration
+
+Because of that, a person who is only partially involved gets charged as if they are fully assigned.
+
+Example from your case:
+
+PM role = 10% involved
+
+.NET role = 100% involved for 12 months
+
+The system should not charge both as full allocation unless that is intentional.
+
+Correct costing logic to build
+New required fields per managed-service resource
+
+For each resource under Sales Support & Managed Services, add:
+
+Role / Title
+
+Country
+
+Base Monthly Salary
+
+CTC
+
+Duration in Months
+
+Allocation %
+
+Margin %
+
+Optional: Billing Start / End or active months
+
+Formula
+Resource cost
+
+Allocated Cost = Monthly CTC × Months × Allocation %
+
+Example:
+
+PM = SAR 8,000/month
+
+12 months
+
+10% allocation
+
+Allocated cost:
+
+8000 × 12 × 0.10 = SAR 9,600
+
+Selling price
+
+Selling Price = Allocated Cost / (1 - Margin %)
+
+If margin is 20%:
+
+9,600 / 0.8 = SAR 12,000
+
+What should update on the dashboard
+
+Once this is added, the dashboard should recalculate and reflect:
+
+1. Sales Support & Managed Services table
+
+Each row should show:
+
+Monthly Cost
+
+Annual Cost
+
+Allocation %
+
+Allocated Monthly Cost
+
+Allocated Annual Cost
+
+Margin %
+
+Recommended Selling Price
+
+2. Projection totals
+
+The following sections should include the allocated managed-services cost where relevant:
+
+Total Department Cost
+
+Total Revenue Monthly
+
+Total Revenue Yearly
+
+Per-Client Economics
+
+Breakdown table
+
+3. Breakdown section
+
+It should split costs into:
+
+Team cost / client
+
+Overhead / client
+
+Managed services allocated cost / client
+
+Total cost / client
+
+Margin (SAR)
+
+Recommended feature behavior
+A. Allocation-based resource model
+
+Each resource should support partial usage:
+
+PM = 10%
+
+QA = 25%
+
+Support Engineer = 40%
+
+.NET Developer = 100%
+
+B. Monthly and yearly views
+
+The dashboard should display both:
+
+raw full salary/CTC
+
+allocated billable cost
+
+This avoids confusion.
+
+C. Validation
+
+Rules should be added:
+
+allocation must be between 0 and 100
+
+months must be at least 1
+
+margin must be between 0 and less than 100
+
+costs should recalculate instantly on edit
+
+PRD addition
+
+You can add this section to the PRD.
+
+Feature: Resource Allocation-Based Managed Services Costing
+Objective
+
+Allow partial utilization of after-sales support and managed-service resources so client pricing reflects actual effort allocation rather than full employee cost.
+
+Problem
+
+The current dashboard treats managed-service resources as fully allocated costs. This inflates or distorts pricing where resources are only partially involved in delivery, such as PM oversight at 10% or part-time support roles.
+
+Requirements
+
+Add Allocation % field for every managed-service resource.
+
+Compute allocated resource cost as:
+
+CTC × Months × Allocation %
+
+Compute recommended selling price using configured margin.
+
+Reflect allocated cost in:
+
+resource row totals
+
+client economics breakdown
+
+total department cost where applicable
+
+total revenue recommendations
+
+Support both one-time and recurring cost visibility alongside resource allocations.
+
+Show monthly and yearly allocated values.
+
+Allow instant recalculation when user edits salary, months, allocation, or margin.
+
+Example
+
+PM, CTC SAR 10,000/month, 12 months, 10% allocation
+Allocated annual cost = SAR 12,000
+
+.NET Developer, CTC SAR 12,000/month, 12 months, 100% allocation
+Allocated annual cost = SAR 144,000
