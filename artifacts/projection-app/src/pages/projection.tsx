@@ -701,21 +701,21 @@ export default function Projection() {
         </CardHeader>
         <CardContent>
           <div className="rounded-md border overflow-x-auto">
-            <Table>
+            <Table className="min-w-[1500px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[180px]">Title</TableHead>
-                  <TableHead className="w-[140px]">Country</TableHead>
-                  <TableHead className="w-[130px] text-right">Salary (SAR)</TableHead>
-                  <TableHead className="w-[110px] text-right">CTC (SAR)</TableHead>
-                  <TableHead className="w-[90px] text-right">Months</TableHead>
-                  <TableHead className="w-[100px] text-right">Alloc %</TableHead>
-                  <TableHead className="w-[160px]">Basis</TableHead>
-                  <TableHead className="w-[80px] text-center">In Totals</TableHead>
-                  <TableHead className="w-[90px] text-right">Margin %</TableHead>
-                  <TableHead className="w-[140px] text-right">Total Cost</TableHead>
-                  <TableHead className="w-[140px] text-right">Selling Price</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
+                  <TableHead className="w-[200px]">Title</TableHead>
+                  <TableHead className="w-[150px]">Country</TableHead>
+                  <TableHead className="w-[160px] text-right">Salary (SAR)</TableHead>
+                  <TableHead className="w-[140px] text-right">CTC (SAR)</TableHead>
+                  <TableHead className="w-[120px] text-right">Months</TableHead>
+                  <TableHead className="w-[120px] text-right">Alloc %</TableHead>
+                  <TableHead className="w-[220px]">Basis</TableHead>
+                  <TableHead className="w-[90px] text-center">In Totals</TableHead>
+                  <TableHead className="w-[120px] text-right">Margin %</TableHead>
+                  <TableHead className="w-[160px] text-right">Total Cost</TableHead>
+                  <TableHead className="w-[160px] text-right">Selling Price</TableHead>
+                  <TableHead className="w-[60px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -736,15 +736,15 @@ export default function Projection() {
                         </SelectContent>
                       </Select>
                     </TableCell>
-                    <TableCell className="p-2 min-w-[120px]">
-                      <Input type="number" defaultValue={res.salarySar} onBlur={(e) => handleUpdateSalesSupport(res.id, "salarySar", parseFloat(e.target.value))} className="h-9 w-full min-w-[100px] border-transparent hover:border-input focus:border-input bg-transparent text-right" />
+                    <TableCell className="p-2">
+                      <Input type="number" defaultValue={res.salarySar} onBlur={(e) => handleUpdateSalesSupport(res.id, "salarySar", parseFloat(e.target.value))} className="h-10 w-full border border-input bg-background text-right px-3" />
                     </TableCell>
-                    <TableCell className="text-right font-mono text-xs p-2 text-muted-foreground min-w-[100px] whitespace-nowrap">{formatCurrency(res.ctc)}</TableCell>
-                    <TableCell className="p-2 min-w-[80px]">
-                      <Input type="number" step="0.5" defaultValue={res.months} onBlur={(e) => handleUpdateSalesSupport(res.id, "months", parseFloat(e.target.value))} className="h-9 w-full min-w-[64px] border-transparent hover:border-input focus:border-input bg-transparent text-right" />
+                    <TableCell className="text-right font-mono text-xs p-2 text-muted-foreground whitespace-nowrap">{formatCurrency(res.ctc)}</TableCell>
+                    <TableCell className="p-2">
+                      <Input type="number" step="0.5" defaultValue={res.months} onBlur={(e) => handleUpdateSalesSupport(res.id, "months", parseFloat(e.target.value))} className="h-10 w-full border border-input bg-background text-right px-3" />
                     </TableCell>
-                    <TableCell className="p-2 min-w-[80px]">
-                      <Input type="number" min="0" max="100" step="1" defaultValue={res.allocationPercent ?? 100} onBlur={(e) => handleUpdateSalesSupport(res.id, "allocationPercent", parseFloat(e.target.value))} className="h-9 w-full min-w-[64px] border-transparent hover:border-input focus:border-input bg-transparent text-right" title="Percentage of time this resource is involved (e.g. 10 = PM at 10%, 100 = full-time)" />
+                    <TableCell className="p-2">
+                      <Input type="number" min="0" max="100" step="1" defaultValue={res.allocationPercent ?? 100} onBlur={(e) => handleUpdateSalesSupport(res.id, "allocationPercent", parseFloat(e.target.value))} className="h-10 w-full border border-input bg-background text-right px-3" title="Percentage of time this resource is involved (e.g. 10 = PM at 10%, 100 = full-time)" />
                     </TableCell>
                     <TableCell className="p-2">
                       <div className="flex items-center gap-1">
@@ -767,7 +767,7 @@ export default function Projection() {
                             step="1"
                             defaultValue={res.assignedClientCount ?? activeProjection?.numClients ?? 0}
                             onBlur={(e) => handleUpdateSalesSupport(res.id, "assignedClientCount", parseInt(e.target.value) || null)}
-                            className="h-9 w-20 border-transparent hover:border-input focus:border-input bg-transparent text-right text-xs"
+                            className="h-10 w-24 border border-input bg-background text-right px-3"
                             title="Number of clients this resource is assigned to."
                           />
                         )}
