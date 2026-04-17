@@ -7,7 +7,9 @@ import {
   FileText, 
   Settings,
   LogOut,
-  Menu
+  Menu,
+  PanelLeftClose,
+  PanelLeftOpen
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -26,6 +28,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const { user } = useUser();
   const { signOut } = useClerk();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sidebarHidden, setSidebarHidden] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem("sidebarHidden") === "1";
+  });
+  const toggleSidebar = () => {
+    setSidebarHidden((prev) => {
+      const next = !prev;
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("sidebarHidden", next ? "1" : "0");
+      }
+      return next;
+    });
+  };
 
   const NavLinks = () => (
     <nav className="space-y-1">
@@ -53,9 +68,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col w-64 border-r border-border bg-sidebar shrink-0">
-        <div className="h-14 flex items-center px-4 border-b border-border shrink-0">
+      <aside className={`${sidebarHidden ? "hidden" : "hidden md:flex"} flex-col w-64 border-r border-border bg-sidebar shrink-0`}>
+        <div className="h-14 flex items-center justify-between px-4 border-b border-border shrink-0">
           <span className="font-bold text-lg text-primary tracking-tight">Dept. Projection</span>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleSidebar} title="Hide sidebar">
+            <PanelLeftClose className="h-4 w-4" />
+          </Button>
         </div>
         
         <div className="flex-1 overflow-y-auto py-4 px-3">
@@ -106,6 +124,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </SheetContent>
           </Sheet>
         </header>
+
+        {/* Show-sidebar floating button (desktop, when hidden) */}
+        {sidebarHidden && (
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={toggleSidebar}
+            title="Show sidebar"
+            className="hidden md:flex fixed top-3 left-3 z-40 h-9 w-9 shadow-md bg-card"
+          >
+            <PanelLeftOpen className="h-4 w-4" />
+          </Button>
+        )}
 
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto">
