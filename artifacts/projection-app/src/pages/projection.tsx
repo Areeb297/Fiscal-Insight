@@ -456,7 +456,23 @@ export default function Projection() {
                       <Input type="number" min="0" max="100" step="1" defaultValue={emp.allocationPercent ?? 100} onBlur={(e) => handleUpdateEmployee(emp.id, "allocationPercent", parseFloat(e.target.value))} className="h-8 border-transparent hover:border-input focus:border-input bg-transparent text-right" title="Percentage of time this person is allocated (e.g. 10 = 10%, 100 = full-time)" />
                     </TableCell>
                     <TableCell className="text-right font-mono text-xs p-2">{emp.ctc}</TableCell>
-                    <TableCell className="text-right font-medium p-2">{formatCurrency(emp.totalYearlyCost)}</TableCell>
+                    <TableCell className="text-right font-medium p-2">
+                      <div>{formatCurrency(emp.totalYearlyCost)}</div>
+                      {(() => {
+                        const alloc = emp.allocationPercent ?? 100;
+                        if (alloc < 100) {
+                          const fullCost = alloc > 0
+                            ? emp.totalYearlyCost / (alloc / 100)
+                            : emp.ctc * emp.monthsFte;
+                          return (
+                            <div className="text-[10px] font-normal text-muted-foreground tabular-nums" title="What this would cost at 100% allocation">
+                              (100%: {formatCurrency(fullCost)})
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
+                    </TableCell>
                     <TableCell className="p-2 text-right">
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteEmployee(emp.id)}>
                         <Trash className="h-4 w-4" />
@@ -700,7 +716,23 @@ export default function Projection() {
                     <TableCell className="p-2">
                       <Input type="number" step="0.1" defaultValue={res.marginPercent} onBlur={(e) => handleUpdateSalesSupport(res.id, "marginPercent", parseFloat(e.target.value))} className="h-8 border-transparent hover:border-input focus:border-input bg-transparent text-right" />
                     </TableCell>
-                    <TableCell className="text-right font-medium p-2 text-muted-foreground">{formatCurrency(res.totalSalaryCost)}</TableCell>
+                    <TableCell className="text-right font-medium p-2 text-muted-foreground">
+                      <div>{formatCurrency(res.totalSalaryCost)}</div>
+                      {(() => {
+                        const alloc = res.allocationPercent ?? 100;
+                        if (alloc < 100) {
+                          const fullCost = alloc > 0
+                            ? res.totalSalaryCost / (alloc / 100)
+                            : res.ctc * res.months;
+                          return (
+                            <div className="text-[10px] font-normal tabular-nums" title="What this would cost at 100% allocation">
+                              (100%: {formatCurrency(fullCost)})
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
+                    </TableCell>
                     <TableCell className="text-right font-bold text-primary p-2">{formatCurrency(computeSellingPrice(res.totalSalaryCost, res.marginPercent))}</TableCell>
                     <TableCell className="p-2 text-right">
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteSalesSupport(res.id)}>
