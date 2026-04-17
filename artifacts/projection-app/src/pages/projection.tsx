@@ -357,14 +357,14 @@ export default function Projection() {
                 {employees?.map((emp) => (
                   <TableRow key={emp.id}>
                     <TableCell className="p-2">
-                      <Input defaultValue={emp.name} onBlur={(e) => handleUpdateEmployee(emp.id, "name", e.target.value)} className="h-8 border-transparent hover:border-input focus:border-input bg-transparent" />
+                      <Input defaultValue={emp.name} onBlur={(e) => handleUpdateEmployee(emp.id, "name", e.target.value)} className="h-9 border-transparent hover:border-input focus:border-input bg-transparent" />
                     </TableCell>
                     <TableCell className="p-2">
-                      <Input defaultValue={emp.title} onBlur={(e) => handleUpdateEmployee(emp.id, "title", e.target.value)} className="h-8 border-transparent hover:border-input focus:border-input bg-transparent" />
+                      <Input defaultValue={emp.title} onBlur={(e) => handleUpdateEmployee(emp.id, "title", e.target.value)} className="h-9 border-transparent hover:border-input focus:border-input bg-transparent" />
                     </TableCell>
                     <TableCell className="p-2">
                       <Select defaultValue={emp.country} onValueChange={(val) => handleUpdateEmployee(emp.id, "country", val)}>
-                        <SelectTrigger className="h-8 border-transparent hover:border-input focus:border-input bg-transparent">
+                        <SelectTrigger className="h-9 border-transparent hover:border-input focus:border-input bg-transparent">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -397,8 +397,13 @@ export default function Projection() {
               </TableBody>
               <TableFooter>
                 <TableRow>
-                  <TableCell colSpan={6} className="text-right font-bold">Grand Total Yearly Cost:</TableCell>
-                  <TableCell className="text-right font-bold text-primary">{formatCurrency(summary?.totalDeptCostYearly || 0)}</TableCell>
+                  <TableCell colSpan={6} className="text-right font-bold">Grand Total Monthly:</TableCell>
+                  <TableCell className="text-right font-bold tabular-nums">{formatCurrency((summary?.totalDeptCostYearly || 0) / 12)}</TableCell>
+                  <TableCell></TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell colSpan={6} className="text-right font-bold">Grand Total Yearly:</TableCell>
+                  <TableCell className="text-right font-bold text-primary tabular-nums">{formatCurrency(summary?.totalDeptCostYearly || 0)}</TableCell>
                   <TableCell></TableCell>
                 </TableRow>
               </TableFooter>
@@ -407,7 +412,7 @@ export default function Projection() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="space-y-8">
         {/* Section 2: Overheads & Subscriptions */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -422,24 +427,24 @@ export default function Projection() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead className="w-[110px]">Type</TableHead>
-                    <TableHead className="w-[90px]">Currency</TableHead>
-                    <TableHead className="w-[100px] text-right">Price</TableHead>
-                    <TableHead className="w-[110px] text-right">SAR/mo</TableHead>
-                    <TableHead className="w-[110px] text-right">SAR/yr</TableHead>
-                    <TableHead className="w-[50px]"></TableHead>
+                    <TableHead className="min-w-[260px]">Name</TableHead>
+                    <TableHead className="w-[150px]">Type</TableHead>
+                    <TableHead className="w-[120px]">Currency</TableHead>
+                    <TableHead className="w-[160px] text-right">Price (orig.)</TableHead>
+                    <TableHead className="w-[140px] text-right">SAR / mo</TableHead>
+                    <TableHead className="w-[140px] text-right">SAR / yr</TableHead>
+                    <TableHead className="w-[60px]"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {subscriptions?.map((sub) => (
                     <TableRow key={sub.id}>
                       <TableCell className="p-2">
-                        <Input defaultValue={sub.name} onBlur={(e) => handleUpdateSubscription(sub.id, "name", e.target.value)} className="h-8 border-transparent hover:border-input focus:border-input bg-transparent" />
+                        <Input defaultValue={sub.name} onBlur={(e) => handleUpdateSubscription(sub.id, "name", e.target.value)} className="h-9 border-transparent hover:border-input focus:border-input bg-transparent font-medium" />
                       </TableCell>
                       <TableCell className="p-2">
                         <Select value={sub.isOneTime ? "one-time" : "recurring"} onValueChange={(val) => handleUpdateSubscription(sub.id, "isOneTime", val === "one-time")}>
-                          <SelectTrigger className="h-8 border-transparent hover:border-input focus:border-input bg-transparent">
+                          <SelectTrigger className="h-9 border-transparent hover:border-input focus:border-input bg-transparent">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -450,7 +455,7 @@ export default function Projection() {
                       </TableCell>
                       <TableCell className="p-2">
                         <Select defaultValue={sub.currency} onValueChange={(val) => handleUpdateSubscription(sub.id, "currency", val)}>
-                          <SelectTrigger className="h-8 border-transparent hover:border-input focus:border-input bg-transparent">
+                          <SelectTrigger className="h-9 border-transparent hover:border-input focus:border-input bg-transparent">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -461,10 +466,10 @@ export default function Projection() {
                         </Select>
                       </TableCell>
                       <TableCell className="p-2">
-                        <Input type="number" defaultValue={sub.originalPrice} onBlur={(e) => handleUpdateSubscription(sub.id, "originalPrice", parseFloat(e.target.value))} className="h-8 border-transparent hover:border-input focus:border-input bg-transparent text-right" />
+                        <Input type="number" defaultValue={sub.originalPrice} onBlur={(e) => handleUpdateSubscription(sub.id, "originalPrice", parseFloat(e.target.value))} className="h-9 border-transparent hover:border-input focus:border-input bg-transparent text-right tabular-nums" />
                       </TableCell>
-                      <TableCell className="text-right font-medium p-2">{formatCurrency(sub.monthlySar)}</TableCell>
-                      <TableCell className="text-right font-medium p-2">{formatCurrency(sub.yearlySar)}</TableCell>
+                      <TableCell className="text-right font-medium p-2 tabular-nums">{formatCurrency(sub.monthlySar)}</TableCell>
+                      <TableCell className="text-right font-medium p-2 tabular-nums">{formatCurrency(sub.yearlySar)}</TableCell>
                       <TableCell className="p-2 text-right">
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteSubscription(sub.id)}>
                           <Trash className="h-4 w-4" />
@@ -592,11 +597,11 @@ export default function Projection() {
                 {salesSupport?.map((res) => (
                   <TableRow key={res.id}>
                     <TableCell className="p-2">
-                      <Input defaultValue={res.title} onBlur={(e) => handleUpdateSalesSupport(res.id, "title", e.target.value)} className="h-8 border-transparent hover:border-input focus:border-input bg-transparent" />
+                      <Input defaultValue={res.title} onBlur={(e) => handleUpdateSalesSupport(res.id, "title", e.target.value)} className="h-9 border-transparent hover:border-input focus:border-input bg-transparent" />
                     </TableCell>
                     <TableCell className="p-2">
                       <Select defaultValue={res.country} onValueChange={(val) => handleUpdateSalesSupport(res.id, "country", val)}>
-                        <SelectTrigger className="h-8 border-transparent hover:border-input focus:border-input bg-transparent">
+                        <SelectTrigger className="h-9 border-transparent hover:border-input focus:border-input bg-transparent">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
