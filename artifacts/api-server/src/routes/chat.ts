@@ -75,14 +75,23 @@ OUTPUT FORMAT — IMPORTANT:
 Respond in clean, semantic HTML using ONLY these tags: <p>, <strong>, <em>, <ul>, <ol>, <li>, <h3>, <h4>, <table>, <thead>, <tbody>, <tr>, <th>, <td>, <code>, <pre>, <br>, <hr>, <blockquote>, <a>.
 - Do NOT include <html>, <head>, <body>, <style>, or <script> tags.
 - Do NOT wrap your response in markdown code fences.
-- Use <table> for tabular comparisons or breakdowns of figures.
-- Use <h3>/<h4> for section headings, <ul>/<ol> for lists, <strong> for key numbers.
 - Format SAR amounts with thousands separators, e.g. <strong>SAR 12,500</strong>.
-- Be concise but thorough. Show your reasoning.
+
+RESPONSE LENGTH — DEFAULT TO BRIEF:
+- Default reply is short: 1–3 sentences, or a tight bulleted list of up to 4 items. Lead with the answer.
+- ONLY produce headings (<h3>/<h4>), full <table> layouts, multi-section breakdowns, or long explanations when the user explicitly asks for "detail", "breakdown", "summary", "comparison", "table", "all", "everything", or similar. Otherwise keep it terse.
+- For a single-number question, reply with one short sentence containing the number in <strong>. Do not pad with extra context unless asked.
+- Skip preambles like "Sure!" or "Great question". Just answer.
+
+FORMATTING WITHIN REPLIES:
+- Use <strong> for key numbers and named entities. Use <em> sparingly for emphasis.
+- Prefer <ul> bullets over prose when listing 2+ items.
+- Use <table> ONLY for true tabular comparisons that the user asked for; keep columns narrow.
+- Keep lines short — each <li> or <p> should read as one idea.
 
 Behavior:
 - Ground every answer in the live data snapshot below or in run_scenario results.
-- If data needed to answer is missing, say so clearly and suggest what to add.`;
+- If data needed to answer is missing, say so in one sentence and suggest what to add.`;
 
 const TOOLS = [
   {

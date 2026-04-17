@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import DOMPurify from "dompurify";
 import { MessageSquare, X, Send, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,11 @@ const SUGGESTIONS = [
   "How does margin change if I cut overheads 20%?",
 ];
 
+const MIN_WIDTH = 360;
+const MAX_WIDTH = 900;
+const DEFAULT_WIDTH = 480;
+const WIDTH_STORAGE_KEY = "chatbot:width";
+
 function AssistantMessage({ html, content }: { html?: string; content: string }) {
   const safeHtml = useMemo(() => {
     if (!html) return null;
@@ -41,7 +46,7 @@ function AssistantMessage({ html, content }: { html?: string; content: string })
       />
     );
   }
-  return <div className="text-sm whitespace-pre-wrap">{content}</div>;
+  return <div className="text-sm whitespace-pre-wrap break-words">{content}</div>;
 }
 
 export default function Chatbot() {
@@ -55,6 +60,88 @@ export default function Chatbot() {
   ]);
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const [width, setWidth] = useState<number>(() => {
+    if (typeof window === "undefined") return DEFAULT_WIDTH;
+    const stored = window.localStorage.getItem(WIDTH_STORAGE_KEY);
+    const parsed = stored ? parseInt(stored, 10) : NaN;
+    if (Number.isFinite(parsed)) {
+      return Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, parsed));
+    }
+    return DEFAULT_WIDTH;
+  });
+  const [isResizing, setIsResizing] = useState(false);
+  const [viewportWidth, setViewportWidth] = useState<number>(() =>
+    typeof window === "undefined" ? 1200 : window.innerWidth,
+  );
+
+  useEffect(() => {
+    const onResize = () => setViewportWidth(window.innerWidth);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem(WIDTH_STORAGE_KEY, String(width));
+  }, [width]);
+
+  const effectiveMaxWidth = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, viewportWidth - 80));
+  const isMobile = viewportWidth < 640;
+  const panelWidth = isMobile ? viewportWidth : Math.min(width, effectiveMaxWidth);
+
+  const handleResizeStart = useCallback(
+    (e: React.MouseEvent | React.TouchEvent) => {
+      if (isMobile) return;
+      e.preventDefault();
+      setIsResizing(true);
+
+      const startX = "touches" in e ? e.touches[0].clientX : e.clientX;
+      const startWidth = panelWidth;
+
+      const onMove = (clientX: number) => {
+        const delta = startX - clientX;
+        const next = Math.min(effectiveMaxWidth, Math.max(MIN_WIDTH, startWidth + delta));
+        setWidth(next);
+      };
+
+      const onMouseMove = (ev: MouseEvent) => onMove(ev.clientX);
+      const onTouchMove = (ev: TouchEvent) => {
+        if (ev.touches.length) onMove(ev.touches[0].clientX);
+      };
+      const onEnd = () => {
+        setIsResizing(false);
+        window.removeEventListener("mousemove", onMouseMove);
+        window.removeEventListener("touchmove", onTouchMove);
+        window.removeEventListener("mouseup", onEnd);
+        window.removeEventListener("touchend", onEnd);
+        document.body.style.userSelect = "";
+        document.body.style.cursor = "";
+      };
+
+      document.body.style.userSelect = "none";
+      document.body.style.cursor = "ew-resize";
+      window.addEventListener("mousemove", onMouseMove);
+      window.addEventListener("touchmove", onTouchMove, { passive: true });
+      window.addEventListener("mouseup", onEnd);
+      window.addEventListener("touchend", onEnd);
+    },
+    [effectiveMaxWidth, isMobile, panelWidth],
+  );
+
+  const handleResizeKey = (e: React.KeyboardEvent) => {
+    if (isMobile) return;
+    const step = e.shiftKey ? 80 : 24;
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      setWidth((w) => Math.min(effectiveMaxWidth, w + step));
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      setWidth((w) => Math.max(MIN_WIDTH, w - step));
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      setWidth(DEFAULT_WIDTH);
+    }
+  };
 
   const sendMessage = useSendChatMessage();
 
@@ -114,34 +201,53 @@ export default function Chatbot() {
       </Button>
 
       <div
-        className={`fixed inset-y-0 right-0 w-full sm:w-[480px] bg-card border-l shadow-2xl transform transition-transform duration-300 ease-in-out z-50 flex flex-col ${
-          isOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`fixed inset-y-0 right-0 bg-card border-l shadow-2xl z-50 flex flex-col ${
+          isResizing ? "" : "transition-transform duration-300 ease-in-out"
+        } ${isOpen ? "translate-x-0" : "translate-x-full"}`}
+        style={{ width: `${panelWidth}px`, maxWidth: "100vw" }}
       >
+        {!isMobile && (
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Resize chat panel"
+            tabIndex={0}
+            onMouseDown={handleResizeStart}
+            onTouchStart={handleResizeStart}
+            onKeyDown={handleResizeKey}
+            className={`absolute left-0 top-0 bottom-0 w-1.5 -translate-x-1/2 cursor-ew-resize z-20 group focus:outline-none ${
+              isResizing ? "bg-primary/30" : ""
+            }`}
+          >
+            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-transparent group-hover:bg-primary/40 group-focus:bg-primary/60 transition-colors" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-10 w-1 rounded-full bg-border group-hover:bg-primary/60 transition-colors" />
+          </div>
+        )}
+
         <CardHeader className="border-b px-4 py-3 flex flex-row items-center justify-between sticky top-0 bg-card z-10 shrink-0">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
               <Sparkles className="h-4 w-4 text-primary" />
             </div>
-            <div>
-              <CardTitle className="text-base font-semibold leading-tight">Projection Assistant</CardTitle>
-              <div className="text-xs text-muted-foreground">Ask about your data</div>
+            <div className="min-w-0">
+              <CardTitle className="text-base font-semibold leading-tight truncate">Projection Assistant</CardTitle>
+              <div className="text-xs text-muted-foreground truncate">Ask about your data</div>
             </div>
           </div>
-          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => setIsOpen(false)}>
+          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full shrink-0" onClick={() => setIsOpen(false)}>
             <X className="h-4 w-4" />
           </Button>
         </CardHeader>
 
-        <ScrollArea className="flex-1" ref={scrollRef}>
-          <div className="space-y-4 p-4">
+        <ScrollArea className="flex-1 min-w-0" ref={scrollRef}>
+          <div className="space-y-4 p-4 min-w-0">
             {messages.map((msg, i) => (
               <div
                 key={i}
-                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                className={`flex min-w-0 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`max-w-[90%] rounded-lg px-3 py-2 ${
+                  className={`max-w-[90%] min-w-0 overflow-hidden rounded-lg px-3 py-2 ${
                     msg.role === "user"
                       ? "bg-primary text-primary-foreground rounded-br-none text-sm"
                       : "bg-muted text-foreground rounded-bl-none"
@@ -150,7 +256,7 @@ export default function Chatbot() {
                   {msg.role === "assistant" ? (
                     <AssistantMessage html={msg.html} content={msg.content} />
                   ) : (
-                    <div className="text-sm whitespace-pre-wrap">{msg.content}</div>
+                    <div className="text-sm whitespace-pre-wrap break-words">{msg.content}</div>
                   )}
                 </div>
               </div>
@@ -188,7 +294,7 @@ export default function Chatbot() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask about projections, margins, costs..."
-              className="flex-1"
+              className="flex-1 min-w-0"
               disabled={sendMessage.isPending}
             />
             <Button type="submit" size="icon" disabled={sendMessage.isPending || !input.trim()}>
