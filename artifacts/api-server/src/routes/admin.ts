@@ -1,6 +1,8 @@
 import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
+import { clerkClient } from "@clerk/express";
 import { db, currenciesTable, ctcRulesTable, systemSettingsTable } from "@workspace/db";
+import { requireAdmin } from "../lib/auth";
 import {
   CreateCurrencyBody,
   UpdateCurrencyParams,
@@ -136,6 +138,62 @@ router.put("/admin/settings", async (req, res): Promise<void> => {
   }
   const [settings] = await db.update(systemSettingsTable).set(parsed.data).where(eq(systemSettingsTable.id, existing.id)).returning();
   res.json(settings);
+});
+
+router.get("/admin/users", async (req, res): Promise<void> => {
+  const ctx = await requireAdmin(req, res);
+  if (!ctx) return;
+  try {
+    const list = await clerkClient.users.getUserList({ limit: 200, orderBy: "-created_at" });
+    const users = list.data.map((u) => ({
+      id: u.id,
+      email: u.primaryEmailAddress?.emailAddress ?? null,
+      firstName: u.firstName,
+      lastName: u.lastName,
+      role: ((u.publicMetadata as Record<string, unknown> | undefined)?.["role"] === "admin" ? "admin" : "user") as "admin" | "user",
+      createdAt: u.createdAt,
+    }));
+    res.json(users);
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || "Failed to list users" });
+  }
+});
+
+router.put("/admin/users/:id/role", async (req, res): Promise<void> => {
+  const ctx = await requireAdmin(req, res);
+  if (!ctx) return;
+  const id = req.params["id"];
+  const role = req.body?.role;
+  if (!id || (role !== "admin" && role !== "user")) {
+    res.status(400).json({ error: "role must be 'admin' or 'user'" });
+    return;
+  }
+  try {
+    await clerkClient.users.updateUser(id, { publicMetadata: { role } });
+    res.json({ id, role });
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || "Failed to update role" });
+  }
+});
+
+router.delete("/admin/users/:id", async (req, res): Promise<void> => {
+  const ctx = await requireAdmin(req, res);
+  if (!ctx) return;
+  const id = req.params["id"];
+  if (!id) {
+    res.status(400).json({ error: "id is required" });
+    return;
+  }
+  if (id === ctx.userId) {
+    res.status(400).json({ error: "You cannot delete your own account" });
+    return;
+  }
+  try {
+    await clerkClient.users.deleteUser(id);
+    res.sendStatus(204);
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || "Failed to delete user" });
+  }
 });
 
 export default router;

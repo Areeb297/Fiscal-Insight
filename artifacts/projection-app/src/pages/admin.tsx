@@ -4,7 +4,7 @@ import {
   useListCtcRules, getListCtcRulesQueryKey, useCreateCtcRule, useUpdateCtcRule, useDeleteCtcRule,
   useGetSystemSettings, getGetSystemSettingsQueryKey, useUpdateSystemSettings
 } from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -142,7 +142,14 @@ export default function Admin() {
           <TabsTrigger value="ctcrules" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-6 py-3">
             CTC Rules
           </TabsTrigger>
+          <TabsTrigger value="users" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-6 py-3">
+            Users & Permissions
+          </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="users" className="mt-6 space-y-6">
+          <UsersPanel />
+        </TabsContent>
         
         <TabsContent value="settings" className="mt-6 space-y-6">
           <Card>
@@ -392,5 +399,125 @@ export default function Admin() {
         }}
       />
     </div>
+  );
+}
+
+type AdminUser = {
+  id: string;
+  email: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  role: "admin" | "user";
+  createdAt: number;
+};
+
+function UsersPanel() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const apiBase = import.meta.env.BASE_URL.replace(/\/$/, "");
+  const usersUrl = `${apiBase}/api/admin/users`;
+
+  const { data: users, isLoading, error } = useQuery<AdminUser[]>({
+    queryKey: [usersUrl],
+    queryFn: async () => {
+      const r = await fetch(usersUrl, { credentials: "include" });
+      if (!r.ok) throw new Error((await r.json()).error || "Failed");
+      return r.json();
+    },
+  });
+
+  async function setRole(id: string, role: "admin" | "user") {
+    const r = await fetch(`${apiBase}/api/admin/users/${id}/role`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ role }),
+    });
+    if (!r.ok) {
+      toast({ title: "Failed to update role", description: (await r.json()).error, variant: "destructive" });
+      return;
+    }
+    toast({ title: `Role updated to ${role}` });
+    queryClient.invalidateQueries({ queryKey: [usersUrl] });
+  }
+
+  async function removeUser(id: string, email: string | null) {
+    if (!confirm(`Delete user ${email ?? id}? This cannot be undone.`)) return;
+    const r = await fetch(`${apiBase}/api/admin/users/${id}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+    if (!r.ok && r.status !== 204) {
+      toast({ title: "Failed to delete user", description: (await r.json()).error, variant: "destructive" });
+      return;
+    }
+    toast({ title: "User deleted" });
+    queryClient.invalidateQueries({ queryKey: [usersUrl] });
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Users & Permissions</CardTitle>
+        <CardDescription>
+          Each person sees only the projections they create. Admins see and manage everyone's projections.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {isLoading && <div className="text-muted-foreground">Loading users…</div>}
+        {error && (
+          <div className="text-destructive text-sm">
+            {(error as Error).message.includes("Admin") || (error as Error).message.includes("403")
+              ? "You need admin access to manage users."
+              : `Could not load users: ${(error as Error).message}`}
+          </div>
+        )}
+        {users && (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {users.map((u) => (
+                <TableRow key={u.id}>
+                  <TableCell>{[u.firstName, u.lastName].filter(Boolean).join(" ") || "—"}</TableCell>
+                  <TableCell className="font-mono text-xs">{u.email ?? "—"}</TableCell>
+                  <TableCell>
+                    <span
+                      className={
+                        u.role === "admin"
+                          ? "inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
+                          : "inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
+                      }
+                    >
+                      {u.role}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right space-x-2">
+                    {u.role === "admin" ? (
+                      <Button size="sm" variant="outline" onClick={() => setRole(u.id, "user")}>
+                        Revoke admin
+                      </Button>
+                    ) : (
+                      <Button size="sm" variant="outline" onClick={() => setRole(u.id, "admin")}>
+                        Make admin
+                      </Button>
+                    )}
+                    <Button size="sm" variant="destructive" onClick={() => removeUser(u.id, u.email)}>
+                      Delete
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
   );
 }

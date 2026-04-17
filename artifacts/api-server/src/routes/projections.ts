@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
+import { eq, and, or, isNull } from "drizzle-orm";
 import { db, projectionsTable, employeesTable, subscriptionsTable, salesSupportResourcesTable, ctcRulesTable, currenciesTable } from "@workspace/db";
 import {
   CreateProjectionBody,
@@ -10,31 +10,60 @@ import {
   DeleteProjectionParams,
 } from "@workspace/api-zod";
 import { computeScenario } from "../lib/summary";
+import { requireAuth } from "../lib/auth";
 
 const router: IRouter = Router();
 
-router.get("/projections", async (_req, res): Promise<void> => {
-  const projections = await db.select().from(projectionsTable).orderBy(projectionsTable.createdAt);
+router.get("/projections", async (req, res): Promise<void> => {
+  const ctx = await requireAuth(req, res);
+  if (!ctx) return;
+  const where = ctx.role === "admin"
+    ? undefined
+    : or(eq(projectionsTable.ownerId, ctx.userId), isNull(projectionsTable.ownerId));
+  const q = db.select().from(projectionsTable);
+  const projections = where
+    ? await q.where(where).orderBy(projectionsTable.createdAt)
+    : await q.orderBy(projectionsTable.createdAt);
   res.json(projections);
 });
 
 router.post("/projections", async (req, res): Promise<void> => {
+  const ctx = await requireAuth(req, res);
+  if (!ctx) return;
   const parsed = CreateProjectionBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  const [projection] = await db.insert(projectionsTable).values(parsed.data).returning();
+  const [projection] = await db
+    .insert(projectionsTable)
+    .values({ ...parsed.data, ownerId: ctx.userId })
+    .returning();
   res.status(201).json(projection);
 });
 
+async function loadOwnedProjection(id: number, ctx: { userId: string; role: string }) {
+  const [projection] = await db.select().from(projectionsTable).where(eq(projectionsTable.id, id));
+  if (!projection) return { projection: null as null, forbidden: false };
+  if (ctx.role !== "admin" && projection.ownerId && projection.ownerId !== ctx.userId) {
+    return { projection: null as null, forbidden: true };
+  }
+  return { projection, forbidden: false };
+}
+
 router.get("/projections/:id", async (req, res): Promise<void> => {
+  const ctx = await requireAuth(req, res);
+  if (!ctx) return;
   const params = GetProjectionParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
     return;
   }
-  const [projection] = await db.select().from(projectionsTable).where(eq(projectionsTable.id, params.data.id));
+  const { projection, forbidden } = await loadOwnedProjection(params.data.id, ctx);
+  if (forbidden) {
+    res.status(403).json({ error: "You do not have access to this projection" });
+    return;
+  }
   if (!projection) {
     res.status(404).json({ error: "Projection not found" });
     return;
@@ -43,6 +72,8 @@ router.get("/projections/:id", async (req, res): Promise<void> => {
 });
 
 router.put("/projections/:id", async (req, res): Promise<void> => {
+  const ctx = await requireAuth(req, res);
+  if (!ctx) return;
   const params = UpdateProjectionParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -53,11 +84,16 @@ router.put("/projections/:id", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  const [projection] = await db.update(projectionsTable).set(parsed.data).where(eq(projectionsTable.id, params.data.id)).returning();
-  if (!projection) {
+  const { projection: existing, forbidden } = await loadOwnedProjection(params.data.id, ctx);
+  if (forbidden) {
+    res.status(403).json({ error: "You do not have access to this projection" });
+    return;
+  }
+  if (!existing) {
     res.status(404).json({ error: "Projection not found" });
     return;
   }
+  const [projection] = await db.update(projectionsTable).set(parsed.data).where(eq(projectionsTable.id, params.data.id)).returning();
   res.json(projection);
 });
 
@@ -73,27 +109,40 @@ async function getCurrencyRate(currencyCode: string): Promise<number> {
 }
 
 router.delete("/projections/:id", async (req, res): Promise<void> => {
+  const ctx = await requireAuth(req, res);
+  if (!ctx) return;
   const params = DeleteProjectionParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
     return;
   }
-  const result = await db.delete(projectionsTable).where(eq(projectionsTable.id, params.data.id)).returning();
-  if (result.length === 0) {
+  const { projection: existing, forbidden } = await loadOwnedProjection(params.data.id, ctx);
+  if (forbidden) {
+    res.status(403).json({ error: "You do not have access to this projection" });
+    return;
+  }
+  if (!existing) {
     res.status(404).json({ error: "Projection not found" });
     return;
   }
+  await db.delete(projectionsTable).where(eq(projectionsTable.id, params.data.id));
   res.status(204).send();
 });
 
 router.get("/projections/:id/summary", async (req, res): Promise<void> => {
+  const ctx = await requireAuth(req, res);
+  if (!ctx) return;
   const params = GetProjectionSummaryParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
     return;
   }
 
-  const [projection] = await db.select().from(projectionsTable).where(eq(projectionsTable.id, params.data.id));
+  const { projection, forbidden } = await loadOwnedProjection(params.data.id, ctx);
+  if (forbidden) {
+    res.status(403).json({ error: "You do not have access to this projection" });
+    return;
+  }
   if (!projection) {
     res.status(404).json({ error: "Projection not found" });
     return;
