@@ -370,6 +370,13 @@ export const CreateQuotationBody = zod.object({
 });
 
 /**
+ * @summary Create a quotation seeded from a projection
+ */
+export const CreateQuotationFromProjectionParams = zod.object({
+  projectionId: zod.coerce.number(),
+});
+
+/**
  * @summary Get quotation with line items
  */
 export const GetQuotationParams = zod.object({

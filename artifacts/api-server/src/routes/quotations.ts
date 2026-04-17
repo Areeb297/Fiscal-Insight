@@ -1,6 +1,17 @@
 import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
-import { db, quotationsTable, quotationLineItemsTable } from "@workspace/db";
+import {
+  db,
+  quotationsTable,
+  quotationLineItemsTable,
+  projectionsTable,
+  employeesTable,
+  subscriptionsTable,
+  salesSupportResourcesTable,
+  ctcRulesTable,
+  currenciesTable,
+  systemSettingsTable,
+} from "@workspace/db";
 import {
   CreateQuotationBody,
   GetQuotationParams,
@@ -12,7 +23,9 @@ import {
   UpdateQuotationLineItemParams,
   UpdateQuotationLineItemBody,
   DeleteQuotationLineItemParams,
+  CreateQuotationFromProjectionParams,
 } from "@workspace/api-zod";
+import { computeScenario, normalizeMarginToFraction } from "../lib/summary";
 
 const router: IRouter = Router();
 
@@ -35,6 +48,122 @@ router.post("/quotations", async (req, res): Promise<void> => {
     return;
   }
   const [quotation] = await db.insert(quotationsTable).values(parsed.data).returning();
+  const result = await getQuotationWithLineItems(quotation.id);
+  res.status(201).json(result);
+});
+
+router.post("/quotations/from-projection/:projectionId", async (req, res): Promise<void> => {
+  const params = CreateQuotationFromProjectionParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+  const projectionId = params.data.projectionId;
+
+  const [projection] = await db.select().from(projectionsTable).where(eq(projectionsTable.id, projectionId));
+  if (!projection) {
+    res.status(404).json({ error: "Projection not found" });
+    return;
+  }
+
+  const [employees, subscriptions, salesResources, ctcRules, currencies, settingsRows] = await Promise.all([
+    db.select().from(employeesTable).where(eq(employeesTable.projectionId, projectionId)),
+    db.select().from(subscriptionsTable).where(eq(subscriptionsTable.projectionId, projectionId)),
+    db.select().from(salesSupportResourcesTable).where(eq(salesSupportResourcesTable.projectionId, projectionId)),
+    db.select().from(ctcRulesTable),
+    db.select().from(currenciesTable),
+    db.select().from(systemSettingsTable),
+  ]);
+
+  const settings = settingsRows[0];
+  const scenario = computeScenario({ projection, employees, subscriptions, salesResources, ctcRules, currencies });
+
+  const now = new Date();
+  const yyyy = now.getUTCFullYear();
+  const mm = String(now.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(now.getUTCDate()).padStart(2, "0");
+  const today = `${yyyy}-${mm}-${dd}`;
+  const compact = `${yyyy}${mm}${dd}`;
+  const prefix = settings?.quotationPrefix ?? "Q-";
+  const companyName = settings?.companyName ?? "Your Company";
+  const quotationNumber = `${prefix}${compact}-${String(projectionId).padStart(2, "0")}`;
+
+  const [quotation] = await db.insert(quotationsTable).values({
+    projectionId,
+    quotationNumber,
+    companyName,
+    clientName: `Client (${projection.yearLabel})`,
+    date: today,
+    status: "draft",
+  }).returning();
+
+  const lineItems: Array<{
+    quotationId: number;
+    sortOrder: number;
+    description: string;
+    quantity: number;
+    unit: string;
+    priceMonthly: number;
+    totalMonths: number;
+  }> = [];
+  let sortOrder = 0;
+
+  const numClients = projection.numClients ?? 0;
+  if (numClients > 0 && scenario.sellingPriceWithoutVat > 0) {
+    lineItems.push({
+      quotationId: quotation.id,
+      sortOrder: sortOrder++,
+      description: `Managed Services - Monthly Fee per Client (${projection.yearLabel})`,
+      quantity: numClients,
+      unit: "client",
+      priceMonthly: Math.round(scenario.sellingPriceWithoutVat * 100) / 100,
+      totalMonths: 12,
+    });
+  }
+
+  for (const r of salesResources) {
+    const ctcRule = ctcRules.find(
+      (rule) =>
+        rule.isActive &&
+        (rule.countryCode.toLowerCase() === r.country.toLowerCase() ||
+          rule.countryName.toLowerCase() === r.country.toLowerCase()),
+    );
+    const multiplier = ctcRule ? ctcRule.ctcMultiplier : 1.0;
+    const monthlyCost = r.salarySar * multiplier;
+    const marginFraction = normalizeMarginToFraction(r.marginPercent);
+    const sellingMonthly = marginFraction < 1 ? monthlyCost / (1 - marginFraction) : monthlyCost;
+    if (sellingMonthly <= 0) continue;
+    lineItems.push({
+      quotationId: quotation.id,
+      sortOrder: sortOrder++,
+      description: `Sales Support Resource - ${r.title} (${r.country})`,
+      quantity: 1,
+      unit: "resource",
+      priceMonthly: Math.round(sellingMonthly * 100) / 100,
+      totalMonths: r.months,
+    });
+  }
+
+  for (const sub of subscriptions) {
+    if (!sub.isOneTime) continue;
+    const rate = sub.currency === "SAR" ? 1.0 : (currencies.find((c) => c.code === sub.currency)?.rateToSar ?? 1.0);
+    const sarAmount = sub.originalPrice * rate;
+    if (sarAmount <= 0) continue;
+    lineItems.push({
+      quotationId: quotation.id,
+      sortOrder: sortOrder++,
+      description: `One-time: ${sub.name}`,
+      quantity: 1,
+      unit: "one-time",
+      priceMonthly: Math.round(sarAmount * 100) / 100,
+      totalMonths: 1,
+    });
+  }
+
+  if (lineItems.length > 0) {
+    await db.insert(quotationLineItemsTable).values(lineItems);
+  }
+
   const result = await getQuotationWithLineItems(quotation.id);
   res.status(201).json(result);
 });

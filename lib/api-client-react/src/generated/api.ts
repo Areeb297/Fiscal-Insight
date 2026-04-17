@@ -1803,6 +1803,93 @@ export const useCreateQuotation = <
 };
 
 /**
+ * @summary Create a quotation seeded from a projection
+ */
+export const getCreateQuotationFromProjectionUrl = (projectionId: number) => {
+  return `/api/quotations/from-projection/${projectionId}`;
+};
+
+export const createQuotationFromProjection = async (
+  projectionId: number,
+  options?: RequestInit,
+): Promise<QuotationWithLineItems> => {
+  return customFetch<QuotationWithLineItems>(
+    getCreateQuotationFromProjectionUrl(projectionId),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export const getCreateQuotationFromProjectionMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createQuotationFromProjection>>,
+    TError,
+    { projectionId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createQuotationFromProjection>>,
+  TError,
+  { projectionId: number },
+  TContext
+> => {
+  const mutationKey = ["createQuotationFromProjection"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createQuotationFromProjection>>,
+    { projectionId: number }
+  > = (props) => {
+    const { projectionId } = props ?? {};
+
+    return createQuotationFromProjection(projectionId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateQuotationFromProjectionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createQuotationFromProjection>>
+>;
+
+export type CreateQuotationFromProjectionMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Create a quotation seeded from a projection
+ */
+export const useCreateQuotationFromProjection = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createQuotationFromProjection>>,
+    TError,
+    { projectionId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createQuotationFromProjection>>,
+  TError,
+  { projectionId: number },
+  TContext
+> => {
+  return useMutation(getCreateQuotationFromProjectionMutationOptions(options));
+};
+
+/**
  * @summary Get quotation with line items
  */
 export const getGetQuotationUrl = (id: number) => {

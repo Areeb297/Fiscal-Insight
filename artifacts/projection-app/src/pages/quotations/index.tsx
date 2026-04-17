@@ -5,7 +5,12 @@ import { Plus, Edit2, FileText, MoreHorizontal, Trash } from "lucide-react";
 import { 
   useListQuotations, 
   getListQuotationsQueryKey,
-  useDeleteQuotation
+  useDeleteQuotation,
+  useCreateQuotationFromProjection,
+  useListProjections,
+  getListProjectionsQueryKey,
+  useGetProjectionSummary,
+  getGetProjectionSummaryQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -36,6 +41,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Sparkles } from "lucide-react";
 
 export default function QuotationsList() {
   const [, setLocation] = useLocation();
@@ -47,8 +62,48 @@ export default function QuotationsList() {
   });
 
   const deleteMutation = useDeleteQuotation();
-  
+  const createFromProjection = useCreateQuotationFromProjection();
+  const { data: projections } = useListProjections({
+    query: { queryKey: getListProjectionsQueryKey() },
+  });
+
   const [quotationToDelete, setQuotationToDelete] = useState<number | null>(null);
+  const [fromProjectionOpen, setFromProjectionOpen] = useState(false);
+  const [selectedProjectionId, setSelectedProjectionId] = useState<string>("");
+
+  const projectionIdNum = selectedProjectionId ? parseInt(selectedProjectionId) : 0;
+  const { data: previewSummary } = useGetProjectionSummary(projectionIdNum, {
+    query: {
+      enabled: !!projectionIdNum,
+      queryKey: getGetProjectionSummaryQueryKey(projectionIdNum),
+    },
+  });
+
+  const handleCreateFromProjection = () => {
+    if (!projectionIdNum) {
+      toast({ title: "Please select a projection", variant: "destructive" });
+      return;
+    }
+    createFromProjection.mutate(
+      { projectionId: projectionIdNum },
+      {
+        onSuccess: (result) => {
+          queryClient.invalidateQueries({ queryKey: getListQuotationsQueryKey() });
+          toast({ title: "Quotation created from projection" });
+          setFromProjectionOpen(false);
+          setSelectedProjectionId("");
+          setLocation(`/quotations/${result.id}`);
+        },
+        onError: (e: unknown) => {
+          const err = e as { message?: string };
+          toast({ title: "Failed to create quotation", description: err?.message ?? "Unknown error", variant: "destructive" });
+        },
+      },
+    );
+  };
+
+  const formatSar = (n: number) =>
+    new Intl.NumberFormat("en-SA", { style: "currency", currency: "SAR", maximumFractionDigits: 0 }).format(n);
 
   const handleDelete = () => {
     if (!quotationToDelete) return;
@@ -87,9 +142,14 @@ export default function QuotationsList() {
           <h1 className="text-3xl font-bold tracking-tight">Quotations</h1>
           <p className="text-muted-foreground mt-1">Manage client proposals and pricing</p>
         </div>
-        <Button onClick={() => setLocation("/quotations/new")}>
-          <Plus className="h-4 w-4 mr-2" /> Create Quotation
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setLocation("/quotations/new")}>
+            <Plus className="h-4 w-4 mr-2" /> New Quotation
+          </Button>
+          <Button onClick={() => setFromProjectionOpen(true)}>
+            <Sparkles className="h-4 w-4 mr-2" /> New From Projection
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -149,6 +209,62 @@ export default function QuotationsList() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={fromProjectionOpen} onOpenChange={(open) => { setFromProjectionOpen(open); if (!open) setSelectedProjectionId(""); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>New Quotation From Projection</DialogTitle>
+            <DialogDescription>
+              Pick a saved projection. Line items will be seeded from its computed numbers — you can still edit them after.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Projection</label>
+              <Select value={selectedProjectionId} onValueChange={setSelectedProjectionId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a projection..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {(projections ?? []).map((p) => (
+                    <SelectItem key={p.id} value={p.id.toString()}>
+                      Projection {p.yearLabel} — {p.numClients} clients @ {p.marginPercent}% margin
+                    </SelectItem>
+                  ))}
+                  {(!projections || projections.length === 0) && (
+                    <SelectItem value="none" disabled>No projections found</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+            {previewSummary && projectionIdNum > 0 && (
+              <div className="rounded-md border bg-muted/30 p-3 text-sm space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Per-client price (monthly, ex VAT):</span>
+                  <span className="font-medium tabular-nums">{formatSar(previewSummary.sellingPriceWithoutVat)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Number of clients:</span>
+                  <span className="font-medium tabular-nums">{previewSummary.projection.numClients}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Sales support resources:</span>
+                  <span className="font-medium tabular-nums">{previewSummary.salesSupportCount}</span>
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFromProjectionOpen(false)}>Cancel</Button>
+            <Button
+              onClick={handleCreateFromProjection}
+              disabled={!projectionIdNum || createFromProjection.isPending}
+            >
+              {createFromProjection.isPending ? "Creating..." : "Create Quotation"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={!!quotationToDelete} onOpenChange={(open) => !open && setQuotationToDelete(null)}>
         <AlertDialogContent>

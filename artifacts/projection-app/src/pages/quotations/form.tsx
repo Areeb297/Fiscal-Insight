@@ -25,6 +25,8 @@ import { ArrowLeft, Plus, Trash, Save, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { z } from "zod";
+import { pdf } from "@react-pdf/renderer";
+import { QuotationPdfDocument } from "./quotation-pdf";
 
 export default function QuotationForm() {
   const [, setLocation] = useLocation();
@@ -122,8 +124,33 @@ export default function QuotationForm() {
     }
   };
 
-  const handleExportPdf = () => {
-    window.print();
+  const handleExportPdf = async () => {
+    if (!quotation) return;
+    try {
+      const blob = await pdf(
+        <QuotationPdfDocument
+          quotationNumber={headerData.quotationNumber || quotation.quotationNumber}
+          companyName={headerData.companyName || quotation.companyName}
+          clientName={headerData.clientName || quotation.clientName}
+          date={headerData.date || quotation.date}
+          status={headerData.status || quotation.status}
+          lineItems={quotation.lineItems ?? []}
+          vatRate={settings?.vatRate ?? 15}
+          logoUrl={settings?.companyLogoUrl ?? null}
+        />,
+      ).toBlob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${headerData.quotationNumber || "quotation"}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      const err = e as { message?: string } | undefined;
+      toast({ title: "Failed to export PDF", description: err?.message ?? "Unknown error", variant: "destructive" });
+    }
   };
 
   const handleAddLineItem = () => {

@@ -432,6 +432,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/QuotationWithLineItems"
 
+  /quotations/from-projection/{projectionId}:
+    post:
+      operationId: createQuotationFromProjection
+      tags: [quotations]
+      summary: Create a quotation seeded from a projection
+      parameters:
+        - name: projectionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuotationWithLineItems"
+
   /quotations/{id}:
     get:
       operationId: getQuotation
