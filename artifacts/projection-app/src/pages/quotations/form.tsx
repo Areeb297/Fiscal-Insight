@@ -23,7 +23,8 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Plus, Trash, Save, Download, Zap } from "lucide-react";
+import { ArrowLeft, Plus, Trash, Save, Download, Zap, FileText, Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { z } from "zod";
@@ -134,23 +135,33 @@ export default function QuotationForm() {
     }
   };
 
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+
+  const buildPdfBlob = async () => {
+    if (!quotation) return null;
+    return await pdf(
+      <QuotationPdfDocument
+        quotationNumber={headerData.quotationNumber || quotation.quotationNumber}
+        companyName={headerData.companyName || quotation.companyName}
+        clientName={headerData.clientName || quotation.clientName}
+        date={headerData.date || quotation.date}
+        status={headerData.status || quotation.status}
+        lineItems={quotation.lineItems ?? []}
+        vatRate={settings?.vatRate ?? 0.15}
+        logoUrl={settings?.companyLogoUrl ?? null}
+        termsText={headerData.termsText ? headerData.termsText : null}
+        defaultTermsText={settings?.termsText ?? null}
+      />,
+    ).toBlob();
+  };
+
   const handleExportPdf = async () => {
     if (!quotation) return;
     try {
-      const blob = await pdf(
-        <QuotationPdfDocument
-          quotationNumber={headerData.quotationNumber || quotation.quotationNumber}
-          companyName={headerData.companyName || quotation.companyName}
-          clientName={headerData.clientName || quotation.clientName}
-          date={headerData.date || quotation.date}
-          status={headerData.status || quotation.status}
-          lineItems={quotation.lineItems ?? []}
-          vatRate={settings?.vatRate ?? 0.15}
-          logoUrl={settings?.companyLogoUrl ?? null}
-          termsText={headerData.termsText ? headerData.termsText : null}
-          defaultTermsText={settings?.termsText ?? null}
-        />,
-      ).toBlob();
+      const blob = await buildPdfBlob();
+      if (!blob) return;
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -164,6 +175,42 @@ export default function QuotationForm() {
       toast({ title: "Failed to export PDF", description: err?.message ?? "Unknown error", variant: "destructive" });
     }
   };
+
+  const handlePreviewPdf = async () => {
+    if (!quotation) return;
+    setPreviewOpen(true);
+    setIsPreviewLoading(true);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
+    try {
+      const blob = await buildPdfBlob();
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      setPreviewUrl(url);
+    } catch (e) {
+      const err = e as { message?: string } | undefined;
+      toast({ title: "Failed to render preview", description: err?.message ?? "Unknown error", variant: "destructive" });
+      setPreviewOpen(false);
+    } finally {
+      setIsPreviewLoading(false);
+    }
+  };
+
+  const handlePreviewOpenChange = (open: boolean) => {
+    setPreviewOpen(open);
+    if (!open && previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
   const handleAddLineItem = (preset: "recurring" | "one-time" = "recurring") => {
     if (isNew) {
@@ -432,9 +479,14 @@ export default function QuotationForm() {
             <Save className="h-4 w-4 mr-2" /> Save Details
           </Button>
           {!isNew && (
-            <Button variant="default" onClick={handleExportPdf}>
-              <Download className="h-4 w-4 mr-2" /> Export PDF
-            </Button>
+            <>
+              <Button variant="outline" onClick={handlePreviewPdf}>
+                <FileText className="h-4 w-4 mr-2" /> Preview PDF
+              </Button>
+              <Button variant="default" onClick={handleExportPdf}>
+                <Download className="h-4 w-4 mr-2" /> Export PDF
+              </Button>
+            </>
           )}
         </CardFooter>
       </Card>
@@ -559,6 +611,40 @@ export default function QuotationForm() {
           </CardContent>
         </Card>
       )}
+
+      <Dialog open={previewOpen} onOpenChange={handlePreviewOpenChange}>
+        <DialogContent className="max-w-5xl w-[95vw] h-[90vh] flex flex-col p-0 gap-0">
+          <DialogHeader className="p-4 border-b">
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-4 w-4" /> PDF Preview
+              <span className="text-xs font-normal text-muted-foreground ml-2">
+                Includes the terms diff appendix when terms differ from the default.
+              </span>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 bg-muted/30 overflow-hidden relative">
+            {isPreviewLoading || !previewUrl ? (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground gap-2">
+                <Loader2 className="h-6 w-6 animate-spin" />
+                <span className="text-sm">Rendering preview…</span>
+              </div>
+            ) : (
+              <iframe
+                key={previewUrl}
+                src={previewUrl}
+                title="Quotation PDF preview"
+                className="w-full h-full border-0"
+              />
+            )}
+          </div>
+          <DialogFooter className="p-4 border-t bg-muted/20">
+            <Button variant="outline" onClick={() => handlePreviewOpenChange(false)}>Close</Button>
+            <Button onClick={handleExportPdf} disabled={isPreviewLoading}>
+              <Download className="h-4 w-4 mr-2" /> Export PDF
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
