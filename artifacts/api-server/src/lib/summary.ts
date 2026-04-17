@@ -81,15 +81,20 @@ export function computeScenario(
     })),
   ];
 
+  let totalDeptCostMonthly = 0;
   let totalDeptCostYearly = 0;
+  let maxEmployeeMonths = 0;
   for (const emp of allEmployees) {
     const m = ctcMultiplier(emp.country, ctcRules);
     const allocFraction = (emp.allocationPercent ?? 100) / 100;
+    totalDeptCostMonthly += emp.salarySar * m * allocFraction;
     totalDeptCostYearly += emp.salarySar * m * emp.monthsFte * allocFraction;
+    if (emp.monthsFte > maxEmployeeMonths) maxEmployeeMonths = emp.monthsFte;
   }
+  const engagementMonths = maxEmployeeMonths > 0 ? maxEmployeeMonths : 12;
 
+  const costPerClientMonthly = numClients > 0 ? totalDeptCostMonthly / numClients : 0;
   const costPerClientYearly = numClients > 0 ? totalDeptCostYearly / numClients : 0;
-  const costPerClientMonthly = costPerClientYearly / 12;
 
   let recurringOverheadMonthly = extraMonthlyOverhead;
   let oneTimeCostsTotal = 0;
@@ -98,21 +103,23 @@ export function computeScenario(
     if (sub.isOneTime) oneTimeCostsTotal += sarAmount;
     else recurringOverheadMonthly += sarAmount;
   }
-  const totalOverheadYearly = recurringOverheadMonthly * 12 + oneTimeCostsTotal;
-  const totalOverheadMonthly = totalOverheadYearly / 12;
+  const totalOverheadMonthly =
+    recurringOverheadMonthly + (engagementMonths > 0 ? oneTimeCostsTotal / engagementMonths : 0);
+  const totalOverheadYearly = recurringOverheadMonthly * engagementMonths + oneTimeCostsTotal;
 
   const overheadPerClientMonthly = numClients > 0 ? totalOverheadMonthly / numClients : 0;
-  const overheadPerClientYearly = overheadPerClientMonthly * 12;
+  const overheadPerClientYearly = numClients > 0 ? totalOverheadYearly / numClients : 0;
   const totalMonthlyCostPerClient = costPerClientMonthly + overheadPerClientMonthly;
-  const totalYearlyCostPerClient = totalMonthlyCostPerClient * 12;
+  const totalYearlyCostPerClient = costPerClientYearly + overheadPerClientYearly;
   const marginFraction = normalizeMarginToFraction(marginPercent);
   const sellingPriceWithoutVat =
     marginFraction < 1 ? totalMonthlyCostPerClient / (1 - marginFraction) : totalMonthlyCostPerClient;
-  const sellingPriceWithoutVatYearly = sellingPriceWithoutVat * 12;
+  const sellingPriceWithoutVatYearly =
+    marginFraction < 1 ? totalYearlyCostPerClient / (1 - marginFraction) : totalYearlyCostPerClient;
   const marginSarMonthly = sellingPriceWithoutVat - totalMonthlyCostPerClient;
-  const marginSarYearly = marginSarMonthly * 12;
+  const marginSarYearly = sellingPriceWithoutVatYearly - totalYearlyCostPerClient;
   const sellingPriceWithVatMonthly = sellingPriceWithoutVat * 1.15;
-  const sellingPriceWithVatYearly = sellingPriceWithVatMonthly * 12;
+  const sellingPriceWithVatYearly = sellingPriceWithoutVatYearly * 1.15;
 
   let salesSupportTotalCost = 0;
   let salesSupportMarginFraction = 0.30;
@@ -135,7 +142,9 @@ export function computeScenario(
       extraMonthlyOverhead,
       addedEmployees: overrides.addEmployees ?? [],
     },
+    totalDeptCostMonthly,
     totalDeptCostYearly,
+    engagementMonths,
     costPerClientYearly,
     costPerClientMonthly,
     totalOverheadMonthly,

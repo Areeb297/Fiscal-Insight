@@ -38,15 +38,16 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Dept Cost (Yearly)</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total Dept Cost (Engagement)</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{formatCurrency(summary.recentProjection.totalDeptCostYearly)}</div>
+              <div className="text-xs text-muted-foreground mt-1">{summary.recentProjection.engagementMonths} mo · {formatCurrency(summary.recentProjection.totalDeptCostMonthly)} / mo</div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Cost per Client (Yearly)</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Cost per Client (Engagement)</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{formatCurrency(summary.recentProjection.costPerClientYearly)}</div>
@@ -54,7 +55,7 @@ export default function Dashboard() {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Selling Price (Yearly)</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Selling Price (Engagement)</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{formatCurrency(summary.recentProjection.sellingPriceWithVatYearly)}</div>

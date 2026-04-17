@@ -109,7 +109,21 @@ export const GetProjectionSummaryResponse = zod.object({
     createdAt: zod.string(),
     updatedAt: zod.string(),
   }),
-  totalDeptCostYearly: zod.number(),
+  totalDeptCostMonthly: zod
+    .number()
+    .describe(
+      "Sum of (salary x CTC x allocation%) across employees - the team's monthly run-rate while engaged.",
+    ),
+  engagementMonths: zod
+    .number()
+    .describe(
+      "Engagement length in months (max of all employees' monthsFte; defaults to 12 when there are no employees). Used to amortize one-time overheads and to compute engagement totals.",
+    ),
+  totalDeptCostYearly: zod
+    .number()
+    .describe(
+      "Engagement total dept cost = sum of (salary x CTC x months x allocation%).",
+    ),
   costPerClientYearly: zod.number(),
   costPerClientMonthly: zod.number(),
   totalOverheadMonthly: zod.number(),
@@ -776,7 +790,21 @@ export const GetDashboardSummaryResponse = zod.object({
         createdAt: zod.string(),
         updatedAt: zod.string(),
       }),
-      totalDeptCostYearly: zod.number(),
+      totalDeptCostMonthly: zod
+        .number()
+        .describe(
+          "Sum of (salary x CTC x allocation%) across employees - the team's monthly run-rate while engaged.",
+        ),
+      engagementMonths: zod
+        .number()
+        .describe(
+          "Engagement length in months (max of all employees' monthsFte; defaults to 12 when there are no employees). Used to amortize one-time overheads and to compute engagement totals.",
+        ),
+      totalDeptCostYearly: zod
+        .number()
+        .describe(
+          "Engagement total dept cost = sum of (salary x CTC x months x allocation%).",
+        ),
       costPerClientYearly: zod.number(),
       costPerClientMonthly: zod.number(),
       totalOverheadMonthly: zod.number(),

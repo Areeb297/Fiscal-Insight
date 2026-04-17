@@ -52,7 +52,13 @@ Financial projection and cost management application for the Ebttikar department
 - Default currency is SAR; all amounts auto-converted using admin exchange rates
 - VAT is fixed at 15% on quotations
 - Selling price = total cost / (1 - margin%)
-- Resource cost (employees & sales support) = salary × CTC multiplier × months × (allocation % ÷ 100). Allocation % defaults to 100 (full-time). Use lower values for partial involvement (e.g. PM at 10%).
+- Resource cost model (DURATION model — adopted Apr 2026):
+  - **Monthly run-rate** per employee = `salary × CTC × (allocation% / 100)` — what the team costs each month they are engaged.
+  - **Engagement total** per employee = `salary × CTC × months × (allocation% / 100)` — what is committed for the whole engagement.
+  - `engagementMonths` for a projection = max `monthsFte` across all its employees (defaults to 12 when there are no employees). Used to amortize one-time overheads and to compute "engagement total" rollups.
+  - Per-client monthly cost = total monthly dept cost / numClients; selling price (monthly) = per-client monthly / (1 − margin%).
+  - Per-client engagement cost = total engagement dept cost / numClients; selling price (engagement) = per-client engagement / (1 − margin%).
+  - Sales support resources use the same allocation rule for their own line totals, but `months` here is the resource's own contract length, independent of the dept engagement.
 
 ## Key Commands
 

@@ -121,15 +121,16 @@ router.post("/quotations/from-projection/:projectionId", async (req, res): Promi
   let sortOrder = 0;
 
   const numClients = projection.numClients ?? 0;
+  const engagementMonths = scenario.engagementMonths || 12;
   if (numClients > 0 && scenario.sellingPriceWithoutVat > 0) {
     lineItems.push({
       quotationId: quotation.id,
       sortOrder: sortOrder++,
-      description: `Managed Services - Monthly Fee per Client (${projection.yearLabel})`,
+      description: `Managed Services - Monthly Fee per Client (${projection.yearLabel}, ${engagementMonths}-month engagement)`,
       quantity: numClients,
       unit: "client",
       priceMonthly: Math.round(scenario.sellingPriceWithoutVat * 100) / 100,
-      totalMonths: 12,
+      totalMonths: engagementMonths,
     });
   }
 

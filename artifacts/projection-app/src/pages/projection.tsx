@@ -312,17 +312,19 @@ export default function Projection() {
           </div>
         </div>
         {summary && (() => {
-          const totalCostMonthly = (summary.totalDeptCostYearly + summary.totalOverheadYearly) / 12;
-          const totalCostYearly = summary.totalDeptCostYearly + summary.totalOverheadYearly;
+          const totalCostMonthly = summary.totalDeptCostMonthly + summary.totalOverheadMonthly;
+          const totalCostEngagement = summary.totalDeptCostYearly + summary.totalOverheadYearly;
           const vatMonthly = summary.sellingPriceWithVatMonthly - summary.sellingPriceWithoutVat;
-          const vatYearly = summary.sellingPriceWithVatYearly - summary.sellingPriceWithoutVatYearly;
+          const vatEngagement = summary.sellingPriceWithVatYearly - summary.sellingPriceWithoutVatYearly;
+          const months = summary.engagementMonths;
+          const engUnit = months === 1 ? "month" : `${months} mo`;
           return (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
               <Card className="border-l-4 border-l-slate-400 dark:border-l-slate-500">
                 <CardContent className="pt-5 pb-4">
                   <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Department Cost</div>
-                  <div className="mt-2 text-2xl font-bold tabular-nums">{formatCurrency(totalCostYearly)}<span className="text-xs font-medium text-muted-foreground ml-1">/ yr</span></div>
-                  <div className="text-xs text-muted-foreground mt-1 tabular-nums">{formatCurrency(totalCostMonthly)} / month</div>
+                  <div className="mt-2 text-2xl font-bold tabular-nums">{formatCurrency(totalCostMonthly)}<span className="text-xs font-medium text-muted-foreground ml-1">/ mo</span></div>
+                  <div className="text-xs text-muted-foreground mt-1 tabular-nums">{formatCurrency(totalCostEngagement)} over {engUnit}</div>
                   <div className="text-[10px] text-muted-foreground mt-1.5">All team salaries + overheads (what we spend)</div>
                 </CardContent>
               </Card>
@@ -336,18 +338,18 @@ export default function Projection() {
               </Card>
               <Card className="border-l-4 border-l-primary">
                 <CardContent className="pt-5 pb-4">
-                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Revenue (Yearly)</div>
-                  <div className="mt-2 text-2xl font-bold text-primary tabular-nums">{formatCurrency(summary.sellingPriceWithoutVatYearly * (activeProjection?.numClients || 1))}<span className="text-xs font-medium text-muted-foreground ml-1">/ yr</span></div>
+                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Revenue (Engagement)</div>
+                  <div className="mt-2 text-2xl font-bold text-primary tabular-nums">{formatCurrency(summary.sellingPriceWithoutVatYearly * (activeProjection?.numClients || 1))}<span className="text-xs font-medium text-muted-foreground ml-1">/ {engUnit}</span></div>
                   <div className="text-xs text-muted-foreground mt-1 tabular-nums">{formatCurrency(summary.sellingPriceWithoutVatYearly)} × {activeProjection?.numClients} clients</div>
-                  <div className="text-[10px] text-muted-foreground mt-1.5">Selling price excl. VAT, all clients combined</div>
+                  <div className="text-[10px] text-muted-foreground mt-1.5">Selling price excl. VAT over the {engUnit} engagement</div>
                 </CardContent>
               </Card>
               <Card className="border-l-4 border-l-amber-500">
                 <CardContent className="pt-5 pb-4">
                   <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">VAT (15%)</div>
-                  <div className="mt-2 text-2xl font-bold text-amber-600 dark:text-amber-400 tabular-nums">{formatCurrency(vatYearly * (activeProjection?.numClients || 1))}<span className="text-xs font-medium text-muted-foreground ml-1">/ yr</span></div>
+                  <div className="mt-2 text-2xl font-bold text-amber-600 dark:text-amber-400 tabular-nums">{formatCurrency(vatEngagement * (activeProjection?.numClients || 1))}<span className="text-xs font-medium text-muted-foreground ml-1">/ {engUnit}</span></div>
                   <div className="text-xs text-muted-foreground mt-1 tabular-nums">{formatCurrency(vatMonthly * (activeProjection?.numClients || 1))} / month</div>
-                  <div className="text-[10px] text-muted-foreground mt-1.5">Charge incl. VAT: <span className="tabular-nums font-medium">{formatCurrency(summary.sellingPriceWithVatYearly * (activeProjection?.numClients || 1))}</span> / yr</div>
+                  <div className="text-[10px] text-muted-foreground mt-1.5">Charge incl. VAT: <span className="tabular-nums font-medium">{formatCurrency(summary.sellingPriceWithVatYearly * (activeProjection?.numClients || 1))}</span> / {engUnit}</div>
                 </CardContent>
               </Card>
             </div>
@@ -489,11 +491,11 @@ export default function Projection() {
               <TableFooter>
                 <TableRow>
                   <TableCell colSpan={7} className="text-right font-bold">Grand Total Monthly:</TableCell>
-                  <TableCell className="text-right font-bold tabular-nums">{formatCurrency((summary?.totalDeptCostYearly || 0) / 12)}</TableCell>
+                  <TableCell className="text-right font-bold tabular-nums">{formatCurrency(summary?.totalDeptCostMonthly || 0)}</TableCell>
                   <TableCell></TableCell>
                 </TableRow>
                 <TableRow>
-                  <TableCell colSpan={7} className="text-right font-bold">Grand Total Yearly:</TableCell>
+                  <TableCell colSpan={7} className="text-right font-bold">Grand Total (Engagement{summary?.engagementMonths ? ` · ${summary.engagementMonths} mo` : ""}):</TableCell>
                   <TableCell className="text-right font-bold text-primary tabular-nums">{formatCurrency(summary?.totalDeptCostYearly || 0)}</TableCell>
                   <TableCell></TableCell>
                 </TableRow>
@@ -624,7 +626,7 @@ export default function Projection() {
               <div className="grid grid-cols-[1.4fr_1fr_1fr] bg-primary-foreground/10 text-[10px] font-bold uppercase tracking-wider text-primary-foreground/80">
                 <div className="px-3 py-2">Breakdown</div>
                 <div className="px-3 py-2 text-right">Monthly</div>
-                <div className="px-3 py-2 text-right">Yearly</div>
+                <div className="px-3 py-2 text-right">Engagement{summary?.engagementMonths ? ` (${summary.engagementMonths} mo)` : ""}</div>
               </div>
               <div className="divide-y divide-primary-foreground/10">
                 <div className="grid grid-cols-[1.4fr_1fr_1fr] items-center">

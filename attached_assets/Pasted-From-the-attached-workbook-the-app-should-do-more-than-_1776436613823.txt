@@ -1,0 +1,549 @@
+From the attached workbook, the app should do more than just show totals. It needs to reproduce the calculation behavior, allocation logic, and quotation flow of the Excel model, while also fixing a few gaps that exist in that workbook.
+
+Biggest things to change
+1. Add a real projection engine, not just UI totals
+
+Your app should calculate from structured rules:
+
+team cost
+
+recurring overheads
+
+one-time costs
+
+managed services resources
+
+client count allocation
+
+margin
+
+VAT
+
+quotation output
+
+Right now the dashboard looks more like a calculator. To match the Excel properly, it should behave like a small financial model.
+
+2. Support three different cost types
+
+The Excel model clearly separates:
+
+core department/team cost
+
+recurring overheads/subscriptions
+
+one-time costs
+
+managed services / sales support
+
+Your app should keep these separate in data model and UI, then combine them in pricing.
+
+Recommended entities:
+
+DepartmentEmployee
+
+RecurringOverhead
+
+OneTimeCost
+
+ManagedServiceResource
+
+ProjectionScenario
+
+QuotationLine
+
+3. Add allocation % / involvement % for managed services
+
+This is the most important new feature you mentioned.
+
+For managed services rows, add:
+
+Allocation %
+
+Billable %
+
+Start month
+
+End month or duration
+
+Margin %
+
+Optional: role category
+
+Example:
+
+PM = 10%
+
+.NET = 100%
+
+Support = 25%
+
+Formula should be:
+
+Allocated Cost = CTC × Months × Allocation %
+
+Then:
+
+Selling Price = Allocated Cost / (1 - Margin %)
+
+Without this, the app will overcharge partial-use resources.
+
+4. Add country-to-CTC logic
+
+The workbook uses a CTC rule based on country.
+
+It appears to behave like this:
+
+Saudi → Salary × 1.5
+
+Pakistan → Salary × 1.0
+
+That means your app should not store only salary. It should support:
+
+base salary
+
+burden/multiplier rule
+
+computed CTC
+
+Better design:
+
+country
+
+burden factor
+
+optional override CTC
+
+computed CTC preview
+
+That way, if Saudi changes from 1.5 to 1.35 later, finance can update it without code change.
+
+5. Add include/exclude toggles on every row
+
+The Excel model has “Include?” logic. The app should support:
+
+enabled / disabled employees
+
+enabled / disabled overheads
+
+enabled / disabled managed services rows
+
+This is needed for scenario planning.
+
+Example use:
+
+with PM
+
+without PM
+
+with hosting
+
+without one-time onboarding
+
+6. Add start month / active period instead of only “months”
+
+Just having Months = 12 is not enough.
+
+You need:
+
+start month
+
+duration
+
+optional end month
+
+Example:
+
+PM active months 1–3 at 10%
+
+.NET active months 1–12 at 100%
+
+Support engineer active months 4–12 at 25%
+
+This lets the model behave closer to real delivery.
+
+7. Separate contract-wide costs from per-client costs
+
+This is very important.
+
+A good projection app should explicitly know whether a cost is:
+
+shared across all clients
+
+per client
+
+per project
+
+one-time implementation
+
+monthly retained service
+
+Because otherwise the model becomes inconsistent.
+
+Recommended field:
+
+AllocationBasis
+
+SharedAcrossClients
+
+PerClient
+
+PerProject
+
+OneTimeSetup
+
+8. Fix cost allocation logic before copying Excel blindly
+
+The workbook has behavior worth replicating, but also behavior worth correcting.
+
+One example from the workbook logic:
+
+team cost is divided by number of clients for per-client costing
+
+but monthly overhead appears to be added as a total monthly amount rather than first being divided by client count
+
+That may be intentional, or it may be a modeling mistake. You should decide this explicitly in the app rather than inheriting it silently.
+
+So in the app, every cost row should have:
+
+allocation basis
+
+amortization method
+
+whether it is shared or client-specific
+
+9. Add one-time cost amortization settings
+
+Right now one-time costs are being spread across the year.
+
+That should be configurable.
+
+For each one-time cost, allow:
+
+charge fully upfront
+
+amortize over 3 months
+
+amortize over 6 months
+
+amortize over 12 months
+
+exclude from monthly charge and show separately in quotation
+
+This is very useful commercially.
+
+10. Add a proper quotation builder
+
+The workbook has a quotation sheet linked to the model. Your app should generate quotation lines automatically from the active scenario.
+
+Recommended quotation sections:
+
+implementation / setup
+
+licenses / subscriptions
+
+managed services
+
+support / SLA
+
+VAT
+
+grand total
+
+And let the user decide:
+
+monthly quotation
+
+yearly quotation
+
+one-time + recurring quotation
+
+grouped by category or detailed by role
+
+What the app should show on the dashboard
+
+A stronger financial projection dashboard should show:
+
+Summary cards
+
+Total annual cost
+
+Total monthly cost
+
+Recommended price ex. VAT
+
+Recommended price incl. VAT
+
+Gross margin SAR
+
+Gross margin %
+
+One-time setup charge
+
+Monthly recurring charge
+
+Breakdown tables
+
+Core team
+
+Overheads
+
+One-time costs
+
+Managed services
+
+Per-client economics
+
+Shared cost vs client-specific cost
+
+Scenario controls
+
+Number of clients
+
+Margin %
+
+SAR/USD rate
+
+Contract duration
+
+amortization period
+
+country multiplier settings
+
+Features needed to truly replicate Excel behavior
+P0
+
+allocation % for managed services
+
+include/exclude toggles
+
+country-based CTC logic
+
+one-time vs recurring cost separation
+
+quotation generation
+
+correct per-client allocation rules
+
+P1
+
+start/end month scheduling
+
+scenario save/load
+
+duplicate scenario
+
+version history
+
+export to Excel/PDF
+
+assumptions panel
+
+P2
+
+sensitivity analysis
+
+break-even client count
+
+target-price reverse calculator
+
+utilization heatmap by month
+
+margin waterfall chart
+
+Recommended formulas to standardize in the app
+Core employee
+
+CTC = Salary × CountryMultiplier
+
+EmployeeTotal = CTC × Months
+
+Shared department cost per client
+
+DeptCostPerClient = TotalDeptCost / NumberOfClients
+
+Recurring overhead
+
+RecurringYearly = MonthlyRecurring × 12
+
+One-time amortized monthly
+
+OneTimeMonthly = OneTimeTotal / AmortizationMonths
+
+Managed service allocated cost
+
+ManagedAllocatedCost = CTC × Months × Allocation%
+
+Total cost
+
+TotalCost = Team + Overheads + OneTime + ManagedServices
+
+Selling price ex. VAT
+
+SellingPrice = TotalCost / (1 - Margin%)
+
+VAT
+
+VAT = SellingPrice × VAT%
+
+Selling price incl. VAT
+
+GrossPrice = SellingPrice + VAT
+
+Data fields I would add immediately
+Department employee
+
+Include
+
+Name
+
+Role
+
+Country
+
+Salary
+
+Country multiplier
+
+CTC
+
+Months
+
+Start month
+
+End month
+
+Notes
+
+Overhead
+
+Include
+
+Name
+
+Type: recurring / one-time
+
+Currency
+
+Original amount
+
+FX rate
+
+SAR amount
+
+Allocation basis
+
+Amortization months
+
+Managed service resource
+
+Include
+
+Title
+
+Country
+
+Salary
+
+Country multiplier
+
+CTC
+
+Start month
+
+Duration
+
+Allocation %
+
+Billable %
+
+Margin %
+
+Allocation basis
+
+Total cost
+
+Selling price
+
+Best UX changes
+
+Show formula tooltip when hovering any calculated number
+
+Show “why this number changed” when user edits a row
+
+Highlight user inputs vs computed values
+
+Add scenario comparison: Base / Aggressive / Conservative
+
+Add warnings:
+
+margin too low
+
+zero clients
+
+duration mismatch
+
+one-time cost not billed
+
+managed resource with 0% allocation
+
+What I would change in your app specifically
+
+Keep the current dashboard.
+
+Add a new Assumptions & Logic panel.
+
+Split costs into:
+
+Department
+
+Overheads
+
+One-Time
+
+Managed Services
+
+Add Allocation % and Active Months to managed services.
+
+Add Quotation Preview as a separate tab.
+
+Add Scenario Save / Duplicate.
+
+Add monthly timeline view for resource allocations.
+
+Recommended PRD additions
+
+Add these sections:
+
+Resource allocation-based pricing
+
+amortization policy for one-time costs
+
+shared vs client-specific allocation basis
+
+country burden-factor logic
+
+quotation generation rules
+
+scenario planning and comparison
+
+formula auditability and traceability
+
+Recommended scope additions
+
+Include:
+
+backend financial calculation service
+
+managed services allocation module
+
+quotation generation module
+
+assumptions/configuration master data
+
+scenario persistence
+
+validation and formula audit trail
+
+exports
+
+The most important next step is to define the single source of truth formulas before building more UI, because otherwise the dashboard will keep looking right while calculating the wrong commercial values.

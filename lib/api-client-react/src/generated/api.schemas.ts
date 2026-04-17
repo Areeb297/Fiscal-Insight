@@ -325,6 +325,11 @@ export interface ChatMessageResponse {
 
 export interface ProjectionSummary {
   projection: Projection;
+  /** Sum of (salary x CTC x allocation%) across employees - the team's monthly run-rate while engaged. */
+  totalDeptCostMonthly: number;
+  /** Engagement length in months (max of all employees' monthsFte; defaults to 12 when there are no employees). Used to amortize one-time overheads and to compute engagement totals. */
+  engagementMonths: number;
+  /** Engagement total dept cost = sum of (salary x CTC x months x allocation%). */
   totalDeptCostYearly: number;
   costPerClientYearly: number;
   costPerClientMonthly: number;
