@@ -141,14 +141,17 @@ router.post("/quotations/from-projection/:projectionId", async (req, res): Promi
           rule.countryName.toLowerCase() === r.country.toLowerCase()),
     );
     const multiplier = ctcRule ? ctcRule.ctcMultiplier : 1.0;
-    const monthlyCost = r.salarySar * multiplier;
+    const allocationPercent = r.allocationPercent ?? 100;
+    const allocationFraction = allocationPercent / 100;
+    const monthlyCost = r.salarySar * multiplier * allocationFraction;
     const marginFraction = normalizeMarginToFraction(r.marginPercent);
     const sellingMonthly = marginFraction < 1 ? monthlyCost / (1 - marginFraction) : monthlyCost;
     if (sellingMonthly <= 0) continue;
+    const allocationLabel = allocationPercent < 100 ? `, ${allocationPercent}% allocation` : "";
     lineItems.push({
       quotationId: quotation.id,
       sortOrder: sortOrder++,
-      description: `Sales Support Resource - ${r.title} (${r.country})`,
+      description: `Sales Support Resource - ${r.title} (${r.country}${allocationLabel})`,
       quantity: 1,
       unit: "resource",
       priceMonthly: Math.round(sellingMonthly * 100) / 100,
