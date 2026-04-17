@@ -240,6 +240,11 @@ export default function Projection() {
     return frac < 1 ? cost / (1 - frac) : cost;
   };
 
+  const normalizeMarginToFractionUI = (raw: number) => {
+    if (!Number.isFinite(raw) || raw <= 0) return 0;
+    return raw > 1 ? raw / 100 : raw;
+  };
+
   if (isLoadingProjections) {
     return <div className="p-8 space-y-8"><Skeleton className="h-12 w-1/3" /><Skeleton className="h-[400px] w-full" /></div>;
   }
@@ -263,15 +268,20 @@ export default function Projection() {
           <p className="text-muted-foreground mt-1">Manage departmental costs, margins, and client economics</p>
         </div>
         {summary && (
-          <div className="flex items-center gap-4 bg-muted/50 p-2 rounded-lg border border-border">
-            <div className="px-4 py-1 text-center">
-              <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Total Cost</div>
-              <div className="font-bold text-primary">{formatCurrency(summary.totalDeptCostYearly)}</div>
+          <div className="flex items-stretch gap-0 bg-muted/50 rounded-lg border border-border overflow-hidden">
+            <div className="px-4 py-2 text-center">
+              <div className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Total Cost / Yr</div>
+              <div className="font-bold text-foreground tabular-nums">{formatCurrency(summary.totalDeptCostYearly)}</div>
             </div>
-            <div className="w-px h-8 bg-border"></div>
-            <div className="px-4 py-1 text-center">
-              <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Selling Price (Yearly)</div>
-              <div className="font-bold text-primary">{formatCurrency(summary.sellingPriceWithoutVatYearly)}</div>
+            <div className="w-px bg-border"></div>
+            <div className="px-4 py-2 text-center">
+              <div className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Selling Price / Yr</div>
+              <div className="font-bold text-primary tabular-nums">{formatCurrency(summary.sellingPriceWithoutVatYearly)}</div>
+            </div>
+            <div className="w-px bg-border"></div>
+            <div className="px-4 py-2 text-center">
+              <div className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Margin / Yr</div>
+              <div className="font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">{formatCurrency(summary.marginSarYearly)}</div>
             </div>
           </div>
         )}
@@ -482,53 +492,70 @@ export default function Projection() {
         </Card>
 
         {/* Client Economics Summary */}
-        <Card className="bg-primary text-primary-foreground">
-          <CardHeader>
-            <CardTitle>Per-Client Economics</CardTitle>
-            <CardDescription className="text-primary-foreground/70">Calculated based on {projections?.[0]?.numClients} clients</CardDescription>
+        <Card className="bg-primary text-primary-foreground border-primary/40 shadow-lg">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center justify-between">
+              <span>Per-Client Economics</span>
+              <span className="text-xs font-medium px-2 py-1 rounded-full bg-primary-foreground/15 text-primary-foreground/90">
+                {projections?.[0]?.numClients} client{(projections?.[0]?.numClients || 0) === 1 ? "" : "s"} · {Math.round((normalizeMarginToFractionUI(projections?.[0]?.marginPercent || 0)) * 100)}% margin
+              </span>
+            </CardTitle>
+            <CardDescription className="text-primary-foreground/70">
+              Recommended price to charge per client to hit your target margin
+            </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="rounded-lg border border-primary-foreground/20 overflow-hidden">
-              <div className="grid grid-cols-3 bg-primary-foreground/10 text-xs font-semibold uppercase tracking-wider">
-                <div className="px-4 py-2">Metric</div>
-                <div className="px-4 py-2 text-right">Monthly</div>
-                <div className="px-4 py-2 text-right">Yearly</div>
+          <CardContent className="space-y-4">
+            {/* Hero callout */}
+            <div className="rounded-xl bg-primary-foreground/15 backdrop-blur-sm p-5 border border-primary-foreground/20">
+              <div className="text-xs uppercase tracking-wider font-semibold text-primary-foreground/70 mb-2">
+                Recommended Selling Price (ex. VAT)
               </div>
-              <div className="divide-y divide-primary-foreground/15 text-sm">
-                <div className="grid grid-cols-3 items-center">
-                  <div className="px-4 py-2 text-primary-foreground/80">Cost / Client</div>
-                  <div className="px-4 py-2 text-right font-medium">{formatCurrency(summary?.costPerClientMonthly || 0)}</div>
-                  <div className="px-4 py-2 text-right font-medium">{formatCurrency(summary?.costPerClientYearly || 0)}</div>
+              <div className="flex items-baseline gap-3 flex-wrap">
+                <div className="text-4xl font-bold tabular-nums">
+                  {formatCurrency(summary?.sellingPriceWithoutVat || 0)}
                 </div>
-                <div className="grid grid-cols-3 items-center">
-                  <div className="px-4 py-2 text-primary-foreground/80">Overhead / Client</div>
-                  <div className="px-4 py-2 text-right font-medium">{formatCurrency(summary?.overheadPerClientMonthly || 0)}</div>
-                  <div className="px-4 py-2 text-right font-medium">{formatCurrency(summary?.overheadPerClientYearly || 0)}</div>
+                <div className="text-sm text-primary-foreground/70">/ client / month</div>
+              </div>
+              <div className="mt-2 flex items-center gap-3 text-xs text-primary-foreground/80 flex-wrap">
+                <span>= <strong className="tabular-nums">{formatCurrency(summary?.sellingPriceWithoutVatYearly || 0)}</strong> / yr</span>
+                <span className="text-primary-foreground/40">·</span>
+                <span>incl. 15% VAT: <strong className="tabular-nums">{formatCurrency(summary?.sellingPriceWithVatMonthly || 0)}</strong> /mo</span>
+              </div>
+            </div>
+
+            {/* Breakdown table */}
+            <div className="rounded-lg border border-primary-foreground/20 overflow-hidden text-sm">
+              <div className="grid grid-cols-[1.4fr_1fr_1fr] bg-primary-foreground/10 text-[10px] font-bold uppercase tracking-wider text-primary-foreground/80">
+                <div className="px-3 py-2">Breakdown</div>
+                <div className="px-3 py-2 text-right">Monthly</div>
+                <div className="px-3 py-2 text-right">Yearly</div>
+              </div>
+              <div className="divide-y divide-primary-foreground/10">
+                <div className="grid grid-cols-[1.4fr_1fr_1fr] items-center">
+                  <div className="px-3 py-2 text-primary-foreground/80">Team cost / client</div>
+                  <div className="px-3 py-2 text-right tabular-nums">{formatCurrency(summary?.costPerClientMonthly || 0)}</div>
+                  <div className="px-3 py-2 text-right tabular-nums">{formatCurrency(summary?.costPerClientYearly || 0)}</div>
                 </div>
-                <div className="grid grid-cols-3 items-center bg-primary-foreground/5">
-                  <div className="px-4 py-2 font-semibold">Total Cost / Client</div>
-                  <div className="px-4 py-2 text-right font-semibold">{formatCurrency(summary?.totalMonthlyCostPerClient || 0)}</div>
-                  <div className="px-4 py-2 text-right font-semibold">{formatCurrency(summary?.totalYearlyCostPerClient || 0)}</div>
+                <div className="grid grid-cols-[1.4fr_1fr_1fr] items-center">
+                  <div className="px-3 py-2 text-primary-foreground/80">Overhead / client</div>
+                  <div className="px-3 py-2 text-right tabular-nums">{formatCurrency(summary?.overheadPerClientMonthly || 0)}</div>
+                  <div className="px-3 py-2 text-right tabular-nums">{formatCurrency(summary?.overheadPerClientYearly || 0)}</div>
                 </div>
-                <div className="grid grid-cols-3 items-center bg-primary-foreground/20">
-                  <div className="px-4 py-3 font-bold">Selling Price (ex. VAT)</div>
-                  <div className="px-4 py-3 text-right text-lg font-bold">{formatCurrency(summary?.sellingPriceWithoutVat || 0)}</div>
-                  <div className="px-4 py-3 text-right text-lg font-bold">{formatCurrency(summary?.sellingPriceWithoutVatYearly || 0)}</div>
+                <div className="grid grid-cols-[1.4fr_1fr_1fr] items-center bg-primary-foreground/10">
+                  <div className="px-3 py-2 font-semibold">Total cost / client</div>
+                  <div className="px-3 py-2 text-right font-semibold tabular-nums">{formatCurrency(summary?.totalMonthlyCostPerClient || 0)}</div>
+                  <div className="px-3 py-2 text-right font-semibold tabular-nums">{formatCurrency(summary?.totalYearlyCostPerClient || 0)}</div>
                 </div>
-                <div className="grid grid-cols-3 items-center">
-                  <div className="px-4 py-2 text-primary-foreground/80">Margin (SAR)</div>
-                  <div className="px-4 py-2 text-right font-medium">{formatCurrency(summary?.marginSarMonthly || 0)}</div>
-                  <div className="px-4 py-2 text-right font-medium">{formatCurrency(summary?.marginSarYearly || 0)}</div>
-                </div>
-                <div className="grid grid-cols-3 items-center">
-                  <div className="px-4 py-2 text-primary-foreground/80">Selling Price (incl. 15% VAT)</div>
-                  <div className="px-4 py-2 text-right font-medium">{formatCurrency(summary?.sellingPriceWithVatMonthly || 0)}</div>
-                  <div className="px-4 py-2 text-right font-medium">{formatCurrency(summary?.sellingPriceWithVatYearly || 0)}</div>
+                <div className="grid grid-cols-[1.4fr_1fr_1fr] items-center">
+                  <div className="px-3 py-2 text-primary-foreground/80">Margin (SAR)</div>
+                  <div className="px-3 py-2 text-right font-medium text-emerald-200 tabular-nums">{formatCurrency(summary?.marginSarMonthly || 0)}</div>
+                  <div className="px-3 py-2 text-right font-medium text-emerald-200 tabular-nums">{formatCurrency(summary?.marginSarYearly || 0)}</div>
                 </div>
               </div>
             </div>
+
             {(summary?.oneTimeCostsTotal || 0) > 0 && (
-              <div className="mt-4 text-xs text-primary-foreground/70 px-1">
+              <div className="text-xs text-primary-foreground/70 px-1">
                 Includes {formatCurrency(summary?.oneTimeCostsTotal || 0)} of one-time costs amortized across the year.
               </div>
             )}
