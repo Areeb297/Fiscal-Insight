@@ -54,10 +54,10 @@ function AnimatedChart() {
       <div className="flex items-start justify-between mb-4">
         <div>
           <p className="text-[10px] uppercase tracking-[0.18em] text-white/50 font-medium">
-            Annual projection
+            Margin trend
           </p>
           <p className="text-white text-xl font-semibold mt-1 tabular-nums">
-            SAR 4.82M
+            32.4%
           </p>
         </div>
         <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-500/15 border border-emerald-400/20">
