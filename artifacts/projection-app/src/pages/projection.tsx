@@ -736,15 +736,15 @@ export default function Projection() {
                         </SelectContent>
                       </Select>
                     </TableCell>
-                    <TableCell className="p-2">
-                      <Input type="number" defaultValue={res.salarySar} onBlur={(e) => handleUpdateSalesSupport(res.id, "salarySar", parseFloat(e.target.value))} className="h-8 border-transparent hover:border-input focus:border-input bg-transparent text-right" />
+                    <TableCell className="p-2 min-w-[120px]">
+                      <Input type="number" defaultValue={res.salarySar} onBlur={(e) => handleUpdateSalesSupport(res.id, "salarySar", parseFloat(e.target.value))} className="h-9 w-full min-w-[100px] border-transparent hover:border-input focus:border-input bg-transparent text-right" />
                     </TableCell>
-                    <TableCell className="text-right font-mono text-xs p-2 text-muted-foreground">{formatCurrency(res.ctc)}</TableCell>
-                    <TableCell className="p-2">
-                      <Input type="number" step="0.5" defaultValue={res.months} onBlur={(e) => handleUpdateSalesSupport(res.id, "months", parseFloat(e.target.value))} className="h-8 border-transparent hover:border-input focus:border-input bg-transparent text-right" />
+                    <TableCell className="text-right font-mono text-xs p-2 text-muted-foreground min-w-[100px] whitespace-nowrap">{formatCurrency(res.ctc)}</TableCell>
+                    <TableCell className="p-2 min-w-[80px]">
+                      <Input type="number" step="0.5" defaultValue={res.months} onBlur={(e) => handleUpdateSalesSupport(res.id, "months", parseFloat(e.target.value))} className="h-9 w-full min-w-[64px] border-transparent hover:border-input focus:border-input bg-transparent text-right" />
                     </TableCell>
-                    <TableCell className="p-2">
-                      <Input type="number" min="0" max="100" step="1" defaultValue={res.allocationPercent ?? 100} onBlur={(e) => handleUpdateSalesSupport(res.id, "allocationPercent", parseFloat(e.target.value))} className="h-8 border-transparent hover:border-input focus:border-input bg-transparent text-right" title="Percentage of time this resource is involved (e.g. 10 = PM at 10%, 100 = full-time)" />
+                    <TableCell className="p-2 min-w-[80px]">
+                      <Input type="number" min="0" max="100" step="1" defaultValue={res.allocationPercent ?? 100} onBlur={(e) => handleUpdateSalesSupport(res.id, "allocationPercent", parseFloat(e.target.value))} className="h-9 w-full min-w-[64px] border-transparent hover:border-input focus:border-input bg-transparent text-right" title="Percentage of time this resource is involved (e.g. 10 = PM at 10%, 100 = full-time)" />
                     </TableCell>
                     <TableCell className="p-2">
                       <div className="flex items-center gap-1">
@@ -767,7 +767,7 @@ export default function Projection() {
                             step="1"
                             defaultValue={res.assignedClientCount ?? activeProjection?.numClients ?? 0}
                             onBlur={(e) => handleUpdateSalesSupport(res.id, "assignedClientCount", parseInt(e.target.value) || null)}
-                            className="h-8 w-14 border-transparent hover:border-input focus:border-input bg-transparent text-right text-xs"
+                            className="h-9 w-20 border-transparent hover:border-input focus:border-input bg-transparent text-right text-xs"
                             title="Number of clients this resource is assigned to."
                           />
                         )}
