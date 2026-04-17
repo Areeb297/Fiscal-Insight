@@ -16,8 +16,8 @@ const router: IRouter = Router();
 async function enrichSubscription(sub: typeof subscriptionsTable.$inferSelect) {
   const rate = sub.currency === "SAR" ? 1.0 : await getCurrencyRate(sub.currency);
   const sarEquivalent = sub.originalPrice * rate;
-  const monthlySar = sarEquivalent;
-  const yearlySar = sarEquivalent * 12;
+  const monthlySar = sub.isOneTime ? sarEquivalent / 12 : sarEquivalent;
+  const yearlySar = sub.isOneTime ? sarEquivalent : sarEquivalent * 12;
   return { ...sub, sarEquivalent, yearlySar, monthlySar };
 }
 

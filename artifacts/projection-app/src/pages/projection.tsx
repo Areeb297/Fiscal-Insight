@@ -157,7 +157,7 @@ export default function Projection() {
   const handleAddSubscription = () => {
     if (!activeProjectionId) return;
     createSubscription.mutate(
-      { projectionId: activeProjectionId, data: { name: "New Sub", currency: "SAR", originalPrice: 0 } },
+      { projectionId: activeProjectionId, data: { name: "New Sub", currency: "SAR", originalPrice: 0, isOneTime: false } },
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListSubscriptionsQueryKey(activeProjectionId) });
@@ -270,8 +270,8 @@ export default function Projection() {
             </div>
             <div className="w-px h-8 bg-border"></div>
             <div className="px-4 py-1 text-center">
-              <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Selling Price</div>
-              <div className="font-bold text-primary">{formatCurrency(summary.sellingPriceWithoutVat)}</div>
+              <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Selling Price (Yearly)</div>
+              <div className="font-bold text-primary">{formatCurrency(summary.sellingPriceWithoutVatYearly)}</div>
             </div>
           </div>
         )}
@@ -413,9 +413,11 @@ export default function Projection() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
-                    <TableHead className="w-[100px]">Currency</TableHead>
-                    <TableHead className="w-[100px] text-right">Price/mo</TableHead>
-                    <TableHead className="w-[120px] text-right">SAR/mo</TableHead>
+                    <TableHead className="w-[110px]">Type</TableHead>
+                    <TableHead className="w-[90px]">Currency</TableHead>
+                    <TableHead className="w-[100px] text-right">Price</TableHead>
+                    <TableHead className="w-[110px] text-right">SAR/mo</TableHead>
+                    <TableHead className="w-[110px] text-right">SAR/yr</TableHead>
                     <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -424,6 +426,17 @@ export default function Projection() {
                     <TableRow key={sub.id}>
                       <TableCell className="p-2">
                         <Input defaultValue={sub.name} onBlur={(e) => handleUpdateSubscription(sub.id, "name", e.target.value)} className="h-8 border-transparent hover:border-input focus:border-input bg-transparent" />
+                      </TableCell>
+                      <TableCell className="p-2">
+                        <Select value={sub.isOneTime ? "one-time" : "recurring"} onValueChange={(val) => handleUpdateSubscription(sub.id, "isOneTime", val === "one-time")}>
+                          <SelectTrigger className="h-8 border-transparent hover:border-input focus:border-input bg-transparent">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="recurring">Recurring</SelectItem>
+                            <SelectItem value="one-time">One-time</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                       <TableCell className="p-2">
                         <Select defaultValue={sub.currency} onValueChange={(val) => handleUpdateSubscription(sub.id, "currency", val)}>
@@ -441,6 +454,7 @@ export default function Projection() {
                         <Input type="number" defaultValue={sub.originalPrice} onBlur={(e) => handleUpdateSubscription(sub.id, "originalPrice", parseFloat(e.target.value))} className="h-8 border-transparent hover:border-input focus:border-input bg-transparent text-right" />
                       </TableCell>
                       <TableCell className="text-right font-medium p-2">{formatCurrency(sub.monthlySar)}</TableCell>
+                      <TableCell className="text-right font-medium p-2">{formatCurrency(sub.yearlySar)}</TableCell>
                       <TableCell className="p-2 text-right">
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteSubscription(sub.id)}>
                           <Trash className="h-4 w-4" />
@@ -450,14 +464,15 @@ export default function Projection() {
                   ))}
                   {!subscriptions?.length && (
                     <TableRow>
-                      <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">No subscriptions added.</TableCell>
+                      <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">No subscriptions added.</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
                 <TableFooter>
                   <TableRow>
-                    <TableCell colSpan={3} className="text-right font-medium">Total Monthly Overhead:</TableCell>
+                    <TableCell colSpan={4} className="text-right font-medium">Total Overhead:</TableCell>
                     <TableCell className="text-right font-medium">{formatCurrency(summary?.totalOverheadMonthly || 0)}</TableCell>
+                    <TableCell className="text-right font-medium">{formatCurrency(summary?.totalOverheadYearly || 0)}</TableCell>
                     <TableCell></TableCell>
                   </TableRow>
                 </TableFooter>
@@ -473,23 +488,50 @@ export default function Projection() {
             <CardDescription className="text-primary-foreground/70">Calculated based on {projections?.[0]?.numClients} clients</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-primary-foreground/10 rounded-lg p-4">
-                  <div className="text-sm font-medium text-primary-foreground/80 mb-1">Monthly Cost/Client</div>
-                  <div className="text-2xl font-bold">{formatCurrency(summary?.totalMonthlyCostPerClient || 0)}</div>
+            <div className="rounded-lg border border-primary-foreground/20 overflow-hidden">
+              <div className="grid grid-cols-3 bg-primary-foreground/10 text-xs font-semibold uppercase tracking-wider">
+                <div className="px-4 py-2">Metric</div>
+                <div className="px-4 py-2 text-right">Monthly</div>
+                <div className="px-4 py-2 text-right">Yearly</div>
+              </div>
+              <div className="divide-y divide-primary-foreground/15 text-sm">
+                <div className="grid grid-cols-3 items-center">
+                  <div className="px-4 py-2 text-primary-foreground/80">Cost / Client</div>
+                  <div className="px-4 py-2 text-right font-medium">{formatCurrency(summary?.costPerClientMonthly || 0)}</div>
+                  <div className="px-4 py-2 text-right font-medium">{formatCurrency(summary?.costPerClientYearly || 0)}</div>
                 </div>
-                <div className="bg-primary-foreground/10 rounded-lg p-4">
-                  <div className="text-sm font-medium text-primary-foreground/80 mb-1">Monthly Margin/Client</div>
-                  <div className="text-2xl font-bold">{formatCurrency(summary?.marginSarMonthly || 0)}</div>
+                <div className="grid grid-cols-3 items-center">
+                  <div className="px-4 py-2 text-primary-foreground/80">Overhead / Client</div>
+                  <div className="px-4 py-2 text-right font-medium">{formatCurrency(summary?.overheadPerClientMonthly || 0)}</div>
+                  <div className="px-4 py-2 text-right font-medium">{formatCurrency(summary?.overheadPerClientYearly || 0)}</div>
                 </div>
-                <div className="bg-primary-foreground/20 rounded-lg p-4 col-span-2">
-                  <div className="text-sm font-medium text-primary-foreground/90 mb-1">Recommended Selling Price (Monthly, ex. VAT)</div>
-                  <div className="text-3xl font-bold">{formatCurrency(summary?.sellingPriceWithoutVat || 0)}</div>
-                  <div className="text-sm mt-2 text-primary-foreground/70">With 15% VAT: {formatCurrency(summary?.sellingPriceWithVatMonthly || 0)}</div>
+                <div className="grid grid-cols-3 items-center bg-primary-foreground/5">
+                  <div className="px-4 py-2 font-semibold">Total Cost / Client</div>
+                  <div className="px-4 py-2 text-right font-semibold">{formatCurrency(summary?.totalMonthlyCostPerClient || 0)}</div>
+                  <div className="px-4 py-2 text-right font-semibold">{formatCurrency(summary?.totalYearlyCostPerClient || 0)}</div>
+                </div>
+                <div className="grid grid-cols-3 items-center bg-primary-foreground/20">
+                  <div className="px-4 py-3 font-bold">Selling Price (ex. VAT)</div>
+                  <div className="px-4 py-3 text-right text-lg font-bold">{formatCurrency(summary?.sellingPriceWithoutVat || 0)}</div>
+                  <div className="px-4 py-3 text-right text-lg font-bold">{formatCurrency(summary?.sellingPriceWithoutVatYearly || 0)}</div>
+                </div>
+                <div className="grid grid-cols-3 items-center">
+                  <div className="px-4 py-2 text-primary-foreground/80">Margin (SAR)</div>
+                  <div className="px-4 py-2 text-right font-medium">{formatCurrency(summary?.marginSarMonthly || 0)}</div>
+                  <div className="px-4 py-2 text-right font-medium">{formatCurrency(summary?.marginSarYearly || 0)}</div>
+                </div>
+                <div className="grid grid-cols-3 items-center">
+                  <div className="px-4 py-2 text-primary-foreground/80">Selling Price (incl. 15% VAT)</div>
+                  <div className="px-4 py-2 text-right font-medium">{formatCurrency(summary?.sellingPriceWithVatMonthly || 0)}</div>
+                  <div className="px-4 py-2 text-right font-medium">{formatCurrency(summary?.sellingPriceWithVatYearly || 0)}</div>
                 </div>
               </div>
             </div>
+            {(summary?.oneTimeCostsTotal || 0) > 0 && (
+              <div className="mt-4 text-xs text-primary-foreground/70 px-1">
+                Includes {formatCurrency(summary?.oneTimeCostsTotal || 0)} of one-time costs amortized across the year.
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -1,4 +1,4 @@
-import { pgTable, serial, text, real, integer, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, real, integer, boolean, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { projectionsTable } from "./projections";
@@ -9,6 +9,7 @@ export const subscriptionsTable = pgTable("subscriptions", {
   name: text("name").notNull(),
   currency: text("currency").notNull().default("SAR"),
   originalPrice: real("original_price").notNull().default(0),
+  isOneTime: boolean("is_one_time").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

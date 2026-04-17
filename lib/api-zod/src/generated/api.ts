@@ -102,7 +102,13 @@ export const GetProjectionSummaryResponse = zod.object({
   totalOverheadMonthly: zod.number(),
   totalOverheadYearly: zod.number(),
   totalMonthlyCostPerClient: zod.number(),
+  overheadPerClientMonthly: zod.number(),
+  overheadPerClientYearly: zod.number(),
+  totalYearlyCostPerClient: zod.number(),
+  oneTimeCostsTotal: zod.number(),
+  recurringOverheadMonthly: zod.number(),
   sellingPriceWithoutVat: zod.number(),
+  sellingPriceWithoutVatYearly: zod.number(),
   marginSarMonthly: zod.number(),
   marginSarYearly: zod.number(),
   sellingPriceWithVatMonthly: zod.number(),
@@ -200,6 +206,7 @@ export const ListSubscriptionsResponseItem = zod.object({
   name: zod.string(),
   currency: zod.string(),
   originalPrice: zod.number(),
+  isOneTime: zod.boolean(),
   sarEquivalent: zod.number(),
   yearlySar: zod.number(),
   monthlySar: zod.number(),
@@ -220,6 +227,7 @@ export const CreateSubscriptionBody = zod.object({
   name: zod.string(),
   currency: zod.string(),
   originalPrice: zod.number(),
+  isOneTime: zod.boolean().optional(),
 });
 
 /**
@@ -234,6 +242,7 @@ export const UpdateSubscriptionBody = zod.object({
   name: zod.string().optional(),
   currency: zod.string().optional(),
   originalPrice: zod.number().optional(),
+  isOneTime: zod.boolean().optional(),
 });
 
 export const UpdateSubscriptionResponse = zod.object({
@@ -242,6 +251,7 @@ export const UpdateSubscriptionResponse = zod.object({
   name: zod.string(),
   currency: zod.string(),
   originalPrice: zod.number(),
+  isOneTime: zod.boolean(),
   sarEquivalent: zod.number(),
   yearlySar: zod.number(),
   monthlySar: zod.number(),
@@ -684,7 +694,13 @@ export const GetDashboardSummaryResponse = zod.object({
       totalOverheadMonthly: zod.number(),
       totalOverheadYearly: zod.number(),
       totalMonthlyCostPerClient: zod.number(),
+      overheadPerClientMonthly: zod.number(),
+      overheadPerClientYearly: zod.number(),
+      totalYearlyCostPerClient: zod.number(),
+      oneTimeCostsTotal: zod.number(),
+      recurringOverheadMonthly: zod.number(),
       sellingPriceWithoutVat: zod.number(),
+      sellingPriceWithoutVatYearly: zod.number(),
       marginSarMonthly: zod.number(),
       marginSarYearly: zod.number(),
       sellingPriceWithVatMonthly: zod.number(),

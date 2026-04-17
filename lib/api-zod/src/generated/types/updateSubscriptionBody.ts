@@ -10,4 +10,5 @@ export interface UpdateSubscriptionBody {
   name?: string;
   currency?: string;
   originalPrice?: number;
+  isOneTime?: boolean;
 }

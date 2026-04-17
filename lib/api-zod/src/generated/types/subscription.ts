@@ -12,6 +12,7 @@ export interface Subscription {
   name: string;
   currency: string;
   originalPrice: number;
+  isOneTime: boolean;
   sarEquivalent: number;
   yearlySar: number;
   monthlySar: number;

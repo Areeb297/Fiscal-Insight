@@ -883,6 +883,8 @@ components:
           type: string
         originalPrice:
           type: number
+        isOneTime:
+          type: boolean
         sarEquivalent:
           type: number
         yearlySar:
@@ -891,7 +893,7 @@ components:
           type: number
         createdAt:
           type: string
-      required: [id, projectionId, name, currency, originalPrice, sarEquivalent, yearlySar, monthlySar, createdAt]
+      required: [id, projectionId, name, currency, originalPrice, isOneTime, sarEquivalent, yearlySar, monthlySar, createdAt]
 
     CreateSubscriptionBody:
       type: object
@@ -902,6 +904,8 @@ components:
           type: string
         originalPrice:
           type: number
+        isOneTime:
+          type: boolean
       required: [name, currency, originalPrice]
 
     UpdateSubscriptionBody:
@@ -913,6 +917,8 @@ components:
           type: string
         originalPrice:
           type: number
+        isOneTime:
+          type: boolean
 
     SalesSupportResource:
       type: object
@@ -1291,7 +1297,19 @@ components:
           type: number
         totalMonthlyCostPerClient:
           type: number
+        overheadPerClientMonthly:
+          type: number
+        overheadPerClientYearly:
+          type: number
+        totalYearlyCostPerClient:
+          type: number
+        oneTimeCostsTotal:
+          type: number
+        recurringOverheadMonthly:
+          type: number
         sellingPriceWithoutVat:
+          type: number
+        sellingPriceWithoutVatYearly:
           type: number
         marginSarMonthly:
           type: number
@@ -1311,7 +1329,7 @@ components:
           type: integer
         salesSupportCount:
           type: integer
-      required: [projection, totalDeptCostYearly, costPerClientYearly, costPerClientMonthly, totalOverheadMonthly, totalOverheadYearly, totalMonthlyCostPerClient, sellingPriceWithoutVat, marginSarMonthly, marginSarYearly, sellingPriceWithVatMonthly, sellingPriceWithVatYearly, salesSupportTotalCost, salesSupportSellingPrice, employeeCount, subscriptionCount, salesSupportCount]
+      required: [projection, totalDeptCostYearly, costPerClientYearly, costPerClientMonthly, totalOverheadMonthly, totalOverheadYearly, totalMonthlyCostPerClient, overheadPerClientMonthly, overheadPerClientYearly, totalYearlyCostPerClient, oneTimeCostsTotal, recurringOverheadMonthly, sellingPriceWithoutVat, sellingPriceWithoutVatYearly, marginSarMonthly, marginSarYearly, sellingPriceWithVatMonthly, sellingPriceWithVatYearly, salesSupportTotalCost, salesSupportSellingPrice, employeeCount, subscriptionCount, salesSupportCount]
 
     DashboardSummary:
       type: object

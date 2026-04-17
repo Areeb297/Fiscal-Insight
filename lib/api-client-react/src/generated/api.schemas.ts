@@ -68,6 +68,7 @@ export interface Subscription {
   name: string;
   currency: string;
   originalPrice: number;
+  isOneTime: boolean;
   sarEquivalent: number;
   yearlySar: number;
   monthlySar: number;
@@ -78,12 +79,14 @@ export interface CreateSubscriptionBody {
   name: string;
   currency: string;
   originalPrice: number;
+  isOneTime?: boolean;
 }
 
 export interface UpdateSubscriptionBody {
   name?: string;
   currency?: string;
   originalPrice?: number;
+  isOneTime?: boolean;
 }
 
 export interface SalesSupportResource {
@@ -284,7 +287,13 @@ export interface ProjectionSummary {
   totalOverheadMonthly: number;
   totalOverheadYearly: number;
   totalMonthlyCostPerClient: number;
+  overheadPerClientMonthly: number;
+  overheadPerClientYearly: number;
+  totalYearlyCostPerClient: number;
+  oneTimeCostsTotal: number;
+  recurringOverheadMonthly: number;
   sellingPriceWithoutVat: number;
+  sellingPriceWithoutVatYearly: number;
   marginSarMonthly: number;
   marginSarYearly: number;
   sellingPriceWithVatMonthly: number;

@@ -102,17 +102,27 @@ router.get("/projections/:id/summary", async (req, res): Promise<void> => {
   const costPerClientYearly = projection.numClients > 0 ? totalDeptCostYearly / projection.numClients : 0;
   const costPerClientMonthly = costPerClientYearly / 12;
 
-  let totalOverheadMonthly = 0;
+  let recurringOverheadMonthly = 0;
+  let oneTimeCostsTotal = 0;
   for (const sub of subs) {
     const rate = sub.currency === "SAR" ? 1.0 : await getCurrencyRate(sub.currency);
-    totalOverheadMonthly += sub.originalPrice * rate;
+    const sarAmount = sub.originalPrice * rate;
+    if (sub.isOneTime) {
+      oneTimeCostsTotal += sarAmount;
+    } else {
+      recurringOverheadMonthly += sarAmount;
+    }
   }
-  const totalOverheadYearly = totalOverheadMonthly * 12;
+  const totalOverheadYearly = recurringOverheadMonthly * 12 + oneTimeCostsTotal;
+  const totalOverheadMonthly = totalOverheadYearly / 12;
 
-  const overheadPerClient = projection.numClients > 0 ? totalOverheadMonthly / projection.numClients : 0;
-  const totalMonthlyCostPerClient = costPerClientMonthly + overheadPerClient;
+  const overheadPerClientMonthly = projection.numClients > 0 ? totalOverheadMonthly / projection.numClients : 0;
+  const overheadPerClientYearly = overheadPerClientMonthly * 12;
+  const totalMonthlyCostPerClient = costPerClientMonthly + overheadPerClientMonthly;
+  const totalYearlyCostPerClient = totalMonthlyCostPerClient * 12;
   const marginFraction = normalizeMarginToFraction(projection.marginPercent);
   const sellingPriceWithoutVat = marginFraction < 1 ? totalMonthlyCostPerClient / (1 - marginFraction) : totalMonthlyCostPerClient;
+  const sellingPriceWithoutVatYearly = sellingPriceWithoutVat * 12;
   const marginSarMonthly = sellingPriceWithoutVat - totalMonthlyCostPerClient;
   const marginSarYearly = marginSarMonthly * 12;
   const sellingPriceWithVatMonthly = sellingPriceWithoutVat * 1.15;
@@ -136,7 +146,13 @@ router.get("/projections/:id/summary", async (req, res): Promise<void> => {
     totalOverheadMonthly,
     totalOverheadYearly,
     totalMonthlyCostPerClient,
+    overheadPerClientMonthly,
+    overheadPerClientYearly,
+    totalYearlyCostPerClient,
+    oneTimeCostsTotal,
+    recurringOverheadMonthly,
     sellingPriceWithoutVat,
+    sellingPriceWithoutVatYearly,
     marginSarMonthly,
     marginSarYearly,
     sellingPriceWithVatMonthly,

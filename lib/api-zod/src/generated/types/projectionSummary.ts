@@ -15,7 +15,13 @@ export interface ProjectionSummary {
   totalOverheadMonthly: number;
   totalOverheadYearly: number;
   totalMonthlyCostPerClient: number;
+  overheadPerClientMonthly: number;
+  overheadPerClientYearly: number;
+  totalYearlyCostPerClient: number;
+  oneTimeCostsTotal: number;
+  recurringOverheadMonthly: number;
   sellingPriceWithoutVat: number;
+  sellingPriceWithoutVatYearly: number;
   marginSarMonthly: number;
   marginSarYearly: number;
   sellingPriceWithVatMonthly: number;
