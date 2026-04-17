@@ -148,6 +148,7 @@ export default function QuotationForm() {
           vatRate={settings?.vatRate ?? 0.15}
           logoUrl={settings?.companyLogoUrl ?? null}
           termsText={headerData.termsText ? headerData.termsText : null}
+          defaultTermsText={settings?.termsText ?? null}
         />,
       ).toBlob();
       const url = URL.createObjectURL(blob);

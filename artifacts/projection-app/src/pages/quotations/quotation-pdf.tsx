@@ -1,5 +1,6 @@
 import { Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
 import { format } from "date-fns";
+import { diffLines, diffSummary } from "./terms-diff";
 
 type LineItem = {
   id: number;
@@ -22,6 +23,7 @@ type QuotationPdfProps = {
   vatRate: number;
   logoUrl?: string | null;
   termsText?: string | null;
+  defaultTermsText?: string | null;
 };
 
 const styles = StyleSheet.create({
@@ -126,6 +128,24 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginBottom: 4,
   },
+  diffPage: { padding: 36, fontSize: 9, fontFamily: "Helvetica", color: "#111" },
+  diffTitle: { fontSize: 14, fontWeight: 700, marginBottom: 4 },
+  diffSubtitle: { fontSize: 9, color: "#666", marginBottom: 12 },
+  diffSummaryRow: { flexDirection: "row", marginBottom: 12, fontSize: 9 },
+  diffSummaryAdd: { color: "#166534", marginRight: 12, fontWeight: 700 },
+  diffSummaryDel: { color: "#991b1b", fontWeight: 700 },
+  diffLine: { flexDirection: "row", paddingVertical: 1, paddingHorizontal: 2 },
+  diffMarker: { width: 12, fontFamily: "Courier", fontWeight: 700 },
+  diffText: { flex: 1, fontFamily: "Courier", fontSize: 9 },
+  diffEq: {},
+  diffAdd: { backgroundColor: "#dcfce7" },
+  diffDel: { backgroundColor: "#fee2e2" },
+  diffMarkerAdd: { color: "#166534" },
+  diffMarkerDel: { color: "#991b1b" },
+  diffMarkerEq: { color: "#999" },
+  diffTextAdd: { color: "#14532d" },
+  diffTextDel: { color: "#7f1d1d", textDecoration: "line-through" },
+  diffTextEq: { color: "#444" },
 });
 
 const fmt = (n: number) =>
@@ -146,8 +166,15 @@ const statusColor = (s: string) => {
 };
 
 export function QuotationPdfDocument(props: QuotationPdfProps) {
-  const { quotationNumber, companyName, clientName, date, status, vatRate, termsText } = props;
+  const { quotationNumber, companyName, clientName, date, status, vatRate, termsText, defaultTermsText } = props;
   const lineItems = props.lineItems.filter((item) => !item.isExcluded);
+
+  const normalizedCustom = (termsText ?? "").trim();
+  const normalizedDefault = (defaultTermsText ?? "").trim();
+  const showDiff =
+    normalizedDefault.length > 0 && normalizedCustom !== normalizedDefault;
+  const diffParts = showDiff ? diffLines(normalizedDefault, normalizedCustom) : [];
+  const diffStats = showDiff ? diffSummary(diffParts) : { added: 0, removed: 0 };
 
   const subtotal = lineItems.reduce(
     (acc, item) => acc + item.quantity * item.priceMonthly * item.totalMonths,
@@ -244,6 +271,58 @@ export function QuotationPdfDocument(props: QuotationPdfProps) {
           />
         </View>
       </Page>
+
+      {showDiff ? (
+        <Page size="A4" style={styles.diffPage} wrap>
+          <Text style={styles.diffTitle}>Terms &amp; Conditions — Changes vs Default</Text>
+          <Text style={styles.diffSubtitle}>
+            This appendix highlights how the terms used in this quotation differ
+            from the company default.
+          </Text>
+          <View style={styles.diffSummaryRow}>
+            <Text style={styles.diffSummaryAdd}>+{diffStats.added} added</Text>
+            <Text style={styles.diffSummaryDel}>−{diffStats.removed} removed</Text>
+          </View>
+          <View>
+            {diffParts.map((p, idx) => {
+              const isBlank = p.text.length === 0;
+              const lineStyle =
+                p.type === "add"
+                  ? styles.diffAdd
+                  : p.type === "del"
+                    ? styles.diffDel
+                    : styles.diffEq;
+              const markerStyle =
+                p.type === "add"
+                  ? styles.diffMarkerAdd
+                  : p.type === "del"
+                    ? styles.diffMarkerDel
+                    : styles.diffMarkerEq;
+              const textStyle =
+                p.type === "add"
+                  ? styles.diffTextAdd
+                  : p.type === "del"
+                    ? styles.diffTextDel
+                    : styles.diffTextEq;
+              const marker = p.type === "add" ? "+" : p.type === "del" ? "−" : " ";
+              return (
+                <View key={idx} style={[styles.diffLine, lineStyle]} wrap={false}>
+                  <Text style={[styles.diffMarker, markerStyle]}>{marker}</Text>
+                  <Text style={[styles.diffText, textStyle]}>
+                    {isBlank ? " " : p.text}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+          <View style={styles.footer} fixed>
+            <Text>© 2026 Onasi-CloudTech. All Rights Reserved.</Text>
+            <Text
+              render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`}
+            />
+          </View>
+        </Page>
+      ) : null}
     </Document>
   );
 }
