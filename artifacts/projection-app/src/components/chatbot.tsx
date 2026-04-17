@@ -131,6 +131,9 @@ export default function Chatbot() {
   const handleResizeKey = (e: React.KeyboardEvent) => {
     if (isMobile) return;
     const step = e.shiftKey ? 80 : 24;
+    // Handle is on the panel's left edge; dragging it leftward enlarges
+    // the panel. Mirror the same direction on the keyboard so the visual
+    // model is consistent: ArrowLeft = grow, ArrowRight = shrink.
     if (e.key === "ArrowLeft") {
       e.preventDefault();
       setWidth((w) => Math.min(effectiveMaxWidth, w + step));
