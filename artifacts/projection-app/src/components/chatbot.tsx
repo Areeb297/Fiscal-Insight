@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import DOMPurify from "dompurify";
-import { MessageSquare, X, Send, Loader2, Sparkles } from "lucide-react";
+import { MessageSquare, X, Send, Loader2, Sparkles, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -11,7 +11,22 @@ type Message = {
   role: "user" | "assistant";
   content: string;
   html?: string;
+  expanded?: boolean;
 };
+
+const STRUCTURAL_HTML_RE = /<(ul|ol|table|h3|h4|pre|blockquote)\b/i;
+
+function isBriefAssistantMessage(msg: Message): boolean {
+  if (msg.role !== "assistant") return false;
+  if (msg.expanded) return false;
+  const html = msg.html ?? "";
+  if (STRUCTURAL_HTML_RE.test(html)) return false;
+  const text = msg.content.trim();
+  if (!text) return false;
+  if (text.length > 320) return false;
+  const sentenceCount = (text.match(/[.!?]+(\s|$)/g) ?? []).length || 1;
+  return sentenceCount <= 3;
+}
 
 const ALLOWED_TAGS = [
   "p", "strong", "em", "ul", "ol", "li", "h3", "h4",
@@ -197,6 +212,45 @@ export default function Chatbot() {
     );
   };
 
+  const requestExpansion = (index: number) => {
+    if (sendMessage.isPending) return;
+    const target = messages[index];
+    if (!target || target.role !== "assistant" || target.expanded) return;
+
+    const userMessage = "Show me the full breakdown of that answer.";
+    const history = messages
+      .slice(0, index + 1)
+      .map((m) => ({ role: m.role, content: m.content }));
+
+    setMessages((prev) => {
+      const next = prev.map((m, i) => (i === index ? { ...m, expanded: true } : m));
+      next.push({ role: "user", content: userMessage });
+      return next;
+    });
+
+    sendMessage.mutate(
+      { data: { message: userMessage, history } },
+      {
+        onSuccess: (response) => {
+          setMessages((prev) => [
+            ...prev,
+            { role: "assistant", content: response.reply, html: response.replyHtml },
+          ]);
+        },
+        onError: () => {
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "assistant",
+              content: "Sorry, I encountered an error processing your request.",
+              html: "<p>Sorry, I encountered an error processing your request.</p>",
+            },
+          ]);
+        },
+      },
+    );
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     submitMessage(input);
@@ -267,7 +321,21 @@ export default function Chatbot() {
                   }`}
                 >
                   {msg.role === "assistant" ? (
-                    <AssistantMessage html={msg.html} content={msg.content} />
+                    <>
+                      <AssistantMessage html={msg.html} content={msg.content} />
+                      {i > 0 && isBriefAssistantMessage(msg) && (
+                        <button
+                          type="button"
+                          onClick={() => requestExpansion(i)}
+                          disabled={sendMessage.isPending}
+                          data-testid={`button-show-full-answer-${i}`}
+                          className="mt-2 inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full border border-border bg-background hover:bg-muted transition-colors text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <ChevronDown className="h-3 w-3" />
+                          Show full answer
+                        </button>
+                      )}
+                    </>
                   ) : (
                     <div className="text-sm whitespace-pre-wrap break-words">{msg.content}</div>
                   )}
