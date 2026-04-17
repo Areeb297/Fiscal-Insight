@@ -16,7 +16,8 @@ const router: IRouter = Router();
 async function enrichEmployee(emp: typeof employeesTable.$inferSelect) {
   const multiplier = await getCtcMultiplier(emp.country);
   const ctc = emp.salarySar * multiplier;
-  const totalYearlyCost = ctc * emp.monthsFte;
+  const allocFraction = (emp.allocationPercent ?? 100) / 100;
+  const totalYearlyCost = ctc * emp.monthsFte * allocFraction;
   return { ...emp, ctc, totalYearlyCost };
 }
 

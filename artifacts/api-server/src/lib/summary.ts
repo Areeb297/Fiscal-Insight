@@ -71,18 +71,21 @@ export function computeScenario(
       country: e.country,
       salarySar: e.salarySar * salaryScale,
       monthsFte: e.monthsFte,
+      allocationPercent: e.allocationPercent ?? 100,
     })),
     ...(overrides.addEmployees ?? []).map((e) => ({
       country: e.country,
       salarySar: e.salarySar,
       monthsFte: e.monthsFte ?? 12,
+      allocationPercent: 100,
     })),
   ];
 
   let totalDeptCostYearly = 0;
   for (const emp of allEmployees) {
     const m = ctcMultiplier(emp.country, ctcRules);
-    totalDeptCostYearly += emp.salarySar * m * emp.monthsFte;
+    const allocFraction = (emp.allocationPercent ?? 100) / 100;
+    totalDeptCostYearly += emp.salarySar * m * emp.monthsFte * allocFraction;
   }
 
   const costPerClientYearly = numClients > 0 ? totalDeptCostYearly / numClients : 0;
@@ -115,7 +118,8 @@ export function computeScenario(
   let salesSupportMarginFraction = 0.30;
   for (const r of salesResources) {
     const m = ctcMultiplier(r.country, ctcRules);
-    salesSupportTotalCost += r.salarySar * m * r.months;
+    const allocFraction = (r.allocationPercent ?? 100) / 100;
+    salesSupportTotalCost += r.salarySar * m * r.months * allocFraction;
     salesSupportMarginFraction = normalizeMarginToFraction(r.marginPercent);
   }
   const salesSupportSellingPrice =

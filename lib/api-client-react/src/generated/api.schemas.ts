@@ -44,6 +44,8 @@ export interface Employee {
   country: string;
   salarySar: number;
   monthsFte: number;
+  /** Percentage allocation 0-100 (e.g. 10 = 10% involvement, 100 = full-time). Cost is multiplied by this fraction. */
+  allocationPercent: number;
   ctc: number;
   totalYearlyCost: number;
   createdAt: string;
@@ -55,6 +57,11 @@ export interface CreateEmployeeBody {
   country: string;
   salarySar: number;
   monthsFte?: number;
+  /**
+   * @minimum 0
+   * @maximum 100
+   */
+  allocationPercent?: number;
 }
 
 export interface UpdateEmployeeBody {
@@ -63,6 +70,11 @@ export interface UpdateEmployeeBody {
   country?: string;
   salarySar?: number;
   monthsFte?: number;
+  /**
+   * @minimum 0
+   * @maximum 100
+   */
+  allocationPercent?: number;
 }
 
 export interface Subscription {
@@ -100,6 +112,8 @@ export interface SalesSupportResource {
   salarySar: number;
   months: number;
   marginPercent: number;
+  /** Percentage allocation 0-100 (e.g. 10 = 10% involvement, 100 = full-time). Cost is multiplied by this fraction. */
+  allocationPercent: number;
   ctc: number;
   totalSalaryCost: number;
   createdAt: string;
@@ -111,6 +125,11 @@ export interface CreateSalesSupportBody {
   salarySar: number;
   months?: number;
   marginPercent?: number;
+  /**
+   * @minimum 0
+   * @maximum 100
+   */
+  allocationPercent?: number;
 }
 
 export interface UpdateSalesSupportBody {
@@ -119,6 +138,11 @@ export interface UpdateSalesSupportBody {
   salarySar?: number;
   months?: number;
   marginPercent?: number;
+  /**
+   * @minimum 0
+   * @maximum 100
+   */
+  allocationPercent?: number;
 }
 
 export interface Quotation {

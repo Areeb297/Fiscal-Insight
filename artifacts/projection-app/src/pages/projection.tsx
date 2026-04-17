@@ -9,6 +9,7 @@ import {
   useUpdateProjection,
   useGetProjectionSummary,
   getGetProjectionSummaryQueryKey,
+  getGetDashboardSummaryQueryKey,
   useListEmployees,
   getListEmployeesQueryKey,
   useCreateEmployee,
@@ -123,6 +124,7 @@ export default function Projection() {
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getGetProjectionSummaryQueryKey(activeProjectionId) });
+          queryClient.invalidateQueries({ queryKey: getGetDashboardSummaryQueryKey() });
           queryClient.invalidateQueries({ queryKey: getGetProjectionQueryKey(activeProjectionId) });
           queryClient.invalidateQueries({ queryKey: getListProjectionsQueryKey() });
         }
@@ -133,11 +135,12 @@ export default function Projection() {
   const handleAddEmployee = () => {
     if (!activeProjectionId) return;
     createEmployee.mutate(
-      { projectionId: activeProjectionId, data: { name: "New Employee", title: "Role", country: ctcRules?.[0]?.countryName || "KSA", salarySar: 0, monthsFte: 12 } },
+      { projectionId: activeProjectionId, data: { name: "New Employee", title: "Role", country: ctcRules?.[0]?.countryName || "KSA", salarySar: 0, monthsFte: 12, allocationPercent: 100 } },
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListEmployeesQueryKey(activeProjectionId) });
           queryClient.invalidateQueries({ queryKey: getGetProjectionSummaryQueryKey(activeProjectionId) });
+          queryClient.invalidateQueries({ queryKey: getGetDashboardSummaryQueryKey() });
         }
       }
     );
@@ -151,6 +154,7 @@ export default function Projection() {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListEmployeesQueryKey(activeProjectionId) });
           queryClient.invalidateQueries({ queryKey: getGetProjectionSummaryQueryKey(activeProjectionId) });
+          queryClient.invalidateQueries({ queryKey: getGetDashboardSummaryQueryKey() });
         }
       }
     );
@@ -164,6 +168,7 @@ export default function Projection() {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListEmployeesQueryKey(activeProjectionId) });
           queryClient.invalidateQueries({ queryKey: getGetProjectionSummaryQueryKey(activeProjectionId) });
+          queryClient.invalidateQueries({ queryKey: getGetDashboardSummaryQueryKey() });
         }
       }
     );
@@ -177,6 +182,7 @@ export default function Projection() {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListSubscriptionsQueryKey(activeProjectionId) });
           queryClient.invalidateQueries({ queryKey: getGetProjectionSummaryQueryKey(activeProjectionId) });
+          queryClient.invalidateQueries({ queryKey: getGetDashboardSummaryQueryKey() });
         }
       }
     );
@@ -190,6 +196,7 @@ export default function Projection() {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListSubscriptionsQueryKey(activeProjectionId) });
           queryClient.invalidateQueries({ queryKey: getGetProjectionSummaryQueryKey(activeProjectionId) });
+          queryClient.invalidateQueries({ queryKey: getGetDashboardSummaryQueryKey() });
         }
       }
     );
@@ -203,6 +210,7 @@ export default function Projection() {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListSubscriptionsQueryKey(activeProjectionId) });
           queryClient.invalidateQueries({ queryKey: getGetProjectionSummaryQueryKey(activeProjectionId) });
+          queryClient.invalidateQueries({ queryKey: getGetDashboardSummaryQueryKey() });
         }
       }
     );
@@ -211,11 +219,12 @@ export default function Projection() {
   const handleAddSalesSupport = () => {
     if (!activeProjectionId) return;
     createSalesSupport.mutate(
-      { projectionId: activeProjectionId, data: { title: "New Resource", country: ctcRules?.[0]?.countryName || "KSA", salarySar: 0, months: 12, marginPercent: 20 } },
+      { projectionId: activeProjectionId, data: { title: "New Resource", country: ctcRules?.[0]?.countryName || "KSA", salarySar: 0, months: 12, marginPercent: 20, allocationPercent: 100 } },
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListSalesSupportResourcesQueryKey(activeProjectionId) });
           queryClient.invalidateQueries({ queryKey: getGetProjectionSummaryQueryKey(activeProjectionId) });
+          queryClient.invalidateQueries({ queryKey: getGetDashboardSummaryQueryKey() });
         }
       }
     );
@@ -229,6 +238,7 @@ export default function Projection() {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListSalesSupportResourcesQueryKey(activeProjectionId) });
           queryClient.invalidateQueries({ queryKey: getGetProjectionSummaryQueryKey(activeProjectionId) });
+          queryClient.invalidateQueries({ queryKey: getGetDashboardSummaryQueryKey() });
         }
       }
     );
@@ -242,6 +252,7 @@ export default function Projection() {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListSalesSupportResourcesQueryKey(activeProjectionId) });
           queryClient.invalidateQueries({ queryKey: getGetProjectionSummaryQueryKey(activeProjectionId) });
+          queryClient.invalidateQueries({ queryKey: getGetDashboardSummaryQueryKey() });
         }
       }
     );
@@ -408,6 +419,7 @@ export default function Projection() {
                   <TableHead className="w-[150px]">Country</TableHead>
                   <TableHead className="w-[150px]">Salary (SAR)</TableHead>
                   <TableHead className="w-[100px]">Months</TableHead>
+                  <TableHead className="w-[110px] text-right">Alloc %</TableHead>
                   <TableHead className="w-[100px] text-right">CTC</TableHead>
                   <TableHead className="w-[150px] text-right">Total</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
@@ -440,6 +452,9 @@ export default function Projection() {
                     <TableCell className="p-2">
                       <Input type="number" step="0.5" defaultValue={emp.monthsFte} onBlur={(e) => handleUpdateEmployee(emp.id, "monthsFte", parseFloat(e.target.value))} className="h-8 border-transparent hover:border-input focus:border-input bg-transparent text-right" />
                     </TableCell>
+                    <TableCell className="p-2">
+                      <Input type="number" min="0" max="100" step="1" defaultValue={emp.allocationPercent ?? 100} onBlur={(e) => handleUpdateEmployee(emp.id, "allocationPercent", parseFloat(e.target.value))} className="h-8 border-transparent hover:border-input focus:border-input bg-transparent text-right" title="Percentage of time this person is allocated (e.g. 10 = 10%, 100 = full-time)" />
+                    </TableCell>
                     <TableCell className="text-right font-mono text-xs p-2">{emp.ctc}</TableCell>
                     <TableCell className="text-right font-medium p-2">{formatCurrency(emp.totalYearlyCost)}</TableCell>
                     <TableCell className="p-2 text-right">
@@ -451,18 +466,18 @@ export default function Projection() {
                 ))}
                 {!employees?.length && (
                   <TableRow>
-                    <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">No employees added.</TableCell>
+                    <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">No employees added.</TableCell>
                   </TableRow>
                 )}
               </TableBody>
               <TableFooter>
                 <TableRow>
-                  <TableCell colSpan={6} className="text-right font-bold">Grand Total Monthly:</TableCell>
+                  <TableCell colSpan={7} className="text-right font-bold">Grand Total Monthly:</TableCell>
                   <TableCell className="text-right font-bold tabular-nums">{formatCurrency((summary?.totalDeptCostYearly || 0) / 12)}</TableCell>
                   <TableCell></TableCell>
                 </TableRow>
                 <TableRow>
-                  <TableCell colSpan={6} className="text-right font-bold">Grand Total Yearly:</TableCell>
+                  <TableCell colSpan={7} className="text-right font-bold">Grand Total Yearly:</TableCell>
                   <TableCell className="text-right font-bold text-primary tabular-nums">{formatCurrency(summary?.totalDeptCostYearly || 0)}</TableCell>
                   <TableCell></TableCell>
                 </TableRow>
@@ -647,6 +662,7 @@ export default function Projection() {
                   <TableHead className="w-[130px] text-right">Salary (SAR)</TableHead>
                   <TableHead className="w-[110px] text-right">CTC (SAR)</TableHead>
                   <TableHead className="w-[90px] text-right">Months</TableHead>
+                  <TableHead className="w-[100px] text-right">Alloc %</TableHead>
                   <TableHead className="w-[90px] text-right">Margin %</TableHead>
                   <TableHead className="w-[140px] text-right">Total Cost</TableHead>
                   <TableHead className="w-[140px] text-right">Selling Price</TableHead>
@@ -679,6 +695,9 @@ export default function Projection() {
                       <Input type="number" step="0.5" defaultValue={res.months} onBlur={(e) => handleUpdateSalesSupport(res.id, "months", parseFloat(e.target.value))} className="h-8 border-transparent hover:border-input focus:border-input bg-transparent text-right" />
                     </TableCell>
                     <TableCell className="p-2">
+                      <Input type="number" min="0" max="100" step="1" defaultValue={res.allocationPercent ?? 100} onBlur={(e) => handleUpdateSalesSupport(res.id, "allocationPercent", parseFloat(e.target.value))} className="h-8 border-transparent hover:border-input focus:border-input bg-transparent text-right" title="Percentage of time this resource is involved (e.g. 10 = PM at 10%, 100 = full-time)" />
+                    </TableCell>
+                    <TableCell className="p-2">
                       <Input type="number" step="0.1" defaultValue={res.marginPercent} onBlur={(e) => handleUpdateSalesSupport(res.id, "marginPercent", parseFloat(e.target.value))} className="h-8 border-transparent hover:border-input focus:border-input bg-transparent text-right" />
                     </TableCell>
                     <TableCell className="text-right font-medium p-2 text-muted-foreground">{formatCurrency(res.totalSalaryCost)}</TableCell>
@@ -692,7 +711,7 @@ export default function Projection() {
                 ))}
                 {!salesSupport?.length && (
                   <TableRow>
-                    <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">No sales support resources added.</TableCell>
+                    <TableCell colSpan={10} className="h-24 text-center text-muted-foreground">No sales support resources added.</TableCell>
                   </TableRow>
                 )}
               </TableBody>

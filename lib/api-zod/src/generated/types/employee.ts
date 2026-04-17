@@ -14,6 +14,8 @@ export interface Employee {
   country: string;
   salarySar: number;
   monthsFte: number;
+  /** Percentage allocation 0-100 (e.g. 10 = 10% involvement, 100 = full-time). Cost is multiplied by this fraction. */
+  allocationPercent: number;
   ctc: number;
   totalYearlyCost: number;
   createdAt: string;

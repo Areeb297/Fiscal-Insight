@@ -12,4 +12,9 @@ export interface CreateEmployeeBody {
   country: string;
   salarySar: number;
   monthsFte?: number;
+  /**
+   * @minimum 0
+   * @maximum 100
+   */
+  allocationPercent?: number;
 }

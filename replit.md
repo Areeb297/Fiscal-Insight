@@ -35,9 +35,9 @@ Financial projection and cost management application for the Ebttikar department
 ## Database Schema
 
 - `projections` — Year projections with SAR rate, # clients, margin %
-- `employees` — Team members with name, title, country (work location), salary, months
+- `employees` — Team members with name, title, country (work location), salary, months, allocation %
 - `subscriptions` — Monthly subscriptions/overheads with multi-currency support
-- `sales_support_resources` — Post-deployment managed services resources
+- `sales_support_resources` — Post-deployment managed services resources (with allocation %)
 - `quotations` — Client quotations with status tracking
 - `quotation_line_items` — Individual line items for quotations
 - `currencies` — Exchange rates (base: SAR)
@@ -52,6 +52,7 @@ Financial projection and cost management application for the Ebttikar department
 - Default currency is SAR; all amounts auto-converted using admin exchange rates
 - VAT is fixed at 15% on quotations
 - Selling price = total cost / (1 - margin%)
+- Resource cost (employees & sales support) = salary × CTC multiplier × months × (allocation % ÷ 100). Allocation % defaults to 100 (full-time). Use lower values for partial involvement (e.g. PM at 10%).
 
 ## Key Commands
 

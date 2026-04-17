@@ -111,7 +111,8 @@ router.get("/projections/:id/summary", async (req, res): Promise<void> => {
   for (const emp of employees) {
     const multiplier = await getCtcMultiplier(emp.country);
     const ctc = emp.salarySar * multiplier;
-    totalDeptCostYearly += ctc * emp.monthsFte;
+    const allocFraction = (emp.allocationPercent ?? 100) / 100;
+    totalDeptCostYearly += ctc * emp.monthsFte * allocFraction;
   }
 
   const costPerClientYearly = projection.numClients > 0 ? totalDeptCostYearly / projection.numClients : 0;
@@ -148,7 +149,8 @@ router.get("/projections/:id/summary", async (req, res): Promise<void> => {
   for (const r of salesResources) {
     const multiplier = await getCtcMultiplier(r.country);
     const ctc = r.salarySar * multiplier;
-    salesSupportTotalCost += ctc * r.months;
+    const allocFraction = (r.allocationPercent ?? 100) / 100;
+    salesSupportTotalCost += ctc * r.months * allocFraction;
     salesSupportMarginFraction = normalizeMarginToFraction(r.marginPercent);
   }
   const salesSupportSellingPrice = salesSupportMarginFraction < 1 ? salesSupportTotalCost / (1 - salesSupportMarginFraction) : salesSupportTotalCost;

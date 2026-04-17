@@ -12,4 +12,9 @@ export interface UpdateSalesSupportBody {
   salarySar?: number;
   months?: number;
   marginPercent?: number;
+  /**
+   * @minimum 0
+   * @maximum 100
+   */
+  allocationPercent?: number;
 }

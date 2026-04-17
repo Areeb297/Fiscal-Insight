@@ -11,6 +11,7 @@ export const salesSupportResourcesTable = pgTable("sales_support_resources", {
   salarySar: real("salary_sar").notNull().default(0),
   months: integer("months").notNull().default(6),
   marginPercent: real("margin_percent").notNull().default(0.30),
+  allocationPercent: real("allocation_percent").notNull().default(100),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

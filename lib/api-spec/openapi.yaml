@@ -874,13 +874,16 @@ components:
           type: number
         monthsFte:
           type: integer
+        allocationPercent:
+          type: number
+          description: Percentage allocation 0-100 (e.g. 10 = 10% involvement, 100 = full-time). Cost is multiplied by this fraction.
         ctc:
           type: number
         totalYearlyCost:
           type: number
         createdAt:
           type: string
-      required: [id, projectionId, name, title, country, salarySar, monthsFte, ctc, totalYearlyCost, createdAt]
+      required: [id, projectionId, name, title, country, salarySar, monthsFte, allocationPercent, ctc, totalYearlyCost, createdAt]
 
     CreateEmployeeBody:
       type: object
@@ -895,6 +898,10 @@ components:
           type: number
         monthsFte:
           type: integer
+        allocationPercent:
+          type: number
+          minimum: 0
+          maximum: 100
       required: [name, title, country, salarySar]
 
     UpdateEmployeeBody:
@@ -910,6 +917,10 @@ components:
           type: number
         monthsFte:
           type: integer
+        allocationPercent:
+          type: number
+          minimum: 0
+          maximum: 100
 
     Subscription:
       type: object
@@ -978,13 +989,16 @@ components:
           type: integer
         marginPercent:
           type: number
+        allocationPercent:
+          type: number
+          description: Percentage allocation 0-100 (e.g. 10 = 10% involvement, 100 = full-time). Cost is multiplied by this fraction.
         ctc:
           type: number
         totalSalaryCost:
           type: number
         createdAt:
           type: string
-      required: [id, projectionId, title, country, salarySar, months, marginPercent, ctc, totalSalaryCost, createdAt]
+      required: [id, projectionId, title, country, salarySar, months, marginPercent, allocationPercent, ctc, totalSalaryCost, createdAt]
 
     CreateSalesSupportBody:
       type: object
@@ -999,6 +1013,10 @@ components:
           type: integer
         marginPercent:
           type: number
+        allocationPercent:
+          type: number
+          minimum: 0
+          maximum: 100
       required: [title, country, salarySar]
 
     UpdateSalesSupportBody:
@@ -1014,6 +1032,10 @@ components:
           type: integer
         marginPercent:
           type: number
+        allocationPercent:
+          type: number
+          minimum: 0
+          maximum: 100
 
     Quotation:
       type: object

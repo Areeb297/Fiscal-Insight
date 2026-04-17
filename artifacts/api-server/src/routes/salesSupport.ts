@@ -16,7 +16,8 @@ const router: IRouter = Router();
 async function enrichResource(r: typeof salesSupportResourcesTable.$inferSelect) {
   const multiplier = await getCtcMultiplier(r.country);
   const ctc = r.salarySar * multiplier;
-  const totalSalaryCost = ctc * r.months;
+  const allocFraction = (r.allocationPercent ?? 100) / 100;
+  const totalSalaryCost = ctc * r.months * allocFraction;
   return { ...r, ctc, totalSalaryCost };
 }
 

@@ -148,6 +148,11 @@ export const ListEmployeesResponseItem = zod.object({
   country: zod.string(),
   salarySar: zod.number(),
   monthsFte: zod.number(),
+  allocationPercent: zod
+    .number()
+    .describe(
+      "Percentage allocation 0-100 (e.g. 10 = 10% involvement, 100 = full-time). Cost is multiplied by this fraction.",
+    ),
   ctc: zod.number(),
   totalYearlyCost: zod.number(),
   createdAt: zod.string(),
@@ -161,12 +166,20 @@ export const CreateEmployeeParams = zod.object({
   projectionId: zod.coerce.number(),
 });
 
+export const createEmployeeBodyAllocationPercentMin = 0;
+export const createEmployeeBodyAllocationPercentMax = 100;
+
 export const CreateEmployeeBody = zod.object({
   name: zod.string(),
   title: zod.string(),
   country: zod.string(),
   salarySar: zod.number(),
   monthsFte: zod.number().optional(),
+  allocationPercent: zod
+    .number()
+    .min(createEmployeeBodyAllocationPercentMin)
+    .max(createEmployeeBodyAllocationPercentMax)
+    .optional(),
 });
 
 /**
@@ -177,12 +190,20 @@ export const UpdateEmployeeParams = zod.object({
   id: zod.coerce.number(),
 });
 
+export const updateEmployeeBodyAllocationPercentMin = 0;
+export const updateEmployeeBodyAllocationPercentMax = 100;
+
 export const UpdateEmployeeBody = zod.object({
   name: zod.string().optional(),
   title: zod.string().optional(),
   country: zod.string().optional(),
   salarySar: zod.number().optional(),
   monthsFte: zod.number().optional(),
+  allocationPercent: zod
+    .number()
+    .min(updateEmployeeBodyAllocationPercentMin)
+    .max(updateEmployeeBodyAllocationPercentMax)
+    .optional(),
 });
 
 export const UpdateEmployeeResponse = zod.object({
@@ -193,6 +214,11 @@ export const UpdateEmployeeResponse = zod.object({
   country: zod.string(),
   salarySar: zod.number(),
   monthsFte: zod.number(),
+  allocationPercent: zod
+    .number()
+    .describe(
+      "Percentage allocation 0-100 (e.g. 10 = 10% involvement, 100 = full-time). Cost is multiplied by this fraction.",
+    ),
   ctc: zod.number(),
   totalYearlyCost: zod.number(),
   createdAt: zod.string(),
@@ -294,6 +320,11 @@ export const ListSalesSupportResourcesResponseItem = zod.object({
   salarySar: zod.number(),
   months: zod.number(),
   marginPercent: zod.number(),
+  allocationPercent: zod
+    .number()
+    .describe(
+      "Percentage allocation 0-100 (e.g. 10 = 10% involvement, 100 = full-time). Cost is multiplied by this fraction.",
+    ),
   ctc: zod.number(),
   totalSalaryCost: zod.number(),
   createdAt: zod.string(),
@@ -309,12 +340,20 @@ export const CreateSalesSupportResourceParams = zod.object({
   projectionId: zod.coerce.number(),
 });
 
+export const createSalesSupportResourceBodyAllocationPercentMin = 0;
+export const createSalesSupportResourceBodyAllocationPercentMax = 100;
+
 export const CreateSalesSupportResourceBody = zod.object({
   title: zod.string(),
   country: zod.string(),
   salarySar: zod.number(),
   months: zod.number().optional(),
   marginPercent: zod.number().optional(),
+  allocationPercent: zod
+    .number()
+    .min(createSalesSupportResourceBodyAllocationPercentMin)
+    .max(createSalesSupportResourceBodyAllocationPercentMax)
+    .optional(),
 });
 
 /**
@@ -325,12 +364,20 @@ export const UpdateSalesSupportResourceParams = zod.object({
   id: zod.coerce.number(),
 });
 
+export const updateSalesSupportResourceBodyAllocationPercentMin = 0;
+export const updateSalesSupportResourceBodyAllocationPercentMax = 100;
+
 export const UpdateSalesSupportResourceBody = zod.object({
   title: zod.string().optional(),
   country: zod.string().optional(),
   salarySar: zod.number().optional(),
   months: zod.number().optional(),
   marginPercent: zod.number().optional(),
+  allocationPercent: zod
+    .number()
+    .min(updateSalesSupportResourceBodyAllocationPercentMin)
+    .max(updateSalesSupportResourceBodyAllocationPercentMax)
+    .optional(),
 });
 
 export const UpdateSalesSupportResourceResponse = zod.object({
@@ -341,6 +388,11 @@ export const UpdateSalesSupportResourceResponse = zod.object({
   salarySar: zod.number(),
   months: zod.number(),
   marginPercent: zod.number(),
+  allocationPercent: zod
+    .number()
+    .describe(
+      "Percentage allocation 0-100 (e.g. 10 = 10% involvement, 100 = full-time). Cost is multiplied by this fraction.",
+    ),
   ctc: zod.number(),
   totalSalaryCost: zod.number(),
   createdAt: zod.string(),

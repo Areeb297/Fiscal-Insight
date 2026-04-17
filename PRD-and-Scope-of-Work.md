@@ -52,7 +52,8 @@ This module captures all team members, their salaries, CTC, and how many months 
 | Salary (SAR/month) | Monthly gross salary in SAR |
 | CTC | Calculated: Saudi → Salary × 1.5 \| Pakistan → Salary × 1.0 |
 | Months (FTE) | How many months this person is engaged in the project year (1–12) |
-| Total Yearly Cost | CTC × Months |
+| Allocation % | How much of the person's time is dedicated (0–100). Default 100 = full-time. Example: a PM who only spends 10% of their time on this project = `10`. |
+| Total Yearly Cost | CTC × Months × (Allocation % ÷ 100) |
 
 #### 2.2 Summary Row
 
@@ -148,7 +149,8 @@ A separate resource costing module for post-deployment managed services, display
 | Salary (SAR/month) | Monthly gross salary |
 | CTC | Same CTC rule as Module 1 |
 | Months | Months of involvement |
-| Total Salary Cost | CTC × Months |
+| Allocation % | How much of the resource's time is dedicated (0–100). Default 100 = full-time. Example: a .NET dev assigned 100% for the full 12 months = `100`; a PM only 10% involved = `10`. |
+| Total Salary Cost | CTC × Months × (Allocation % ÷ 100) |
 
 #### 2.9 Sales Support Summary
 
