@@ -20,7 +20,8 @@ router.post("/auth/signup", async (req, res): Promise<void> => {
       return;
     }
 
-    const clerkRes = await fetch("https://api.clerk.com/v1/users", {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const clerkRes: any = await fetch("https://api.clerk.com/v1/users", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${CLERK_SECRET_KEY}`,
@@ -82,7 +83,8 @@ router.post("/auth/admin-reset", async (req, res): Promise<void> => {
       return;
     }
 
-    const lookup = await fetch(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const lookup: any = await fetch(
       `https://api.clerk.com/v1/users?email_address=${encodeURIComponent(email)}`,
       { headers: { Authorization: `Bearer ${CLERK_SECRET_KEY}` } },
     );
@@ -90,7 +92,8 @@ router.post("/auth/admin-reset", async (req, res): Promise<void> => {
     let userId: string | undefined = Array.isArray(found) && found[0]?.id;
 
     if (!userId) {
-      const create = await fetch("https://api.clerk.com/v1/users", {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const create: any = await fetch("https://api.clerk.com/v1/users", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${CLERK_SECRET_KEY}`,
@@ -112,7 +115,8 @@ router.post("/auth/admin-reset", async (req, res): Promise<void> => {
       }
       userId = createData.id;
     } else {
-      const update = await fetch(`https://api.clerk.com/v1/users/${userId}`, {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const update: any = await fetch(`https://api.clerk.com/v1/users/${userId}`, {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${CLERK_SECRET_KEY}`,
