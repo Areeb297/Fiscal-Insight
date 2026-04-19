@@ -1,6 +1,10 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { setBaseUrl, setAuthTokenGetter } from "@workspace/api-client-react";
 
 const TOKEN_KEY = "fi_auth_token";
+
+// Initialize API client base URL once at module load
+setBaseUrl((import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "");
 
 export interface AuthUser {
   id: string;
@@ -30,6 +34,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Keep API client in sync with current token
+  useEffect(() => {
+    setAuthTokenGetter(() => localStorage.getItem(TOKEN_KEY));
+    return () => setAuthTokenGetter(null);
+  }, []);
 
   useEffect(() => {
     const stored = localStorage.getItem(TOKEN_KEY);
