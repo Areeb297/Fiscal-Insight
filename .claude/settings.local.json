@@ -20,17 +20,14 @@
       "Bash(node --env-file=.env -e ':*)",
       "Bash(python3:*)",
       "Read(//tmp/**)",
-      "WebFetch(domain:api.anthropic.com)",
-      "Read(//c/Users/areeb/AppData/Local/Temp/**)",
+      "Bash(\"C:/Users/areeb/AppData/Roaming/npm/pnpm.cmd\" install:*)",
+      "Bash(\"C:/Users/areeb/AppData/Roaming/npm/pnpm.cmd\" --filter @workspace/db run push)",
+      "Bash(DATABASE_URL=\"postgresql://neondb_owner:npg_w6LpBEyHJ4rD@ep-jolly-cake-ajnhpoki.c-3.us-east-2.aws.neon.tech/neondb?sslmode=require\" \"C:/Users/areeb/AppData/Roaming/npm/pnpm.cmd\" --filter @workspace/db run push)",
+      "Bash(node:*)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)",
+      "Bash(git -c user.name=Areeb297 -c user.email=areeb.shafqat@gmail.com commit -m ' *)",
       "Bash(git push *)",
-      "Bash(node ./build.mjs)",
-      "Bash(node artifacts/api-server/build.mjs)",
-      "Bash(pnpm typecheck *)",
-      "Bash(git config *)",
-      "Bash(git commit --allow-empty -m ' *)",
-      "Bash(npx pnpm@9 install --no-frozen-lockfile)"
+      "Bash(ssh *)"
     ]
   }
 }

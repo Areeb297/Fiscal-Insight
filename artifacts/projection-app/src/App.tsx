@@ -57,13 +57,13 @@ function SignInForm() {
         <Label htmlFor="si-password">Password</Label>
         <Input id="si-password" type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} className="h-10" />
       </div>
-      {error && <p className="text-sm text-destructive">{error}</p>}
-      <Button type="submit" disabled={loading} className="w-full bg-[#156082] hover:bg-[#0E2841] h-10">
+      {error && <p className="auth-err">{error}</p>}
+      <Button type="submit" disabled={loading} className="auth-submit-btn w-full h-10">
         {loading ? "Signing in…" : "Sign in"}
       </Button>
-      <p className="text-sm text-center text-muted-foreground">
+      <p className="text-sm text-center" style={{ color: "rgba(255,255,255,0.35)", fontFamily: "'DM Sans', sans-serif" }}>
         Don't have an account?{" "}
-        <a href={`${basePath}/sign-up`} className="text-[#156082] hover:text-[#0E2841] font-medium">Create one</a>
+        <a href={`${basePath}/sign-up`} className="auth-link">Create one</a>
       </p>
     </form>
   );
@@ -113,15 +113,15 @@ function SignUpForm() {
       <div className="space-y-1.5">
         <Label htmlFor="su-password">Password</Label>
         <Input id="su-password" type="password" required autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} className="h-10" />
-        <p className="text-xs text-muted-foreground">At least 8 characters.</p>
+        <p className="auth-hint">At least 8 characters.</p>
       </div>
-      {error && <p className="text-sm text-destructive">{error}</p>}
-      <Button type="submit" disabled={loading} className="w-full bg-[#156082] hover:bg-[#0E2841] h-10">
+      {error && <p className="auth-err">{error}</p>}
+      <Button type="submit" disabled={loading} className="auth-submit-btn w-full h-10">
         {loading ? "Creating account…" : "Create account"}
       </Button>
-      <p className="text-sm text-center text-muted-foreground">
+      <p className="text-sm text-center" style={{ color: "rgba(255,255,255,0.35)", fontFamily: "'DM Sans', sans-serif" }}>
         Already have an account?{" "}
-        <a href={`${basePath}/sign-in`} className="text-[#156082] hover:text-[#0E2841] font-medium">Sign in</a>
+        <a href={`${basePath}/sign-in`} className="auth-link">Sign in</a>
       </p>
     </form>
   );
@@ -131,9 +131,13 @@ function SignInPage() {
   return (
     <AuthContentWrapper>
       <div className="space-y-6">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-bold text-foreground">Welcome back</h1>
-          <p className="text-sm text-muted-foreground">Sign in to your account</p>
+        <div className="space-y-1.5">
+          <h1 style={{ fontSize: "22px", fontWeight: 700, color: "white", fontFamily: "'Syne', sans-serif", letterSpacing: "-0.02em", lineHeight: 1.2 }}>
+            Welcome back
+          </h1>
+          <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", fontFamily: "'DM Sans', sans-serif" }}>
+            Sign in to your account
+          </p>
         </div>
         <SignInForm />
       </div>
@@ -145,9 +149,13 @@ function SignUpPage() {
   return (
     <AuthContentWrapper>
       <div className="space-y-6">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-bold text-foreground">Create account</h1>
-          <p className="text-sm text-muted-foreground">Get started with Fiscal Insight</p>
+        <div className="space-y-1.5">
+          <h1 style={{ fontSize: "22px", fontWeight: 700, color: "white", fontFamily: "'Syne', sans-serif", letterSpacing: "-0.02em", lineHeight: 1.2 }}>
+            Create account
+          </h1>
+          <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", fontFamily: "'DM Sans', sans-serif" }}>
+            Get started with Fiscal Insight
+          </p>
         </div>
         <SignUpForm />
       </div>
