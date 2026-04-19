@@ -1,3 +1,7 @@
+import { config } from "dotenv";
+import { resolve } from "path";
+config({ path: resolve(process.cwd(), "../../.env") });
+
 import app from "./app";
 import { logger } from "./lib/logger";
 import { runDataFixes } from "./lib/dataFixes";

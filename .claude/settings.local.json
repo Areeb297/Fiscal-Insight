@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm install:*)",
+      "Bash(npm install:*)",
+      "Bash(where pnpm:*)",
+      "Bash(node -e \"console.log\\(process.execPath\\)\")",
+      "Bash(/c/Users/areeb/AppData/Roaming/npm/pnpm.cmd install:*)",
+      "Bash(/c/Users/areeb/AppData/Roaming/npm/pnpm.cmd --filter @workspace/api-server add dotenv)",
+      "Bash(/c/Users/areeb/AppData/Roaming/npm/pnpm.cmd add:*)",
+      "Read(//c/Users/areeb/.claude/plugins/cache/ui-ux-pro-max-skill/ui-ux-pro-max/2.5.0/.claude/skills/ui-ux-pro-max/**)",
+      "Bash(python scripts/search.py \"financial invoicing SaaS dashboard professional\" --design-system -p \"Fiscal Insight\" -f markdown)",
+      "Bash(python \"/c/Users/areeb/.claude/plugins/cache/ui-ux-pro-max-skill/ui-ux-pro-max/2.5.0/src/ui-ux-pro-max/scripts/search.py\" \"financial invoicing SaaS dashboard professional\" --design-system -p \"Fiscal Insight\" -f markdown)",
+      "mcp__claude_ai_TinyFish__fetch_content",
+      "Bash(\"C:\\\\Users\\\\areeb\\\\AppData\\\\Roaming\\\\npm\\\\pnpm.cmd\" --filter projection-app exec tsc --noEmit --strict false)",
+      "Bash(pnpm --filter @workspace/projection-app run typecheck)",
+      "Bash(npx tsc:*)",
+      "Bash(python3 -c ':*)",
+      "Bash(npx tsx -e ':*)",
+      "Bash(node --env-file=.env -e ':*)",
+      "Bash(python3:*)"
+    ]
+  }
+}

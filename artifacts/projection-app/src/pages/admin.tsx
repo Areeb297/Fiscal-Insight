@@ -125,7 +125,7 @@ export default function Admin() {
   };
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 max-w-5xl mx-auto space-y-6 pb-24">
+    <div className="space-y-6 pb-24">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Administration</h1>
         <p className="text-muted-foreground mt-1">Manage system settings, currencies, and calculation rules</p>

@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { Eye, Trash, MoreHorizontal, RefreshCw, FileText, Calendar as CalendarIcon } from "lucide-react";
+import {
+  Eye, Trash, MoreHorizontal, RefreshCw, FileText,
+  Calendar as CalendarIcon, ChevronUp, ChevronDown,
+  ChevronsUpDown, DollarSign, AlertCircle, Receipt,
+} from "lucide-react";
 import {
   useListInvoices,
   getListInvoicesQueryKey,
@@ -27,16 +31,23 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
-const statusColors: Record<string, string> = {
-  draft: "bg-gray-200 text-gray-800",
-  sent: "bg-blue-200 text-blue-900",
-  paid: "bg-green-200 text-green-900",
-  overdue: "bg-red-200 text-red-900",
+// ── helpers ────────────────────────────────────────────────────────────────
+
+const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
+  draft:   { label: "Draft",   className: "bg-slate-100 text-slate-700 border-slate-200" },
+  sent:    { label: "Sent",    className: "bg-blue-50 text-blue-700 border-blue-200" },
+  paid:    { label: "Paid",    className: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  overdue: { label: "Overdue", className: "bg-red-50 text-red-700 border-red-200" },
 };
 
 function fmtMoney(n: number, code = "SAR") {
-  return `${code} ${(n ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 })}`;
+  return new Intl.NumberFormat("en-SA", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(n ?? 0);
 }
 
 function thisMonth() {
@@ -46,26 +57,90 @@ function thisMonth() {
 
 function nextMonth(month: string) {
   const [y, m] = month.split("-").map(Number);
-  const ny = m === 12 ? y + 1 : y;
-  const nm = m === 12 ? 1 : m + 1;
-  return `${ny}-${String(nm).padStart(2, "0")}`;
+  return `${m === 12 ? y + 1 : y}-${String(m === 12 ? 1 : m + 1).padStart(2, "0")}`;
 }
 
 type SortKey = "dueDate" | "issueDate" | "billingMonth" | "client" | "amount";
+
+// ── sub-components ─────────────────────────────────────────────────────────
+
+function MetricCard({
+  label, value, sub, icon: Icon, accent,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  icon: React.ElementType;
+  accent?: "red" | "emerald" | "blue";
+}) {
+  const iconColor = accent === "red" ? "text-red-500 bg-red-50" :
+    accent === "emerald" ? "text-emerald-600 bg-emerald-50" :
+    "text-primary bg-primary/8";
+  return (
+    <Card className="flex-1 min-w-0">
+      <CardContent className="p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-1">{label}</p>
+            <p className={cn(
+              "text-2xl font-bold tabular-nums leading-none",
+              accent === "red" ? "text-red-600" : accent === "emerald" ? "text-emerald-600" : "text-foreground"
+            )}>
+              {value}
+            </p>
+            {sub && <p className="mt-1 text-xs text-muted-foreground">{sub}</p>}
+          </div>
+          <div className={cn("rounded-lg p-2 shrink-0", iconColor)}>
+            <Icon className="h-4 w-4" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function SortHead({
+  label, sortKey: k, currentKey, dir, onSort,
+  className,
+}: {
+  label: string;
+  sortKey: SortKey;
+  currentKey: SortKey;
+  dir: "asc" | "desc";
+  onSort: (k: SortKey) => void;
+  className?: string;
+}) {
+  const active = currentKey === k;
+  return (
+    <TableHead
+      className={cn("cursor-pointer select-none whitespace-nowrap", className)}
+      onClick={() => onSort(k)}
+    >
+      <span className="inline-flex items-center gap-1">
+        {label}
+        {active
+          ? dir === "asc" ? <ChevronUp className="h-3 w-3 text-primary" /> : <ChevronDown className="h-3 w-3 text-primary" />
+          : <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />}
+      </span>
+    </TableHead>
+  );
+}
+
+// ── main page ──────────────────────────────────────────────────────────────
 
 export default function InvoicesList() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [projectionFilter, setProjectionFilter] = useState<number | undefined>(undefined);
   const [clientFilter, setClientFilter] = useState<string>("all");
   const [sortKey, setSortKey] = useState<SortKey>("dueDate");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [genProjId, setGenProjId] = useState<number | undefined>(undefined);
-  const [fromMonthVal, setFromMonthVal] = useState<string>(() => thisMonth());
-  const [toMonthVal, setToMonthVal] = useState<string>(() => nextMonth(thisMonth()));
+  const [fromMonthVal, setFromMonthVal] = useState(() => thisMonth());
+  const [toMonthVal, setToMonthVal] = useState(() => nextMonth(thisMonth()));
 
   const params: Record<string, unknown> = {};
   if (statusFilter && statusFilter !== "all") params.status = statusFilter;
@@ -88,9 +163,7 @@ export default function InvoicesList() {
   });
   const updateMut = useUpdateInvoice({
     mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
-      },
+      onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/invoices"] }),
     },
   });
   const genMut = useGenerateProjectionInvoices({
@@ -118,244 +191,321 @@ export default function InvoicesList() {
         case "amount": return inv.grandTotal ?? 0;
         case "issueDate": return inv.issueDate;
         case "billingMonth": return inv.billingMonth;
-        case "dueDate":
         default: return inv.dueDate;
       }
     };
     const av = get(a); const bv = get(b);
-    if (av < bv) return -1 * dir;
-    if (av > bv) return 1 * dir;
-    return 0;
+    return av < bv ? -1 * dir : av > bv ? 1 * dir : 0;
   });
-  const grandTotal = filtered.reduce((s, i) => s + (i.grandTotal ?? 0), 0);
-  const outstanding = filtered
-    .filter((i) => i.status !== "paid")
-    .reduce((s, i) => s + (i.grandTotal ?? 0), 0);
-  const overdueCount = filtered.filter((i) => i.status === "overdue").length;
+
+  const grandTotal    = filtered.reduce((s, i) => s + (i.grandTotal ?? 0), 0);
+  const outstanding   = filtered.filter((i) => i.status !== "paid").reduce((s, i) => s + (i.grandTotal ?? 0), 0);
+  const overdueCount  = filtered.filter((i) => i.status === "overdue").length;
+  const paidCount     = filtered.filter((i) => i.status === "paid").length;
+
   const toggleSort = (k: SortKey) => {
     if (sortKey === k) setSortDir(sortDir === "asc" ? "desc" : "asc");
     else { setSortKey(k); setSortDir("asc"); }
   };
-  const sortIcon = (k: SortKey) => sortKey === k ? (sortDir === "asc" ? " ↑" : " ↓") : "";
+
+  // Determine first billing month per (projectionId, clientKey) → "Setup" badge
+  const firstMonthMap = new Map<string, string>();
+  for (const inv of sorted) {
+    const key = `${inv.projectionId}-${inv.clientKey}`;
+    if (!firstMonthMap.has(key) || inv.billingMonth < firstMonthMap.get(key)!) {
+      firstMonthMap.set(key, inv.billingMonth);
+    }
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-10">
+
+      {/* ── Page header ── */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Invoices</h1>
-          <p className="text-muted-foreground">Auto-generated recurring monthly invoices.</p>
+          <h1 className="text-2xl font-semibold tracking-tight">Invoices</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Manage and generate client invoices.</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setLocation("/invoices/calendar")}>
-            <CalendarIcon className="mr-2 h-4 w-4" /> Payment Calendar
-          </Button>
-        </div>
+        <Button variant="outline" size="sm" onClick={() => setLocation("/invoices/calendar")}>
+          <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+          Payment Calendar
+        </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Total Billed</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold">{fmtMoney(grandTotal)}</div></CardContent>
-        </Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Outstanding</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold">{fmtMoney(outstanding)}</div></CardContent>
-        </Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Overdue</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold text-red-600">{overdueCount}</div></CardContent>
-        </Card>
+      {/* ── KPI row ── */}
+      <div className="flex gap-4 flex-wrap">
+        <MetricCard
+          label="Total Billed"
+          value={`SAR ${fmtMoney(grandTotal)}`}
+          sub={`${filtered.length} invoice${filtered.length !== 1 ? "s" : ""}`}
+          icon={DollarSign}
+        />
+        <MetricCard
+          label="Outstanding"
+          value={`SAR ${fmtMoney(outstanding)}`}
+          sub={`${filtered.length - paidCount} unpaid`}
+          icon={Receipt}
+          accent="blue"
+        />
+        <MetricCard
+          label="Overdue"
+          value={String(overdueCount)}
+          sub={overdueCount === 0 ? "All on time" : "Needs attention"}
+          icon={AlertCircle}
+          accent={overdueCount > 0 ? "red" : undefined}
+        />
       </div>
 
+      {/* ── Generate invoices ── */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Generate monthly invoices</CardTitle>
+        <CardHeader className="pb-4">
+          <CardTitle className="text-sm font-semibold">Generate monthly invoices</CardTitle>
+          <p className="text-xs text-muted-foreground">Select a projection and date range, then generate invoices for all clients.</p>
         </CardHeader>
-        <CardContent className="flex flex-wrap items-end gap-3">
-          <div>
-            <label className="text-xs text-muted-foreground">Projection</label>
-            <Select value={genProjId ? String(genProjId) : ""} onValueChange={(v) => setGenProjId(Number(v))}>
-              <SelectTrigger className="w-64"><SelectValue placeholder="Select projection" /></SelectTrigger>
-              <SelectContent>
-                {(projections ?? []).map((p) => (
-                  <SelectItem key={p.id} value={String(p.id)}>{p.name ?? `Projection ${p.id}`} ({p.yearLabel})</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <Separator />
+        <CardContent className="pt-4">
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">Projection</label>
+              <Select value={genProjId ? String(genProjId) : ""} onValueChange={(v) => setGenProjId(Number(v))}>
+                <SelectTrigger className="h-9 w-60 text-sm">
+                  <SelectValue placeholder="Select projection" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(projections ?? []).map((p) => (
+                    <SelectItem key={p.id} value={String(p.id)}>
+                      {p.name ?? `Projection ${p.id}`}
+                      <span className="ml-1.5 text-muted-foreground">({p.yearLabel})</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">From</label>
+              <input
+                type="month"
+                value={fromMonthVal}
+                onChange={(e) => setFromMonthVal(e.target.value)}
+                className="h-9 rounded-md border bg-background px-3 text-sm tabular-nums focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">To</label>
+              <input
+                type="month"
+                value={toMonthVal}
+                onChange={(e) => setToMonthVal(e.target.value)}
+                className="h-9 rounded-md border bg-background px-3 text-sm tabular-nums focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+
+            <Button
+              size="sm"
+              disabled={!genProjId || !fromMonthVal || !toMonthVal || genMut.isPending}
+              onClick={() => {
+                if (!genProjId) return;
+                if (toMonthVal < fromMonthVal) {
+                  toast({ title: "Invalid range", description: "To-month must be on or after from-month.", variant: "destructive" });
+                  return;
+                }
+                genMut.mutate({ id: genProjId, data: { fromMonth: fromMonthVal, toMonth: toMonthVal } });
+              }}
+              className="h-9"
+            >
+              <RefreshCw className={cn("mr-2 h-3.5 w-3.5", genMut.isPending && "animate-spin")} />
+              {genMut.isPending ? "Generating…" : "Generate"}
+            </Button>
           </div>
-          <div>
-            <label className="text-xs text-muted-foreground">From (YYYY-MM)</label>
-            <input
-              type="month"
-              value={fromMonthVal}
-              onChange={(e) => setFromMonthVal(e.target.value)}
-              className="block h-10 rounded-md border bg-background px-3 text-sm"
-            />
-          </div>
-          <div>
-            <label className="text-xs text-muted-foreground">To (YYYY-MM)</label>
-            <input
-              type="month"
-              value={toMonthVal}
-              onChange={(e) => setToMonthVal(e.target.value)}
-              className="block h-10 rounded-md border bg-background px-3 text-sm"
-            />
-          </div>
-          <Button
-            disabled={!genProjId || !fromMonthVal || !toMonthVal || genMut.isPending}
-            onClick={() => {
-              if (!genProjId) return;
-              if (toMonthVal < fromMonthVal) {
-                toast({ title: "Invalid range", description: "To-month must be on or after from-month.", variant: "destructive" });
-                return;
-              }
-              genMut.mutate({ id: genProjId, data: { fromMonth: fromMonthVal, toMonth: toMonthVal } });
-            }}
-          >
-            <RefreshCw className={`mr-2 h-4 w-4 ${genMut.isPending ? "animate-spin" : ""}`} />
-            Generate range
-          </Button>
         </CardContent>
       </Card>
 
+      {/* ── Invoice table ── */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>All Invoices</CardTitle>
-          <div className="flex gap-2">
-            <Select value={statusFilter ?? "all"} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-36"><SelectValue placeholder="Status" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="sent">Sent</SelectItem>
-                <SelectItem value="paid">Paid</SelectItem>
-                <SelectItem value="overdue">Overdue</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select
-              value={projectionFilter ? String(projectionFilter) : "all"}
-              onValueChange={(v) => setProjectionFilter(v === "all" ? undefined : Number(v))}
-            >
-              <SelectTrigger className="w-48"><SelectValue placeholder="Projection" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All projections</SelectItem>
-                {(projections ?? []).map((p) => (
-                  <SelectItem key={p.id} value={String(p.id)}>{p.name ?? `Projection ${p.id}`}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={clientFilter} onValueChange={setClientFilter}>
-              <SelectTrigger className="w-44"><SelectValue placeholder="Client" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All clients</SelectItem>
-                {clientOptions.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-              </SelectContent>
-            </Select>
+        <CardHeader className="pb-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <CardTitle className="text-sm font-semibold">All Invoices</CardTitle>
+              {sorted.length > 0 && (
+                <p className="text-xs text-muted-foreground mt-0.5">{sorted.length} invoice{sorted.length !== 1 ? "s" : ""} shown</p>
+              )}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="h-8 w-36 text-xs">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="sent">Sent</SelectItem>
+                  <SelectItem value="paid">Paid</SelectItem>
+                  <SelectItem value="overdue">Overdue</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={projectionFilter ? String(projectionFilter) : "all"}
+                onValueChange={(v) => setProjectionFilter(v === "all" ? undefined : Number(v))}
+              >
+                <SelectTrigger className="h-8 w-44 text-xs">
+                  <SelectValue placeholder="All projections" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All projections</SelectItem>
+                  {(projections ?? []).map((p) => (
+                    <SelectItem key={p.id} value={String(p.id)}>{p.name ?? `Projection ${p.id}`}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={clientFilter} onValueChange={setClientFilter}>
+                <SelectTrigger className="h-8 w-40 text-xs">
+                  <SelectValue placeholder="All clients" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All clients</SelectItem>
+                  {clientOptions.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <Separator />
+        <CardContent className="p-0">
           {isLoading ? (
-            <Skeleton className="h-40 w-full" />
+            <div className="p-6 space-y-3">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-10 w-full" />
+              ))}
+            </div>
           ) : sorted.length === 0 ? (
-            <div className="py-12 text-center text-muted-foreground">
-              <FileText className="mx-auto mb-2 h-8 w-8 opacity-40" />
-              No invoices yet. Generate them from a projection above.
+            <div className="py-16 text-center">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                <FileText className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <p className="text-sm font-medium text-foreground">No invoices yet</p>
+              <p className="text-xs text-muted-foreground mt-1">Generate invoices from a projection above.</p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Invoice #</TableHead>
-                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("client")}>Client{sortIcon("client")}</TableHead>
-                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("billingMonth")}>Month{sortIcon("billingMonth")}</TableHead>
-                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("issueDate")}>Issue{sortIcon("issueDate")}</TableHead>
-                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("dueDate")}>Due{sortIcon("dueDate")}</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="cursor-pointer select-none text-right" onClick={() => toggleSort("amount")}>Total{sortIcon("amount")}</TableHead>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {(() => {
-                  // Determine the earliest billing month per (projectionId, clientKey) = "Setup Invoice"
-                  const firstMonthMap = new Map<string, string>();
-                  for (const inv of sorted) {
-                    const key = `${inv.projectionId}-${inv.clientKey}`;
-                    if (!firstMonthMap.has(key) || inv.billingMonth < firstMonthMap.get(key)!) {
-                      firstMonthMap.set(key, inv.billingMonth);
-                    }
-                  }
-                  return sorted.map((inv) => {
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/40 hover:bg-muted/40">
+                    <TableHead className="pl-6 w-36">Invoice #</TableHead>
+                    <SortHead label="Client"  sortKey="client"       currentKey={sortKey} dir={sortDir} onSort={toggleSort} />
+                    <SortHead label="Month"   sortKey="billingMonth" currentKey={sortKey} dir={sortDir} onSort={toggleSort} />
+                    <SortHead label="Issued"  sortKey="issueDate"    currentKey={sortKey} dir={sortDir} onSort={toggleSort} />
+                    <SortHead label="Due"     sortKey="dueDate"      currentKey={sortKey} dir={sortDir} onSort={toggleSort} />
+                    <TableHead>Status</TableHead>
+                    <SortHead label="Total"   sortKey="amount"       currentKey={sortKey} dir={sortDir} onSort={toggleSort} className="text-right pr-6" />
+                    <TableHead className="w-10" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sorted.map((inv) => {
                     const key = `${inv.projectionId}-${inv.clientKey}`;
                     const isSetup = firstMonthMap.get(key) === inv.billingMonth;
-                  return (
-                  <TableRow key={inv.id} className="cursor-pointer" onClick={() => setLocation(`/invoices/${inv.id}`)}>
-                    <TableCell className="font-mono">{inv.invoiceNumber}</TableCell>
-                    <TableCell>{inv.clientName}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1.5">
-                        {inv.billingMonth}
-                        {isSetup
-                          ? <span className="text-[9px] font-bold uppercase tracking-wide text-amber-700 bg-amber-100 dark:bg-amber-900/40 dark:text-amber-400 px-1.5 py-0.5 rounded">Setup</span>
-                          : <span className="text-[9px] font-medium uppercase tracking-wide text-sky-700 bg-sky-100 dark:bg-sky-900/40 dark:text-sky-400 px-1.5 py-0.5 rounded">Recurring</span>
-                        }
-                      </div>
-                    </TableCell>
-                    <TableCell>{inv.issueDate}</TableCell>
-                    <TableCell>{inv.dueDate}</TableCell>
-                    <TableCell>
-                      <Select
-                        value={inv.status}
-                        onValueChange={(v) => updateMut.mutate({ id: inv.id, data: { status: v as "draft"|"sent"|"paid"|"overdue" } })}
+                    const statusCfg = STATUS_CONFIG[inv.status] ?? STATUS_CONFIG.draft;
+
+                    return (
+                      <TableRow
+                        key={inv.id}
+                        className="cursor-pointer group"
+                        onClick={() => setLocation(`/invoices/${inv.id}`)}
                       >
-                        <SelectTrigger className="h-8 w-28" onClick={(e) => e.stopPropagation()}>
-                          <Badge className={statusColors[inv.status]}>{inv.status}</Badge>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="draft">Draft</SelectItem>
-                          <SelectItem value="sent">Sent</SelectItem>
-                          <SelectItem value="paid">Paid</SelectItem>
-                          <SelectItem value="overdue">Overdue</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell className="text-right">{fmtMoney(inv.grandTotal, inv.currencyCode)}</TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setLocation(`/invoices/${inv.id}`)}>
-                            <Eye className="mr-2 h-4 w-4" /> View / Print
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600" onClick={() => setDeleteId(inv.id)}>
-                            <Trash className="mr-2 h-4 w-4" /> Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                  );
-                  });
-                })()}
-              </TableBody>
-            </Table>
+                        <TableCell className="pl-6 font-mono text-xs text-muted-foreground group-hover:text-foreground transition-colors">
+                          {inv.invoiceNumber}
+                        </TableCell>
+                        <TableCell className="font-medium text-sm">{inv.clientName}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <span className="tabular-nums text-sm">{inv.billingMonth}</span>
+                            <span className={cn(
+                              "inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide border",
+                              isSetup
+                                ? "bg-amber-50 text-amber-700 border-amber-200"
+                                : "bg-sky-50 text-sky-700 border-sky-200"
+                            )}>
+                              {isSetup ? "Setup" : "Recurring"}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="tabular-nums text-sm text-muted-foreground">{inv.issueDate}</TableCell>
+                        <TableCell className="tabular-nums text-sm text-muted-foreground">{inv.dueDate}</TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <Select
+                            value={inv.status}
+                            onValueChange={(v) => updateMut.mutate({ id: inv.id, data: { status: v as "draft" | "sent" | "paid" | "overdue" } })}
+                          >
+                            <SelectTrigger className="h-7 w-auto border-0 px-2 shadow-none focus:ring-0 hover:bg-muted rounded-md">
+                              <span className={cn(
+                                "inline-flex items-center rounded px-2 py-0.5 text-[11px] font-medium border",
+                                statusCfg.className
+                              )}>
+                                {statusCfg.label}
+                              </span>
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Object.entries(STATUS_CONFIG).map(([val, cfg]) => (
+                                <SelectItem key={val} value={val}>{cfg.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums font-semibold text-sm pr-6">
+                          <span className="text-muted-foreground text-xs font-normal mr-1">{inv.currencyCode ?? "SAR"}</span>
+                          {fmtMoney(inv.grandTotal)}
+                        </TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()} className="pr-4">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <MoreHorizontal className="h-3.5 w-3.5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => setLocation(`/invoices/${inv.id}`)}>
+                                <Eye className="mr-2 h-3.5 w-3.5" /> View / Print
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-red-600 focus:text-red-600"
+                                onClick={() => setDeleteId(inv.id)}
+                              >
+                                <Trash className="mr-2 h-3.5 w-3.5" /> Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
 
+      {/* ── Delete confirm ── */}
       <AlertDialog open={deleteId !== null} onOpenChange={(o) => !o && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete invoice?</AlertDialogTitle>
-            <AlertDialogDescription>This cannot be undone.</AlertDialogDescription>
+            <AlertDialogTitle>Delete this invoice?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. The invoice will be permanently removed.
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
-                if (deleteId !== null) deleteMut.mutate({ id: deleteId });
-                setDeleteId(null);
-              }}
-            >Delete</AlertDialogAction>
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => { if (deleteId !== null) deleteMut.mutate({ id: deleteId }); setDeleteId(null); }}
+            >
+              Delete invoice
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

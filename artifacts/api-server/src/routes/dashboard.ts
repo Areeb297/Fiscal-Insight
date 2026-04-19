@@ -134,6 +134,8 @@ router.get("/dashboard/summary", async (_req, res): Promise<void> => {
     });
     const revenue = sc.sellingPriceWithoutVat * (p.numClients ?? 0);
     const cost = sc.totalDeptCostMonthly + sc.totalOverheadMonthly;
+    // Skip projections with no data configured — they clutter the trend chart
+    if (cost === 0 && revenue === 0 && employees.length === 0) continue;
     projectionTrend.push({
       label: p.name?.trim() ? p.name : `#${p.id} · ${p.yearLabel}`,
       monthlyCost: Math.round(cost),

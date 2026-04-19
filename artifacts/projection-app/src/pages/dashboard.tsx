@@ -78,7 +78,7 @@ export default function Dashboard() {
   const formatCurrency = (val: number) => new Intl.NumberFormat('en-SA', { style: 'currency', currency: 'SAR' }).format(val);
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto space-y-6 md:space-y-8">
+    <div className="space-y-6 md:space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h1>
         <div className="flex flex-wrap gap-2 sm:gap-3">
@@ -234,40 +234,87 @@ export default function Dashboard() {
           )}
 
           {summary.charts.headcountByCountry && summary.charts.headcountByCountry.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Headcount by Country</CardTitle>
-                <CardDescription>Team distribution across regions</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ChartContainer
-                  className="h-[260px] w-full"
-                  config={Object.fromEntries(
-                    summary.charts.headcountByCountry.map((row, i) => [
-                      row.country,
-                      { label: row.country, color: `hsl(var(--chart-${(i % 5) + 1}))` },
-                    ]),
-                  ) satisfies ChartConfig}
-                >
-                  <PieChart>
-                    <ChartTooltip content={<ChartTooltipContent nameKey="country" />} />
-                    <Pie
-                      data={summary.charts.headcountByCountry}
-                      dataKey="headcount"
-                      nameKey="country"
-                      innerRadius={60}
-                      outerRadius={100}
-                      paddingAngle={2}
-                    >
-                      {summary.charts.headcountByCountry.map((row, i) => (
-                        <Cell key={row.country} fill={`hsl(var(--chart-${(i % 5) + 1}))`} />
-                      ))}
-                    </Pie>
-                    <ChartLegend content={<ChartLegendContent nameKey="country" />} />
-                  </PieChart>
-                </ChartContainer>
-              </CardContent>
-            </Card>
+            <div className="lg:col-span-2 grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Headcount by Country — donut */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Headcount by Country</CardTitle>
+                  <CardDescription>Team distribution across regions</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ChartContainer
+                    className="h-[260px] w-full"
+                    config={Object.fromEntries(
+                      summary.charts.headcountByCountry.map((row, i) => [
+                        row.country,
+                        { label: row.country, color: `hsl(var(--chart-${(i % 5) + 1}))` },
+                      ]),
+                    ) satisfies ChartConfig}
+                  >
+                    <PieChart>
+                      <ChartTooltip content={<ChartTooltipContent nameKey="country" />} />
+                      <Pie
+                        data={summary.charts.headcountByCountry}
+                        dataKey="headcount"
+                        nameKey="country"
+                        innerRadius={60}
+                        outerRadius={100}
+                        paddingAngle={2}
+                      >
+                        {summary.charts.headcountByCountry.map((row, i) => (
+                          <Cell key={row.country} fill={`hsl(var(--chart-${(i % 5) + 1}))`} />
+                        ))}
+                      </Pie>
+                      <ChartLegend content={<ChartLegendContent nameKey="country" />} />
+                    </PieChart>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
+
+              {/* Monthly Payroll by Country — bar (derived from headcount proportions) */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Monthly Payroll by Country</CardTitle>
+                  <CardDescription>Estimated cost split by location</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {(() => {
+                    const totalHc = summary.charts.headcountByCountry.reduce((s, r) => s + r.headcount, 0);
+                    const avgPerHead = totalHc > 0 ? (summary.recentProjection?.totalDeptCostMonthly ?? 0) / totalHc : 0;
+                    const costData = summary.charts.headcountByCountry.map((r, i) => ({
+                      country: r.country,
+                      headcount: r.headcount,
+                      cost: Math.round(r.headcount * avgPerHead),
+                      fill: `hsl(var(--chart-${(i % 5) + 1}))`,
+                    }));
+                    return (
+                      <ChartContainer
+                        className="h-[260px] w-full"
+                        config={Object.fromEntries(
+                          costData.map((r) => [r.country, { label: r.country, color: r.fill }])
+                        ) satisfies ChartConfig}
+                      >
+                        <BarChart data={costData} margin={{ left: 12, right: 12, bottom: 8 }}>
+                          <CartesianGrid vertical={false} />
+                          <XAxis dataKey="country" tickLine={false} axisLine={false} tickMargin={8} tick={{ fontSize: 12 }} />
+                          <YAxis tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} tickLine={false} axisLine={false} />
+                          <ChartTooltip
+                            content={<ChartTooltipContent formatter={(v, _name, item) =>
+                              [`${formatCurrency(v as number)} · ${item.payload.headcount} ppl`, "Est. Monthly Cost"]
+                            } />}
+                          />
+                          <Bar dataKey="cost" radius={6}>
+                            {costData.map((r) => (
+                              <Cell key={r.country} fill={r.fill} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ChartContainer>
+                    );
+                  })()}
+                </CardContent>
+              </Card>
+            </div>
           )}
 
           {summary.charts.projectionTrend && summary.charts.projectionTrend.length > 0 && (
