@@ -58,11 +58,14 @@ import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
+const KNOWN_DEPTS = ["HC", "FIN", "OPS", "IT", "CS"] as const;
+
 export default function Projection() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const params = useParams();
   const [, setLocation] = useLocation();
+  const [otherDepts, setOtherDepts] = useState<Set<number>>(new Set());
 
   const routeId = params.id ? parseInt(params.id) : NaN;
   const hasRouteId = Number.isFinite(routeId) && routeId > 0;
@@ -143,7 +146,7 @@ export default function Projection() {
   const handleAddVendor = () => {
     if (!activeProjectionId) return;
     createVendor.mutate(
-      { projectionId: activeProjectionId, data: { name: "New Setup Item", vendorName: "", currency: "SAR", amount: 0, amortizeMonths: 1, marginPercent: 20 } },
+      { projectionId: activeProjectionId, data: { name: "New Setup Item", vendorName: "", currency: "SAR", amount: 0, amortizeMonths: 1, marginPercent: 30 } },
       { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListVendorSetupFeesQueryKey(activeProjectionId) }); invalidateAll(); } }
     );
   };
@@ -165,7 +168,7 @@ export default function Projection() {
   const handleAddInfra = () => {
     if (!activeProjectionId) return;
     createInfra.mutate(
-      { projectionId: activeProjectionId, data: { name: "New Infrastructure Line", category: "compute", currency: "SAR", amount: 0, billingCycle: "monthly", marginPercent: 20, allocationBasis: "shared" } },
+      { projectionId: activeProjectionId, data: { name: "New Infrastructure Line", category: "compute", currency: "SAR", amount: 0, billingCycle: "one_time", marginPercent: 5, allocationBasis: "shared" } },
       { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListInfrastructureCostsQueryKey(activeProjectionId) }); invalidateAll(); } }
     );
   };
@@ -298,7 +301,7 @@ export default function Projection() {
   const handleAddSalesSupport = () => {
     if (!activeProjectionId) return;
     createSalesSupport.mutate(
-      { projectionId: activeProjectionId, data: { title: "New Resource", country: ctcRules?.[0]?.countryName || "KSA", salarySar: 0, months: 12, marginPercent: 20, allocationPercent: 100 } },
+      { projectionId: activeProjectionId, data: { name: "Project Manager", title: "PM", department: "OPS", country: ctcRules?.[0]?.countryName || "KSA", salarySar: 20000, ctcSar: 30000, months: 12, marginPercent: 30, allocationPercent: 100 } },
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListSalesSupportResourcesQueryKey(activeProjectionId) });
@@ -413,12 +416,26 @@ export default function Projection() {
               <div className="space-y-1.5">
                 <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Fiscal year</Label>
                 <Input
-                  type="number"
-                  min="2020"
-                  max="2099"
+                  type="text"
+                  placeholder="e.g. 2026-27"
                   key={`fy-${activeProjection?.id}`}
-                  defaultValue={activeProjection?.fiscalYear ?? new Date().getFullYear()}
-                  onBlur={(e) => handleUpdateProjectionSettings("fiscalYear", parseInt(e.target.value))}
+                  defaultValue={activeProjection?.fiscalYear ?? activeProjection?.yearLabel ?? ""}
+                  onBlur={(e) => {
+                    const raw = e.target.value.trim();
+                    if (raw) handleUpdateProjectionSettings("fiscalYear", raw);
+                  }}
+                  className="h-10 bg-background tabular-nums"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Start month</Label>
+                <Input
+                  type="month"
+                  key={`sm-${activeProjection?.id}`}
+                  defaultValue={activeProjection?.startMonth ?? ""}
+                  onBlur={(e) => {
+                    handleUpdateProjectionSettings("startMonth", e.target.value.trim());
+                  }}
                   className="h-10 bg-background tabular-nums"
                 />
               </div>
@@ -531,6 +548,119 @@ export default function Projection() {
           );
         })()}
       </motion.div>
+
+      {/* 4-Stream Revenue Breakdown */}
+      {summary && (summary.coreSellExVatMonthly != null || summary.msSellExVatMonthly != null) && (() => {
+        const s = summary;
+        const vat = activeProjection?.vatRate ?? 15;
+        const nc = activeProjection?.numClients || 1;
+        const streams = [
+          {
+            icon: Sparkles,
+            tone: "blue",
+            label: "Core Platform",
+            sublabel: "Team + Tools · recurring",
+            col1Label: "Cost / client / mo",
+            col1: formatCurrency(s.coreCostPerClientMonthly ?? 0),
+            col2Label: "Sell ex-VAT / mo",
+            col2: formatCurrency(s.coreSellExVatMonthly ?? 0),
+            col3Label: `Sell inc-VAT (${vat}%) / mo`,
+            col3: formatCurrency(s.coreSellIncVatMonthly ?? 0),
+            col4Label: "Yearly per client",
+            col4: formatCurrency((s.coreSellIncVatMonthly ?? 0) * 12),
+          },
+          {
+            icon: Building2,
+            tone: "violet",
+            label: "Managed Services",
+            sublabel: "PM + support · engagement-weighted",
+            col1Label: "Cost / client / mo",
+            col1: formatCurrency(s.msCostPerClientMonthly ?? 0),
+            col2Label: "Sell ex-VAT / mo",
+            col2: formatCurrency(s.msSellExVatMonthly ?? 0),
+            col3Label: `Sell inc-VAT (${vat}%) / mo`,
+            col3: formatCurrency(s.msSellIncVatMonthly ?? 0),
+            col4Label: "Yearly per client",
+            col4: formatCurrency((s.msSellIncVatMonthly ?? 0) * 12),
+          },
+          {
+            icon: Receipt,
+            tone: "amber",
+            label: "One-Time Setup",
+            sublabel: "Vendor fees · billed once",
+            col1Label: "Cost per client",
+            col1: formatCurrency((s.vendorSetupTotalCost ?? 0) + (s.infraOneTimeCostPerClient ?? 0)),
+            col2Label: "Sell ex-VAT",
+            col2: formatCurrency((s.vendorSetupTotalSelling ?? 0) + (s.infraOneTimeSellExVatPerClient ?? 0)),
+            col3Label: `Sell inc-VAT (${vat}%)`,
+            col3: formatCurrency((s.vendorSetupTotalWithVat ?? 0) + (s.infraOneTimeSellIncVatPerClient ?? 0)),
+            col4Label: `Total (${nc} clients)`,
+            col4: formatCurrency(((s.vendorSetupTotalWithVat ?? 0) + (s.infraOneTimeSellIncVatPerClient ?? 0)) * nc),
+          },
+          {
+            icon: TrendingUp,
+            tone: "emerald",
+            label: "Invoice Summary",
+            sublabel: "Per client · 12-month engagement",
+            col1Label: "Invoice #1 (inc-VAT)",
+            col1: formatCurrency(s.invoice1TotalIncVat ?? 0),
+            col2Label: "Invoices #2-12 each",
+            col2: formatCurrency(s.invoiceRecurringIncVat ?? 0),
+            col3Label: "Year-1 per client",
+            col3: formatCurrency(s.year1TotalPerClient ?? 0),
+            col4Label: `Year-1 × ${nc} clients`,
+            col4: formatCurrency(s.year1TotalAllClients ?? 0),
+          },
+        ];
+        const toneMap: Record<string, { ring: string; text: string; gradient: string; iconBg: string; labelColor: string }> = {
+          blue: { ring: "ring-blue-200/60 dark:ring-blue-700/40", text: "text-blue-700 dark:text-blue-300", gradient: "from-blue-50/70 via-background to-background dark:from-blue-900/20", iconBg: "bg-blue-500/10 text-blue-600 dark:text-blue-300", labelColor: "text-blue-600 dark:text-blue-400" },
+          violet: { ring: "ring-violet-200/60 dark:ring-violet-700/40", text: "text-violet-700 dark:text-violet-300", gradient: "from-violet-50/70 via-background to-background dark:from-violet-900/20", iconBg: "bg-violet-500/10 text-violet-600 dark:text-violet-300", labelColor: "text-violet-600 dark:text-violet-400" },
+          amber: { ring: "ring-amber-200/60 dark:ring-amber-700/40", text: "text-amber-700 dark:text-amber-300", gradient: "from-amber-50/70 via-background to-background dark:from-amber-900/20", iconBg: "bg-amber-500/10 text-amber-600 dark:text-amber-300", labelColor: "text-amber-600 dark:text-amber-400" },
+          emerald: { ring: "ring-emerald-200/60 dark:ring-emerald-700/40", text: "text-emerald-700 dark:text-emerald-300", gradient: "from-emerald-50/70 via-background to-background dark:from-emerald-900/20", iconBg: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300", labelColor: "text-emerald-600 dark:text-emerald-400" },
+        };
+        return (
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }}>
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Revenue Streams · Per-Client Economics</h3>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+              {streams.map((s, i) => {
+                const t = toneMap[s.tone];
+                const Icon = s.icon;
+                return (
+                  <motion.div key={s.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.07 * i }}>
+                    <Card className={`ring-1 ${t.ring} bg-gradient-to-br ${t.gradient} shadow-sm h-full`}>
+                      <CardContent className="pt-4 pb-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className={`h-7 w-7 rounded-md flex items-center justify-center shrink-0 ${t.iconBg}`}><Icon className="h-3.5 w-3.5" /></div>
+                          <div>
+                            <div className={`text-xs font-bold uppercase tracking-wide ${t.labelColor}`}>{s.label}</div>
+                            <div className="text-[10px] text-muted-foreground">{s.sublabel}</div>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          {[
+                            { label: s.col1Label, value: s.col1 },
+                            { label: s.col2Label, value: s.col2 },
+                            { label: s.col3Label, value: s.col3 },
+                            { label: s.col4Label, value: s.col4 },
+                          ].map((row) => (
+                            <div key={row.label} className="flex items-baseline justify-between gap-2">
+                              <span className="text-[10px] text-muted-foreground leading-snug shrink-0">{row.label}</span>
+                              <span className={`text-xs font-bold tabular-nums shrink-0 ${t.text}`}>{row.value}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </motion.div>
+        );
+      })()}
 
       {/* Global Settings */}
       <Card>
@@ -792,74 +922,58 @@ export default function Projection() {
           </CardContent>
         </Card>
 
-        {/* Client Economics Summary */}
+        {/* Invoice Schedule Summary — replaces the old bundled Per-Client Economics card */}
         <Card className="bg-primary text-primary-foreground border-primary/40 shadow-lg">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center justify-between">
-              <span>Per-Client Economics</span>
+              <span>Invoice Schedule · Per Client</span>
               <span className="text-xs font-medium px-2 py-1 rounded-full bg-primary-foreground/15 text-primary-foreground/90">
                 {activeProjection?.numClients} client{(activeProjection?.numClients || 0) === 1 ? "" : "s"} · {Math.round((normalizeMarginToFractionUI(activeProjection?.marginPercent || 0)) * 100)}% margin
               </span>
             </CardTitle>
             <CardDescription className="text-primary-foreground/70">
-              Recommended price to charge per client to hit your target margin
+              Invoice #1 includes setup fees + first month. Invoices #2–12 are recurring only.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Hero callout */}
-            <div className="rounded-xl bg-primary-foreground/15 backdrop-blur-sm p-5 border border-primary-foreground/20">
-              <div className="text-xs uppercase tracking-wider font-semibold text-primary-foreground/70 mb-2">
-                Recommended Selling Price (ex. VAT)
+            {/* Two-column hero: Day-1 vs Recurring */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-xl bg-primary-foreground/15 backdrop-blur-sm p-4 border border-primary-foreground/20">
+                <div className="text-[10px] uppercase tracking-wider font-semibold text-primary-foreground/70 mb-1.5">Invoice #1 · Setup</div>
+                <div className="text-3xl font-bold tabular-nums">{formatCurrency(summary?.invoice1TotalIncVat || 0)}</div>
+                <div className="text-xs text-primary-foreground/70 mt-1">inc. VAT · one-time + Month 1</div>
               </div>
-              <div className="flex items-baseline gap-3 flex-wrap">
-                <div className="text-4xl font-bold tabular-nums">
-                  {formatCurrency(summary?.sellingPriceWithoutVat || 0)}
-                </div>
-                <div className="text-sm text-primary-foreground/70">/ client / month</div>
-              </div>
-              <div className="mt-2 flex items-center gap-3 text-xs text-primary-foreground/80 flex-wrap">
-                <span>= <strong className="tabular-nums">{formatCurrency(summary?.sellingPriceWithoutVatYearly || 0)}</strong> / yr</span>
-                <span className="text-primary-foreground/40">·</span>
-                <span>incl. 15% VAT: <strong className="tabular-nums">{formatCurrency(summary?.sellingPriceWithVatMonthly || 0)}</strong> /mo</span>
+              <div className="rounded-xl bg-primary-foreground/15 backdrop-blur-sm p-4 border border-primary-foreground/20">
+                <div className="text-[10px] uppercase tracking-wider font-semibold text-primary-foreground/70 mb-1.5">Invoices #2–12 · Recurring</div>
+                <div className="text-3xl font-bold tabular-nums">{formatCurrency(summary?.invoiceRecurringIncVat || 0)}</div>
+                <div className="text-xs text-primary-foreground/70 mt-1">inc. VAT · per month × 11</div>
               </div>
             </div>
-
-            {/* Breakdown table */}
-            <div className="rounded-lg border border-primary-foreground/20 overflow-x-auto text-sm">
+            {/* Year-1 totals */}
+            <div className="rounded-lg border border-primary-foreground/20 text-sm overflow-x-auto">
               <div className="grid grid-cols-[1.4fr_1fr_1fr] bg-primary-foreground/10 text-[10px] font-bold uppercase tracking-wider text-primary-foreground/80">
-                <div className="px-3 py-2">Breakdown</div>
-                <div className="px-3 py-2 text-right">Monthly</div>
-                <div className="px-3 py-2 text-right">Engagement{summary?.engagementMonths ? ` (${summary.engagementMonths} mo)` : ""}</div>
+                <div className="px-3 py-2">Year-1 Summary</div>
+                <div className="px-3 py-2 text-right">Per Client</div>
+                <div className="px-3 py-2 text-right">All {activeProjection?.numClients || "?"} Clients</div>
               </div>
               <div className="divide-y divide-primary-foreground/10">
                 <div className="grid grid-cols-[1.4fr_1fr_1fr] items-center">
-                  <div className="px-3 py-2 text-primary-foreground/80">Team cost / client</div>
-                  <div className="px-3 py-2 text-right tabular-nums">{formatCurrency(summary?.costPerClientMonthly || 0)}</div>
-                  <div className="px-3 py-2 text-right tabular-nums">{formatCurrency(summary?.costPerClientYearly || 0)}</div>
+                  <div className="px-3 py-2 text-primary-foreground/80">Recurring revenue (×11)</div>
+                  <div className="px-3 py-2 text-right tabular-nums">{formatCurrency((summary?.invoiceRecurringIncVat || 0) * 11)}</div>
+                  <div className="px-3 py-2 text-right tabular-nums">{formatCurrency((summary?.invoiceRecurringIncVat || 0) * 11 * (activeProjection?.numClients || 1))}</div>
                 </div>
                 <div className="grid grid-cols-[1.4fr_1fr_1fr] items-center">
-                  <div className="px-3 py-2 text-primary-foreground/80">Overhead / client</div>
-                  <div className="px-3 py-2 text-right tabular-nums">{formatCurrency(summary?.overheadPerClientMonthly || 0)}</div>
-                  <div className="px-3 py-2 text-right tabular-nums">{formatCurrency(summary?.overheadPerClientYearly || 0)}</div>
+                  <div className="px-3 py-2 text-primary-foreground/80">Setup invoice (×1)</div>
+                  <div className="px-3 py-2 text-right tabular-nums">{formatCurrency(summary?.invoice1TotalIncVat || 0)}</div>
+                  <div className="px-3 py-2 text-right tabular-nums">{formatCurrency((summary?.invoice1TotalIncVat || 0) * (activeProjection?.numClients || 1))}</div>
                 </div>
                 <div className="grid grid-cols-[1.4fr_1fr_1fr] items-center bg-primary-foreground/10">
-                  <div className="px-3 py-2 font-semibold">Total cost / client</div>
-                  <div className="px-3 py-2 text-right font-semibold tabular-nums">{formatCurrency(summary?.totalMonthlyCostPerClient || 0)}</div>
-                  <div className="px-3 py-2 text-right font-semibold tabular-nums">{formatCurrency(summary?.totalYearlyCostPerClient || 0)}</div>
-                </div>
-                <div className="grid grid-cols-[1.4fr_1fr_1fr] items-center">
-                  <div className="px-3 py-2 text-primary-foreground/80">Margin (SAR)</div>
-                  <div className="px-3 py-2 text-right font-medium text-emerald-200 tabular-nums">{formatCurrency(summary?.marginSarMonthly || 0)}</div>
-                  <div className="px-3 py-2 text-right font-medium text-emerald-200 tabular-nums">{formatCurrency(summary?.marginSarYearly || 0)}</div>
+                  <div className="px-3 py-2 font-semibold">Year-1 Total (inc. VAT)</div>
+                  <div className="px-3 py-2 text-right font-bold tabular-nums">{formatCurrency(summary?.year1TotalPerClient || 0)}</div>
+                  <div className="px-3 py-2 text-right font-bold tabular-nums text-emerald-200">{formatCurrency(summary?.year1TotalAllClients || 0)}</div>
                 </div>
               </div>
             </div>
-
-            {(summary?.oneTimeCostsTotal || 0) > 0 && (
-              <div className="text-xs text-primary-foreground/70 px-1">
-                Includes {formatCurrency(summary?.oneTimeCostsTotal || 0)} of one-time costs amortized across the year.
-              </div>
-            )}
           </CardContent>
         </Card>
       </div>
@@ -875,20 +989,22 @@ export default function Projection() {
         </CardHeader>
         <CardContent>
           <div className="rounded-md border overflow-x-auto">
-            <Table className="min-w-[1800px]">
+            <Table className="min-w-[2200px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[220px]">Title</TableHead>
-                  <TableHead className="w-[160px]">Country</TableHead>
-                  <TableHead className="w-[180px] text-right">Salary (SAR)</TableHead>
-                  <TableHead className="w-[160px] text-right">CTC (SAR)</TableHead>
-                  <TableHead className="w-[140px] text-right">Months</TableHead>
-                  <TableHead className="w-[140px] text-right">Alloc %</TableHead>
-                  <TableHead className="w-[260px]">Basis</TableHead>
-                  <TableHead className="w-[100px] text-center">In Totals</TableHead>
-                  <TableHead className="w-[140px] text-right">Margin %</TableHead>
-                  <TableHead className="w-[180px] text-right">Total Cost</TableHead>
-                  <TableHead className="w-[180px] text-right">Selling Price</TableHead>
+                  <TableHead className="w-[180px]">Name</TableHead>
+                  <TableHead className="w-[180px]">Title</TableHead>
+                  <TableHead className="w-[140px]">Department</TableHead>
+                  <TableHead className="w-[140px]">Country</TableHead>
+                  <TableHead className="w-[160px] text-right">Salary (SAR)</TableHead>
+                  <TableHead className="w-[160px] text-right" title="Override CTC directly (leave blank to derive from Salary × CTC multiplier)">CTC / mo (SAR)</TableHead>
+                  <TableHead className="w-[120px] text-right">Months</TableHead>
+                  <TableHead className="w-[120px] text-right">Alloc %</TableHead>
+                  <TableHead className="w-[240px]">Basis</TableHead>
+                  <TableHead className="w-[90px] text-center">In Totals</TableHead>
+                  <TableHead className="w-[120px] text-right">Margin %</TableHead>
+                  <TableHead className="w-[160px] text-right">Total Cost</TableHead>
+                  <TableHead className="w-[160px] text-right">Selling Price</TableHead>
                   <TableHead className="w-[60px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -896,7 +1012,50 @@ export default function Projection() {
                 {salesSupport?.map((res) => (
                   <TableRow key={res.id}>
                     <TableCell className="p-2 align-middle">
-                      <Input defaultValue={res.title} onBlur={(e) => handleUpdateSalesSupport(res.id, "title", e.target.value)} className="h-10" />
+                      <Input defaultValue={res.name ?? ""} onBlur={(e) => handleUpdateSalesSupport(res.id, "name", e.target.value)} className="h-10" placeholder="Full name" />
+                    </TableCell>
+                    <TableCell className="p-2 align-middle">
+                      <Input defaultValue={res.title} onBlur={(e) => handleUpdateSalesSupport(res.id, "title", e.target.value)} className="h-10" placeholder="Job title" />
+                    </TableCell>
+                    <TableCell className="p-2 align-middle min-w-[120px]">
+                      {(() => {
+                        const isKnown = (KNOWN_DEPTS as readonly string[]).includes(res.department ?? "");
+                        const showOther = otherDepts.has(res.id) || (!isKnown && !!res.department);
+                        return (
+                          <div className="flex flex-col gap-1">
+                            <Select
+                              value={showOther ? "Other" : (res.department ?? "")}
+                              onValueChange={(val) => {
+                                if (val === "Other") {
+                                  setOtherDepts((prev) => new Set([...prev, res.id]));
+                                } else {
+                                  setOtherDepts((prev) => { const s = new Set(prev); s.delete(res.id); return s; });
+                                  handleUpdateSalesSupport(res.id, "department", val);
+                                }
+                              }}
+                            >
+                              <SelectTrigger className="h-10">
+                                <SelectValue placeholder="Dept" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {KNOWN_DEPTS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                                <SelectItem value="Other">Other…</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            {showOther && (
+                              <Input
+                                defaultValue={isKnown ? "" : (res.department ?? "")}
+                                placeholder="Specify…"
+                                className="h-9"
+                                onBlur={(e) => {
+                                  const v = e.target.value.trim();
+                                  if (v) handleUpdateSalesSupport(res.id, "department", v);
+                                }}
+                              />
+                            )}
+                          </div>
+                        );
+                      })()}
                     </TableCell>
                     <TableCell className="p-2 align-middle">
                       <Select defaultValue={res.country} onValueChange={(val) => handleUpdateSalesSupport(res.id, "country", val)}>
@@ -919,7 +1078,21 @@ export default function Projection() {
                         className="h-10 text-right tabular-nums"
                       />
                     </TableCell>
-                    <TableCell className="text-right font-mono text-sm p-2 text-muted-foreground whitespace-nowrap tabular-nums align-middle">{formatCurrency(res.ctc)}</TableCell>
+                    <TableCell className="p-2 align-middle">
+                      <Input
+                        key={`ctc-${res.id}-${res.ctcSar}`}
+                        type="number"
+                        inputMode="decimal"
+                        defaultValue={res.ctcSar ?? res.ctc ?? ""}
+                        placeholder={String(Math.round(res.ctc ?? 0))}
+                        onBlur={(e) => {
+                          const v = e.target.value.trim();
+                          handleUpdateSalesSupport(res.id, "ctcSar", v === "" ? null : parseFloat(v));
+                        }}
+                        className="h-10 text-right tabular-nums"
+                        title="Override monthly CTC directly. Leave blank to derive from Salary × CTC multiplier."
+                      />
+                    </TableCell>
                     <TableCell className="p-2 align-middle">
                       <Input
                         type="number"
@@ -1008,7 +1181,7 @@ export default function Projection() {
                 ))}
                 {!salesSupport?.length && (
                   <TableRow>
-                    <TableCell colSpan={10} className="h-24 text-center text-muted-foreground">No sales support resources added.</TableCell>
+                    <TableCell colSpan={14} className="h-24 text-center text-muted-foreground">No sales support resources added.</TableCell>
                   </TableRow>
                 )}
               </TableBody>
@@ -1125,8 +1298,8 @@ export default function Projection() {
                   <TableHead>Billing</TableHead>
                   <TableHead>Allocation</TableHead>
                   <TableHead className="text-right">Margin %</TableHead>
-                  <TableHead className="text-right">Monthly cost (SAR)</TableHead>
-                  <TableHead className="text-right">Selling / mo</TableHead>
+                  <TableHead className="text-right">Cost (SAR)</TableHead>
+                  <TableHead className="text-right">Selling price</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
@@ -1139,13 +1312,18 @@ export default function Projection() {
                     return c?.rateToSar ?? 1;
                   };
                   const sarAmount = (line.amount || 0) * fxToSar(line.currency || "SAR");
-                  const cycle = line.billingCycle || "monthly";
-                  const engagementMonths = summary?.engagementMonths || 12;
-                  const monthlyCost = cycle === "monthly" ? sarAmount : cycle === "annual" ? sarAmount / 12 : sarAmount / Math.max(1, engagementMonths);
-                  const sellingMonthly = computeSellingPrice(monthlyCost, line.marginPercent ?? 0);
+                  const cycle = line.billingCycle || "one_time";
+                  const isOneTime = cycle === "one_time";
+                  const displayCost = isOneTime ? sarAmount : cycle === "annual" ? sarAmount / 12 : sarAmount;
+                  const sellingDisplay = computeSellingPrice(displayCost, line.marginPercent ?? 0);
                   return (
-                    <TableRow key={line.id}>
-                      <TableCell className="p-2"><Input defaultValue={line.name} onBlur={(e) => handleUpdateInfra(line.id, "name", e.target.value)} className="h-9" /></TableCell>
+                    <TableRow key={line.id} className={isOneTime ? "bg-amber-50/30 dark:bg-amber-950/20" : ""}>
+                      <TableCell className="p-2">
+                        <div className="flex items-center gap-1.5">
+                          <Input defaultValue={line.name} onBlur={(e) => handleUpdateInfra(line.id, "name", e.target.value)} className="h-9" />
+                          {isOneTime && <span className="text-[9px] font-bold uppercase tracking-wide text-amber-600 bg-amber-100 dark:bg-amber-900/40 dark:text-amber-400 px-1.5 py-0.5 rounded shrink-0">Setup</span>}
+                        </div>
+                      </TableCell>
                       <TableCell className="p-2">
                         <Select value={line.category || "compute"} onValueChange={(val) => handleUpdateInfra(line.id, "category", val)}>
                           <SelectTrigger className="h-9 w-32"><SelectValue /></SelectTrigger>
@@ -1190,8 +1368,14 @@ export default function Projection() {
                         </Select>
                       </TableCell>
                       <TableCell className="p-2"><Input type="number" step="0.5" defaultValue={line.marginPercent} onBlur={(e) => handleUpdateInfra(line.id, "marginPercent", parseFloat(e.target.value))} className="h-9 text-right tabular-nums" /></TableCell>
-                      <TableCell className="p-2 text-right font-mono text-sm text-muted-foreground tabular-nums">{formatCurrency(monthlyCost)}</TableCell>
-                      <TableCell className="p-2 text-right font-bold text-primary tabular-nums">{formatCurrency(sellingMonthly)}</TableCell>
+                      <TableCell className="p-2 text-right font-mono text-sm text-muted-foreground tabular-nums">
+                        {formatCurrency(displayCost)}
+                        <div className="text-[9px] text-muted-foreground">{isOneTime ? "one-time" : cycle === "annual" ? "/ mo (annual)" : "/ mo"}</div>
+                      </TableCell>
+                      <TableCell className="p-2 text-right font-bold text-primary tabular-nums">
+                        {formatCurrency(sellingDisplay)}
+                        <div className="text-[9px] text-muted-foreground">{isOneTime ? "one-time" : "/ mo"}</div>
+                      </TableCell>
                       <TableCell className="p-2 text-right">
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteInfra(line.id)}><Trash className="h-4 w-4" /></Button>
                       </TableCell>

@@ -273,11 +273,31 @@ export default function InvoicesList() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sorted.map((inv) => (
+                {(() => {
+                  // Determine the earliest billing month per (projectionId, clientKey) = "Setup Invoice"
+                  const firstMonthMap = new Map<string, string>();
+                  for (const inv of sorted) {
+                    const key = `${inv.projectionId}-${inv.clientKey}`;
+                    if (!firstMonthMap.has(key) || inv.billingMonth < firstMonthMap.get(key)!) {
+                      firstMonthMap.set(key, inv.billingMonth);
+                    }
+                  }
+                  return sorted.map((inv) => {
+                    const key = `${inv.projectionId}-${inv.clientKey}`;
+                    const isSetup = firstMonthMap.get(key) === inv.billingMonth;
+                  return (
                   <TableRow key={inv.id} className="cursor-pointer" onClick={() => setLocation(`/invoices/${inv.id}`)}>
                     <TableCell className="font-mono">{inv.invoiceNumber}</TableCell>
                     <TableCell>{inv.clientName}</TableCell>
-                    <TableCell>{inv.billingMonth}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1.5">
+                        {inv.billingMonth}
+                        {isSetup
+                          ? <span className="text-[9px] font-bold uppercase tracking-wide text-amber-700 bg-amber-100 dark:bg-amber-900/40 dark:text-amber-400 px-1.5 py-0.5 rounded">Setup</span>
+                          : <span className="text-[9px] font-medium uppercase tracking-wide text-sky-700 bg-sky-100 dark:bg-sky-900/40 dark:text-sky-400 px-1.5 py-0.5 rounded">Recurring</span>
+                        }
+                      </div>
+                    </TableCell>
                     <TableCell>{inv.issueDate}</TableCell>
                     <TableCell>{inv.dueDate}</TableCell>
                     <TableCell>
@@ -313,7 +333,9 @@ export default function InvoicesList() {
                       </DropdownMenu>
                     </TableCell>
                   </TableRow>
-                ))}
+                  );
+                  });
+                })()}
               </TableBody>
             </Table>
           )}

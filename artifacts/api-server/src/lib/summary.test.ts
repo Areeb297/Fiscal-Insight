@@ -190,9 +190,12 @@ describe("computeScenario - sales support inclusion toggle", () => {
     return {
       id: 1,
       projectionId: 1,
+      name: "",
       title: "PM",
+      department: "",
       country: "KSA",
       salarySar: 6000,
+      ctcSar: null,
       months: 12,
       marginPercent: 0.30,
       allocationPercent: 100,
@@ -238,6 +241,117 @@ describe("computeScenario - sales support inclusion toggle", () => {
     // 6000 × 4 clients × 12 months = 288000 total; amortized over 12mo / 4 clients = 6000 per client
     expect(r.salesSupportTotalCost).toBe(288000);
     expect(r.salesSupportPerClientMonthlyAmortized).toBe(6000);
+  });
+});
+
+describe("computeScenario - Projection 36 canonical regression", () => {
+  // Inputs derived to reproduce the canonical Projection 36 targets:
+  //   Invoice #1 per client (inc. VAT) = SAR 79,964.02
+  //   Recurring invoice per client (inc. VAT) = SAR 30,077.02
+  //   Year-1 per client (inc. VAT) = SAR 410,811.24
+  //   Year-1 all 5 clients (inc. VAT) ≈ SAR 2,054,056.20 (≈ target 2,054,056.07 within rounding)
+  const proj36 = {
+    ...baseProjection,
+    numClients: 5,
+    marginPercent: 0.30,
+    vatRate: 0.15,
+    fiscalYear: "2026-27",
+  } as any;
+
+  // Single shared employee whose salary produces exactly:
+  //   coreCostPerClientMonthly = 18307.752 → coreSellExVatMonthly = 26153.93 → inc-VAT = 30077.02
+  const proj36emp = emp({ salarySar: 91538.76, costBasis: "shared", months: 12, allocationPercent: 100 });
+
+  // Vendor setup fee that adds exactly SAR 49,887.00 (inc. VAT) to Invoice #1
+  const vendorSetup = {
+    id: 1,
+    projectionId: 1,
+    name: "Platform Licensing",
+    vendorName: "Vendor A",
+    currency: "SAR",
+    amount: 30366.00,
+    amortizeMonths: 12,
+    marginPercent: 0.30,
+    notes: null,
+    createdAt: new Date(),
+  } as any;
+
+  it("recurring invoice inc-VAT matches SAR 30,077.02", () => {
+    const r = computeScenario(inputs({
+      projection: proj36,
+      employees: [proj36emp],
+      vendorSetupFees: [vendorSetup],
+    }));
+    expect(r.invoiceRecurringIncVat).toBeCloseTo(30077.02, 0);
+  });
+
+  it("invoice #1 inc-VAT matches SAR 79,964.02", () => {
+    const r = computeScenario(inputs({
+      projection: proj36,
+      employees: [proj36emp],
+      vendorSetupFees: [vendorSetup],
+    }));
+    expect(r.invoice1TotalIncVat).toBeCloseTo(79964.02, 0);
+  });
+
+  it("year-1 per client inc-VAT = invoice1 + 11 × recurring = SAR 410,811.24", () => {
+    const r = computeScenario(inputs({
+      projection: proj36,
+      employees: [proj36emp],
+      vendorSetupFees: [vendorSetup],
+    }));
+    expect(r.year1TotalPerClient).toBeCloseTo(410811.24, 0);
+  });
+
+  it("year-1 all 5 clients ≈ SAR 2,054,056 (within SAR 1 of target)", () => {
+    const r = computeScenario(inputs({
+      projection: proj36,
+      employees: [proj36emp],
+      vendorSetupFees: [vendorSetup],
+    }));
+    expect(Math.abs(r.year1TotalAllClients - 2054056.07)).toBeLessThan(1);
+  });
+
+  it("marginMonthlyAvg uses ex-VAT basis (positive, less than invoice recurring)", () => {
+    const r = computeScenario(inputs({
+      projection: proj36,
+      employees: [proj36emp],
+      vendorSetupFees: [vendorSetup],
+    }));
+    expect(r.marginMonthlyAvg).toBeGreaterThan(0);
+    expect(r.marginMonthlyAvg).toBeLessThan(r.invoiceRecurringIncVat);
+    // At 30% margin: recurring ex-VAT margin = 26153.93 × 0.30 = 7846.18
+    expect(r.marginMonthlyAvg).toBeGreaterThan(7000);
+    expect(r.marginMonthlyAvg).toBeLessThan(12000);
+  });
+
+  it("year1TotalAllClients = year1TotalPerClient × numClients structural invariant", () => {
+    const r = computeScenario(inputs({
+      projection: proj36,
+      employees: [proj36emp],
+      vendorSetupFees: [vendorSetup],
+    }));
+    expect(r.year1TotalAllClients).toBeCloseTo(r.year1TotalPerClient * 5, 0);
+  });
+
+  it("dashboard cost-per-client KPI: coreCostPerClientYearly + msCostPerClientYearly + vendorSetupTotalCost + infraOneTimeCostPerClient", () => {
+    const r = computeScenario(inputs({
+      projection: proj36,
+      employees: [proj36emp],
+      vendorSetupFees: [vendorSetup],
+    }));
+    // vendorSetupTotalCost is per-client (billed per engagement, not split across clients)
+    const dashboardCostPerClient =
+      (r.coreCostPerClientYearly ?? 0) +
+      (r.msCostPerClientYearly ?? 0) +
+      r.vendorSetupTotalCost +
+      r.infraOneTimeCostPerClient;
+    // Core annual cost (18307.752 × 12) = 219693.02 + vendor setup cost 30366.00 = 250059.02
+    expect(dashboardCostPerClient).toBeGreaterThan(0);
+    expect(dashboardCostPerClient).toBeCloseTo(
+      r.coreCostPerClientYearly + r.vendorSetupTotalCost,
+      0
+    );
   });
 });
 

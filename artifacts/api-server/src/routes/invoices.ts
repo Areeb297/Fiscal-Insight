@@ -5,7 +5,12 @@ import {
   invoicesTable,
   invoiceLineItemsTable,
   projectionsTable,
+  employeesTable,
+  subscriptionsTable,
+  salesSupportResourcesTable,
+  vendorSetupFeesTable,
   infrastructureCostsTable,
+  ctcRulesTable,
   currenciesTable,
   systemSettingsTable,
 } from "@workspace/db";
@@ -16,7 +21,7 @@ import {
 import * as zod from "zod";
 const z = zod;
 import { requireAuth } from "../lib/auth";
-import { normalizeMarginToFraction } from "../lib/summary";
+import { normalizeMarginToFraction, computeScenario } from "../lib/summary";
 
 type InvoiceRow = typeof invoicesTable.$inferSelect;
 type InvoiceWithTotals = InvoiceRow & { subtotal: number; vatTotal: number; grandTotal: number };
@@ -58,18 +63,6 @@ const GenerateBody = z.object({
   toMonth: z.string().regex(/^\d{4}-\d{2}$/),
 });
 
-function rateToSar(currencyCode: string, currencies: { code: string; rateToSar: number }[]) {
-  if (currencyCode === "SAR") return 1.0;
-  const c = currencies.find((cu) => cu.code === currencyCode);
-  return c ? c.rateToSar : 1.0;
-}
-
-function monthlyAmount(amount: number, billingCycle: string, engagementMonths: number): number {
-  if (billingCycle === "annual") return amount / 12;
-  if (billingCycle === "one_time") return engagementMonths > 0 ? amount / engagementMonths : 0;
-  return amount;
-}
-
 function monthsBetweenInclusive(from: string, to: string): string[] {
   const [fy, fm] = from.split("-").map(Number);
   const [ty, tm] = to.split("-").map(Number);
@@ -89,6 +82,10 @@ function addDays(iso: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+function r2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
 function lineTotals(li: { quantity: number; unitPrice: number; marginPercent: number; vatRate: number }) {
   const margin = normalizeMarginToFraction(li.marginPercent);
   const sellingUnit = margin < 1 ? li.unitPrice / (1 - margin) : li.unitPrice;
@@ -96,9 +93,9 @@ function lineTotals(li: { quantity: number; unitPrice: number; marginPercent: nu
   const vatFrac = li.vatRate > 1 ? li.vatRate / 100 : li.vatRate;
   const vat = subtotal * vatFrac;
   return {
-    lineSubtotal: Math.round(subtotal * 100) / 100,
-    lineVat: Math.round(vat * 100) / 100,
-    lineTotal: Math.round((subtotal + vat) * 100) / 100,
+    lineSubtotal: r2(subtotal),
+    lineVat: r2(vat),
+    lineTotal: r2(subtotal + vat),
   };
 }
 
@@ -124,9 +121,9 @@ async function loadInvoiceWithTotals(id: number, ctx: AuthCtx) {
   return {
     invoice: {
       ...invoice,
-      subtotal: Math.round(subtotal * 100) / 100,
-      vatTotal: Math.round(vatTotal * 100) / 100,
-      grandTotal: Math.round((subtotal + vatTotal) * 100) / 100,
+      subtotal: r2(subtotal),
+      vatTotal: r2(vatTotal),
+      grandTotal: r2(subtotal + vatTotal),
       lineItems: enriched,
     },
     forbidden: false,
@@ -154,9 +151,9 @@ async function withInvoiceTotals(rows: InvoiceRow[]): Promise<InvoiceWithTotals[
     const t = byInv.get(r.id) ?? { subtotal: 0, vatTotal: 0 };
     return {
       ...r,
-      subtotal: Math.round(t.subtotal * 100) / 100,
-      vatTotal: Math.round(t.vatTotal * 100) / 100,
-      grandTotal: Math.round((t.subtotal + t.vatTotal) * 100) / 100,
+      subtotal: r2(t.subtotal),
+      vatTotal: r2(t.vatTotal),
+      grandTotal: r2(t.subtotal + t.vatTotal),
     };
   });
 }
@@ -246,9 +243,9 @@ router.get("/invoices/calendar", async (req, res): Promise<void> => {
   }
   const sortedMonths = Array.from(months.values()).sort((a, b) => a.month.localeCompare(b.month));
   for (const m of sortedMonths) {
-    m.totalDue = Math.round(m.totalDue * 100) / 100;
-    m.totalPaid = Math.round(m.totalPaid * 100) / 100;
-    m.totalOutstanding = Math.round(m.totalOutstanding * 100) / 100;
+    m.totalDue = r2(m.totalDue);
+    m.totalPaid = r2(m.totalPaid);
+    m.totalOutstanding = r2(m.totalOutstanding);
   }
   const totals = sortedMonths.reduce(
     (acc, m) => ({
@@ -259,9 +256,9 @@ router.get("/invoices/calendar", async (req, res): Promise<void> => {
     }),
     { invoiceCount: 0, totalDue: 0, totalPaid: 0, totalOutstanding: 0 },
   );
-  totals.totalDue = Math.round(totals.totalDue * 100) / 100;
-  totals.totalPaid = Math.round(totals.totalPaid * 100) / 100;
-  totals.totalOutstanding = Math.round(totals.totalOutstanding * 100) / 100;
+  totals.totalDue = r2(totals.totalDue);
+  totals.totalPaid = r2(totals.totalPaid);
+  totals.totalOutstanding = r2(totals.totalOutstanding);
   res.json({ months: sortedMonths, totals });
 });
 
@@ -383,14 +380,22 @@ export async function generateInvoicesForProjection(opts: {
   ownerId: string;
 }): Promise<{ created: number; updated: number; skipped: number; invoices: InvoiceRow[] }> {
   const { projectionId, fromMonth, toMonth, ownerId } = opts;
+
   const [projection] = await db.select().from(projectionsTable).where(eq(projectionsTable.id, projectionId));
   if (!projection) throw new Error("Projection not found");
 
-  const [infraCosts, currencies, settingsRows] = await Promise.all([
-    db.select().from(infrastructureCostsTable).where(eq(infrastructureCostsTable.projectionId, projectionId)),
-    db.select().from(currenciesTable),
-    db.select().from(systemSettingsTable),
-  ]);
+  const [employees, subscriptions, salesResources, vendorSetupFees, infraCosts, ctcRules, currencies, settingsRows] =
+    await Promise.all([
+      db.select().from(employeesTable).where(eq(employeesTable.projectionId, projectionId)),
+      db.select().from(subscriptionsTable).where(eq(subscriptionsTable.projectionId, projectionId)),
+      db.select().from(salesSupportResourcesTable).where(eq(salesSupportResourcesTable.projectionId, projectionId)),
+      db.select().from(vendorSetupFeesTable).where(eq(vendorSetupFeesTable.projectionId, projectionId)),
+      db.select().from(infrastructureCostsTable).where(eq(infrastructureCostsTable.projectionId, projectionId)),
+      db.select().from(ctcRulesTable),
+      db.select().from(currenciesTable),
+      db.select().from(systemSettingsTable),
+    ]);
+
   const settings = settingsRows[0];
   const prefix = settings?.quotationPrefix ?? "INV-";
   const companyName = settings?.companyName ?? "Your Company";
@@ -399,22 +404,60 @@ export async function generateInvoicesForProjection(opts: {
     ? (projection.vatRate > 1 ? projection.vatRate / 100 : projection.vatRate)
     : 0.15;
   const numClients = Math.max(1, projection.numClients ?? 1);
-  const engagementMonths = Math.max(12, (projection.durationYears ?? 1) * 12);
   const invoiceDay = Math.min(28, Math.max(1, projection.invoiceDayOfMonth ?? 1));
   const termsDays = Math.max(0, projection.invoicePaymentTermsDays ?? 30);
 
+  // Compute full scenario to get selling prices
+  const scenario = computeScenario({
+    projection,
+    employees,
+    subscriptions,
+    salesResources,
+    vendorSetupFees,
+    infrastructureCosts: infraCosts,
+    ctcRules,
+    currencies,
+  });
+
   const months = monthsBetweenInclusive(fromMonth, toMonth);
+  const allMonths = months.sort();
+
+  // Derive fiscal-year label for invoice numbering (e.g., "2026-27")
+  const fyLabel = projection.fiscalYear ? projection.fiscalYear.trim() : "";
+  const fyPrefix = fyLabel ? `FY${fyLabel}-` : "";
+
   let created = 0, updated = 0, skipped = 0;
   const writtenInvoices: InvoiceRow[] = [];
 
   for (let clientIdx = 1; clientIdx <= numClients; clientIdx += 1) {
     const clientKey = `client-${clientIdx}`;
     const clientName = `Client ${clientIdx}`;
-    for (const month of months) {
+
+    // Determine the setup month: prefer the projection's explicit startMonth if set,
+    // otherwise fall back to the earliest billing month ever generated for this client
+    // across ALL months (not just the current range), ensuring setup charges always
+    // appear in the true first month of the engagement.
+    let setupMonth: string;
+    if (projection.startMonth) {
+      setupMonth = projection.startMonth;
+    } else {
+      const priorMonths = await db
+        .select({ billingMonth: invoicesTable.billingMonth })
+        .from(invoicesTable)
+        .where(and(
+          eq(invoicesTable.projectionId, projectionId),
+          eq(invoicesTable.clientKey, clientKey),
+        ));
+      const allKnownMonths = [...priorMonths.map((r) => r.billingMonth), ...allMonths].sort();
+      setupMonth = allKnownMonths[0];
+    }
+
+    for (let mi = 0; mi < allMonths.length; mi += 1) {
+      const month = allMonths[mi];
+      const isSetupMonth = month === setupMonth;
       const issueDate = `${month}-${String(invoiceDay).padStart(2, "0")}`;
       const dueDate = addDays(issueDate, termsDays);
 
-      // Idempotent lookup
       const [existing] = await db.select().from(invoicesTable).where(
         and(
           eq(invoicesTable.projectionId, projectionId),
@@ -433,7 +476,7 @@ export async function generateInvoicesForProjection(opts: {
         invoiceId = existing.id;
         updated += 1;
       } else {
-        const invoiceNumber = `${prefix}${month.replace("-", "")}-P${projectionId}-C${clientIdx}`;
+        const invoiceNumber = `${prefix}${fyPrefix}${month.replace("-", "")}-P${projectionId}-C${clientIdx}`;
         const [ins] = await db.insert(invoicesTable).values({
           ownerId,
           projectionId,
@@ -452,39 +495,127 @@ export async function generateInvoicesForProjection(opts: {
         created += 1;
       }
 
-      // Refresh line items from infra costs (rebuild auto lines, keep manual)
+      // Delete auto-generated lines; keep manual ones
       await db.delete(invoiceLineItemsTable).where(
         and(
           eq(invoiceLineItemsTable.invoiceId, invoiceId),
           eq(invoiceLineItemsTable.isManual, false),
         ),
       );
-      let sortOrder = 0;
+
       const newLines: Array<typeof invoiceLineItemsTable.$inferInsert> = [];
-      for (const ic of infraCosts) {
-        const sar = ic.amount * rateToSar(ic.currency, currencies);
-        const monthlyBase = monthlyAmount(sar, ic.billingCycle, engagementMonths);
-        const allocFraction = ic.allocationBasis === "per_client"
-          ? 1
-          : (numClients > 0 ? 1 / numClients : 1);
-        const unitPrice = Math.round(monthlyBase * allocFraction * 100) / 100;
-        if (unitPrice <= 0) continue;
-        newLines.push({
-          invoiceId,
-          sortOrder: sortOrder++,
-          description: `${ic.name} (${ic.category})`,
-          quantity: 1,
-          unitPrice,
-          marginPercent: ic.marginPercent ?? 0,
-          vatRate,
-          sourceKind: "infrastructure_cost",
-          sourceRefId: ic.id,
-          isManual: false,
-        });
+      let sortOrder = 0;
+
+      if (isSetupMonth) {
+        // ─── Invoice #1: Setup Invoice ───────────────────────────────────────
+        // Stream C: Vendor Setup Fee lines (one per fee, per-client price, margin already in the fee)
+        for (const vs of scenario.vendorSetupLines) {
+          newLines.push({
+            invoiceId,
+            sortOrder: sortOrder++,
+            description: vs.name || vs.vendorName || "Setup Fee",
+            quantity: 1,
+            // unitPrice is the COST ex-VAT; marginPercent applies markup
+            unitPrice: r2(vs.amountSar),
+            marginPercent: (vs.sellingSar > 0 && vs.amountSar > 0)
+              ? r2((1 - vs.amountSar / vs.sellingSar) * 100)
+              : 0,
+            vatRate,
+            sourceKind: "vendor_setup_fee",
+            sourceRefId: vs.id,
+            isManual: false,
+          });
+        }
+
+        // Stream D: Infrastructure one-time lines (one line per item, per-client selling price)
+        for (const infra of scenario.infrastructureLines) {
+          if (!infra.isOneTime || infra.oneTimeSellingSar <= 0) continue;
+          const perClientSelling = numClients > 0 ? infra.oneTimeSellingSar / numClients : infra.oneTimeSellingSar;
+          if (perClientSelling <= 0) continue;
+          newLines.push({
+            invoiceId,
+            sortOrder: sortOrder++,
+            description: `${infra.name} (One-Time Setup)`,
+            quantity: 1,
+            unitPrice: r2(perClientSelling),
+            marginPercent: 0,
+            vatRate,
+            sourceKind: "infrastructure_cost",
+            sourceRefId: infra.id,
+            isManual: false,
+          });
+        }
+
+        // Stream A: Core Platform Month 1
+        if (scenario.coreSellExVatMonthly > 0) {
+          newLines.push({
+            invoiceId,
+            sortOrder: sortOrder++,
+            description: "Core Platform — Month 1",
+            quantity: 1,
+            unitPrice: r2(scenario.coreSellExVatMonthly),
+            marginPercent: 0,
+            vatRate,
+            sourceKind: "core_platform",
+            sourceRefId: null,
+            isManual: false,
+          });
+        }
+
+        // Stream B: Managed Services Month 1
+        if (scenario.msSellExVatMonthly > 0) {
+          newLines.push({
+            invoiceId,
+            sortOrder: sortOrder++,
+            description: "Managed Services — Month 1",
+            quantity: 1,
+            unitPrice: r2(scenario.msSellExVatMonthly),
+            marginPercent: 0,
+            vatRate,
+            sourceKind: "managed_services",
+            sourceRefId: null,
+            isManual: false,
+          });
+        }
+      } else {
+        // ─── Invoices #2-12: Recurring ───────────────────────────────────────
+        // Stream A: Core Platform recurring
+        if (scenario.coreSellExVatMonthly > 0) {
+          newLines.push({
+            invoiceId,
+            sortOrder: sortOrder++,
+            description: "Core Platform — Monthly Recurring",
+            quantity: 1,
+            unitPrice: r2(scenario.coreSellExVatMonthly),
+            marginPercent: 0,
+            vatRate,
+            sourceKind: "core_platform",
+            sourceRefId: null,
+            isManual: false,
+          });
+        }
+
+        // Stream B: Managed Services recurring
+        if (scenario.msSellExVatMonthly > 0) {
+          newLines.push({
+            invoiceId,
+            sortOrder: sortOrder++,
+            description: "Managed Services — Monthly Recurring",
+            quantity: 1,
+            unitPrice: r2(scenario.msSellExVatMonthly),
+            marginPercent: 0,
+            vatRate,
+            sourceKind: "managed_services",
+            sourceRefId: null,
+            isManual: false,
+          });
+        }
       }
+
       if (newLines.length > 0) {
         await db.insert(invoiceLineItemsTable).values(newLines);
       }
+
       const [refreshed] = await db.select().from(invoicesTable).where(eq(invoicesTable.id, invoiceId));
       if (refreshed) writtenInvoices.push(refreshed);
     }

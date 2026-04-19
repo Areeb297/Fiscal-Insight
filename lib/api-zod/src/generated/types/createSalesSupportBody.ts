@@ -8,9 +8,12 @@
 import type { CreateSalesSupportBodyCostBasis } from "./createSalesSupportBodyCostBasis";
 
 export interface CreateSalesSupportBody {
+  name?: string;
   title: string;
+  department?: string;
   country: string;
   salarySar: number;
+  ctcSar?: number | null;
   months?: number;
   marginPercent?: number;
   /**

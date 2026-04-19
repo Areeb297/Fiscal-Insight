@@ -13,6 +13,7 @@ export const projectionsTable = pgTable("projections", {
   sarRate: real("sar_rate").notNull().default(3.75),
   numClients: integer("num_clients").notNull().default(5),
   marginPercent: real("margin_percent").notNull().default(0.30),
+  startMonth: text("start_month"),
   autoGenerateInvoices: boolean("auto_generate_invoices").notNull().default(false),
   invoiceDayOfMonth: integer("invoice_day_of_month").notNull().default(1),
   invoicePaymentTermsDays: integer("invoice_payment_terms_days").notNull().default(30),

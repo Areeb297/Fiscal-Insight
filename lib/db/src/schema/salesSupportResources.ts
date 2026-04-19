@@ -6,9 +6,12 @@ import { projectionsTable } from "./projections";
 export const salesSupportResourcesTable = pgTable("sales_support_resources", {
   id: serial("id").primaryKey(),
   projectionId: integer("projection_id").notNull().references(() => projectionsTable.id, { onDelete: "cascade" }),
+  name: text("name").notNull().default(""),
   title: text("title").notNull(),
+  department: text("department").notNull().default(""),
   country: text("country").notNull(),
   salarySar: real("salary_sar").notNull().default(0),
+  ctcSar: real("ctc_sar"),
   months: integer("months").notNull().default(6),
   marginPercent: real("margin_percent").notNull().default(0.30),
   allocationPercent: real("allocation_percent").notNull().default(100),

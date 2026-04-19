@@ -50,15 +50,43 @@ Financial projection and cost management application for the Ebttikar department
 - Saudi Arabia (SA) = salary x 1.5 CTC multiplier
 - Pakistan (PK) = salary x 1.0 (no markup)
 - Default currency is SAR; all amounts auto-converted using admin exchange rates
-- VAT is fixed at 15% on quotations
+- VAT applied at projection's `vatRate` (default 15%)
 - Selling price = total cost / (1 - margin%)
-- Resource cost model (DURATION model — adopted Apr 2026):
-  - **Monthly run-rate** per employee = `salary × CTC × (allocation% / 100)` — what the team costs each month they are engaged.
-  - **Engagement total** per employee = `salary × CTC × months × (allocation% / 100)` — what is committed for the whole engagement.
-  - `engagementMonths` for a projection = max `monthsFte` across all its employees (defaults to 12 when there are no employees). Used to amortize one-time overheads and to compute "engagement total" rollups.
-  - Per-client monthly cost = total monthly dept cost / numClients; selling price (monthly) = per-client monthly / (1 − margin%).
-  - Per-client engagement cost = total engagement dept cost / numClients; selling price (engagement) = per-client engagement / (1 − margin%).
-  - Sales support resources use the same allocation rule for their own line totals, but `months` here is the resource's own contract length, independent of the dept engagement.
+
+## 4-Stream Revenue Model (Apr 2026)
+
+The engine (`artifacts/api-server/src/lib/summary.ts`) computes 4 distinct revenue streams:
+
+1. **Core Platform** (Stream A): Team salaries + recurring subscriptions/overheads
+   - `coreCostPerClientMonthly = (totalDeptCostMonthly + recurringOverheadMonthly) / numClients`
+   - `coreSellExVatMonthly = coreCostPerClientMonthly / (1 - projectionMargin)`
+   
+2. **Managed Services** (Stream B): Sales/support resources, engagement-weighted monthly
+   - Each MS resource: `engagementWeightedMonthly = effectiveCTC × alloc × months / 12`
+   - `msCostPerClientMonthly = Σ(engagementWeightedMonthly) / numClients`
+   - `msSellExVatMonthly = msCostPerClientMonthly / (1 - projectionMargin)`
+
+3. **One-Time Setup Fees** (Stream C): Vendor setup fees charged per client, full amount
+   - Each client pays the full setup fee amount (not shared)
+   - Each fee has its own margin %
+
+4. **Infrastructure** (Stream D): Default billing = `one_time`, default margin = 5%
+   - One-time infra goes to Invoice #1 only; NOT in monthly recurring
+   - Shared infra: `infraOneTimeCostPerClient = total / numClients`
+
+## Invoice Structure
+
+- **Invoice #1** ("Setup Invoice"): Vendor setup fee lines + Infrastructure (one-time) + Core M1 + MS M1
+- **Invoices #2–12** ("Recurring"): Core Platform recurring + Managed Services recurring
+- UI shows "Setup" badge for first invoice per client, "Recurring" for subsequent ones
+
+## Resource Cost Model (DURATION model)
+
+- **Monthly run-rate** per employee = `salary × CTC × (allocation% / 100)`
+- **Engagement total** per employee = `salary × CTC × months × (allocation% / 100)`
+- `engagementMonths` = max `monthsFte` across all employees (min 12)
+- Recurring overheads: monthly = SAR subscription amount; annual overhead = monthly × 12 (NO amortization of one-time subs into monthly)
+- Sales support resources: `ctcSar` field takes precedence over derived `salary × CTC`
 
 ## Key Commands
 

@@ -52,4 +52,25 @@ export interface ProjectionSummary {
   salesSupportCount: number;
   vendorSetupCount?: number;
   infrastructureCount?: number;
+  /** 4-stream fields */
+  coreCostPerClientMonthly?: number;
+  coreCostPerClientYearly?: number;
+  coreSellExVatMonthly?: number;
+  coreSellIncVatMonthly?: number;
+  msCostPerClientMonthly?: number;
+  msCostPerClientYearly?: number;
+  msSellExVatMonthly?: number;
+  msSellIncVatMonthly?: number;
+  combinedExVatMonthly?: number;
+  combinedIncVatMonthly?: number;
+  infraOneTimeSellExVatPerClient?: number;
+  infraOneTimeSellIncVatPerClient?: number;
+  infraOneTimeCostPerClient?: number;
+  invoice1TotalIncVat?: number;
+  invoice1TotalExVat?: number;
+  invoiceRecurringIncVat?: number;
+  invoiceRecurringExVat?: number;
+  year1TotalPerClient?: number;
+  year1TotalAllClients?: number;
+  marginMonthlyAvg?: number;
 }

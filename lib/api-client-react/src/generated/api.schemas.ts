@@ -19,6 +19,7 @@ export interface Projection {
   fiscalYear: string;
   durationYears: number;
   vatRate: number;
+  startMonth?: string | null;
   autoGenerateInvoices: boolean;
   invoiceDayOfMonth: number;
   invoicePaymentTermsDays: number;
@@ -35,6 +36,7 @@ export interface CreateProjectionBody {
   sarRate?: number;
   numClients?: number;
   marginPercent?: number;
+  startMonth?: string | null;
 }
 
 export interface UpdateProjectionBody {
@@ -46,6 +48,7 @@ export interface UpdateProjectionBody {
   sarRate?: number;
   numClients?: number;
   marginPercent?: number;
+  startMonth?: string | null;
   autoGenerateInvoices?: boolean;
   invoiceDayOfMonth?: number;
   invoicePaymentTermsDays?: number;
@@ -168,9 +171,12 @@ export const SalesSupportResourceCostBasis = {
 export interface SalesSupportResource {
   id: number;
   projectionId: number;
+  name?: string;
   title: string;
+  department?: string;
   country: string;
   salarySar: number;
+  ctcSar?: number | null;
   months: number;
   marginPercent: number;
   /** Percentage allocation 0-100 (e.g. 10 = 10% involvement, 100 = full-time). Cost is multiplied by this fraction. */
@@ -194,9 +200,12 @@ export const CreateSalesSupportBodyCostBasis = {
 } as const;
 
 export interface CreateSalesSupportBody {
+  name?: string;
   title: string;
+  department?: string;
   country: string;
   salarySar: number;
+  ctcSar?: number | null;
   months?: number;
   marginPercent?: number;
   /**
@@ -218,9 +227,12 @@ export const UpdateSalesSupportBodyCostBasis = {
 } as const;
 
 export interface UpdateSalesSupportBody {
+  name?: string;
   title?: string;
+  department?: string;
   country?: string;
   salarySar?: number;
+  ctcSar?: number | null;
   months?: number;
   marginPercent?: number;
   /**
@@ -555,6 +567,26 @@ export interface ProjectionSummary {
   salesSupportCount: number;
   vendorSetupCount?: number;
   infrastructureCount?: number;
+  coreCostPerClientMonthly?: number;
+  coreCostPerClientYearly?: number;
+  coreSellExVatMonthly?: number;
+  coreSellIncVatMonthly?: number;
+  msCostPerClientMonthly?: number;
+  msCostPerClientYearly?: number;
+  msSellExVatMonthly?: number;
+  msSellIncVatMonthly?: number;
+  combinedExVatMonthly?: number;
+  combinedIncVatMonthly?: number;
+  infraOneTimeSellExVatPerClient?: number;
+  infraOneTimeSellIncVatPerClient?: number;
+  infraOneTimeCostPerClient?: number;
+  invoice1TotalIncVat?: number;
+  invoice1TotalExVat?: number;
+  invoiceRecurringIncVat?: number;
+  invoiceRecurringExVat?: number;
+  year1TotalPerClient?: number;
+  year1TotalAllClients?: number;
+  marginMonthlyAvg?: number;
 }
 
 export type DashboardSummaryChartsCostBreakdownItem = {

@@ -8,9 +8,12 @@
 import type { UpdateSalesSupportBodyCostBasis } from "./updateSalesSupportBodyCostBasis";
 
 export interface UpdateSalesSupportBody {
+  name?: string;
   title?: string;
+  department?: string;
   country?: string;
   salarySar?: number;
+  ctcSar?: number | null;
   months?: number;
   marginPercent?: number;
   /**

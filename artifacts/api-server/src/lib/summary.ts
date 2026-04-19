@@ -75,6 +75,10 @@ function priceWithMargin(cost: number, marginRaw: number): number {
   return f < 1 ? cost / (1 - f) : cost;
 }
 
+function r2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
 export function computeScenario(
   inputs: ScenarioInputs,
   overrides: ScenarioOverrides = {},
@@ -98,7 +102,9 @@ export function computeScenario(
     ? (projection.vatRate > 1 ? projection.vatRate / 100 : projection.vatRate)
     : 0.15;
   const durationYears = projection.durationYears && projection.durationYears > 0 ? projection.durationYears : 1;
+  const marginFraction = normalizeMarginToFraction(marginPercent);
 
+  // ─── Team (Core Platform) ──────────────────────────────────────────────────
   const allEmployees = [
     ...employees.map((e) => ({
       country: e.country,
@@ -143,6 +149,8 @@ export function computeScenario(
   const costPerClientMonthly = numClients > 0 ? totalDeptCostMonthly / numClients : 0;
   const costPerClientYearly = numClients > 0 ? totalDeptCostYearly / numClients : 0;
 
+  // ─── Overhead (Recurring Subscriptions only) ───────────────────────────────
+  // One-time subscriptions are NOT amortized into monthly; they are tracked separately.
   let recurringOverheadMonthly = extraMonthlyOverhead;
   let oneTimeCostsTotal = 0;
   for (const sub of subscriptions) {
@@ -150,37 +158,65 @@ export function computeScenario(
     if (sub.isOneTime) oneTimeCostsTotal += sarAmount;
     else recurringOverheadMonthly += sarAmount;
   }
+  // Engagement-weighted: annual = monthly × 12 (no engagementMonths amortization)
+  const totalOverheadYearly = recurringOverheadMonthly * 12;
+  const totalOverheadMonthly = recurringOverheadMonthly;
+  // Legacy fields (kept for backward compat)
   const oneTimeAmortizedMonthly = engagementMonths > 0 ? oneTimeCostsTotal / engagementMonths : 0;
-  const totalOverheadMonthly = recurringOverheadMonthly + oneTimeAmortizedMonthly;
-  const totalOverheadYearly = recurringOverheadMonthly * engagementMonths + oneTimeCostsTotal;
 
   const overheadPerClientMonthly = numClients > 0 ? totalOverheadMonthly / numClients : 0;
   const overheadPerClientYearly = numClients > 0 ? totalOverheadYearly / numClients : 0;
 
-  // Sales support / managed services
+  // ─── Core Platform Stream ──────────────────────────────────────────────────
+  // Core = Team + Recurring Overhead, charged per client per month at projectionMargin
+  const coreCostMonthly = totalDeptCostMonthly + totalOverheadMonthly;
+  const coreCostPerClientMonthly = numClients > 0 ? coreCostMonthly / numClients : 0;
+  const coreCostPerClientYearly = coreCostPerClientMonthly * 12;
+  const coreSellExVatMonthly = priceWithMargin(coreCostPerClientMonthly, marginFraction);
+  const coreSellIncVatMonthly = coreSellExVatMonthly * (1 + vatFraction);
+
+  // ─── Managed Services Stream ───────────────────────────────────────────────
+  // Engagement-weighted monthly: (ctc × alloc × months) / 12 → monthly × 12 = annual
   let salesSupportTotalCost = 0;
   let salesSupportIncludedMonthly = 0;
-  let salesSupportMarginFraction = 0.30;
+  let msTotalEngagementWeightedMonthly = 0;
   for (const r of salesResources) {
     const m = ctcMultiplier(r.country, ctcRules);
     const allocFraction = (r.allocationPercent ?? 100) / 100;
     const cm = clientMultiplier(r.costBasis, r.assignedClientCount, numClients);
-    const monthlyContribution = r.salarySar * m * allocFraction * cm;
-    salesSupportTotalCost += monthlyContribution * r.months;
+    // Use ctcSar if explicitly set, otherwise derive from salary × multiplier
+    const effectiveCtcPerMonth = r.ctcSar != null
+      ? r.ctcSar * allocFraction * cm
+      : r.salarySar * m * allocFraction * cm;
+    const totalAnnualCost = effectiveCtcPerMonth * (r.months ?? 12);
+    const engagementWeightedMonthly = totalAnnualCost / 12;
+    salesSupportTotalCost += totalAnnualCost;
+    msTotalEngagementWeightedMonthly += engagementWeightedMonthly;
     if (r.includeInTotals) {
-      const amortized = engagementMonths > 0 ? (monthlyContribution * r.months) / engagementMonths : 0;
-      salesSupportIncludedMonthly += amortized;
+      salesSupportIncludedMonthly += engagementWeightedMonthly;
     }
-    salesSupportMarginFraction = normalizeMarginToFraction(r.marginPercent);
   }
-  const salesSupportSellingPrice =
-    salesSupportMarginFraction < 1
-      ? salesSupportTotalCost / (1 - salesSupportMarginFraction)
-      : salesSupportTotalCost;
+  const salesSupportMarginFraction = salesResources.length > 0
+    ? normalizeMarginToFraction(salesResources[salesResources.length - 1].marginPercent)
+    : marginFraction;
+  const salesSupportSellingPrice = salesSupportMarginFraction < 1
+    ? salesSupportTotalCost / (1 - salesSupportMarginFraction)
+    : salesSupportTotalCost;
   const salesSupportPerClientMonthlyAmortized =
     numClients > 0 ? salesSupportIncludedMonthly / numClients : 0;
 
-  // One-time setup fees: treated as a single up-front charge, NOT folded into monthly recurring.
+  // Per-client MS costs (engagement-weighted)
+  const msCostPerClientMonthly = numClients > 0 ? msTotalEngagementWeightedMonthly / numClients : 0;
+  const msCostPerClientYearly = msCostPerClientMonthly * 12;
+  const msSellExVatMonthly = priceWithMargin(msCostPerClientMonthly, marginFraction);
+  const msSellIncVatMonthly = msSellExVatMonthly * (1 + vatFraction);
+
+  // Combined monthly recurring per client
+  const combinedExVatMonthly = coreSellExVatMonthly + msSellExVatMonthly;
+  const combinedIncVatMonthly = combinedExVatMonthly * (1 + vatFraction);
+
+  // ─── One-Time Setup Fees (Vendor Setup) ────────────────────────────────────
+  // Each client pays the full setup fees
   let vendorSetupTotalCost = 0;
   let vendorSetupTotalSelling = 0;
   let vendorSetupTotalWithVat = 0;
@@ -213,45 +249,106 @@ export function computeScenario(
       totalWithVatSar,
     });
   }
-  // Kept at 0 — one-time setup is no longer amortized into per-client monthly cost.
   const vendorSetupMonthlyAmortized = 0;
   const vendorSetupSellingPriceMonthly = 0;
   const vendorSetupPerClientMonthly = 0;
 
-  // Infrastructure costs
+  // ─── Infrastructure Stream ─────────────────────────────────────────────────
+  // One-time infra → Invoice #1 only, NOT in monthly recurring
+  // Recurring infra (monthly/annual) → included in monthly (treated as overhead-like)
   let infrastructureMonthlyCost = 0;
   let infrastructureSellingPriceMonthly = 0;
+  let infraOneTimeTotalCost = 0;
+  let infraOneTimeTotalSelling = 0;
+  let infraOneTimeTotalWithVat = 0;
   const infrastructureLines: Array<{
     id: number;
     name: string;
     category: string;
+    billingCycle: string;
     monthlyCostSar: number;
     monthlySellingSar: number;
     marginSarMonthly: number;
+    isOneTime: boolean;
+    oneTimeCostSar: number;
+    oneTimeSellingSar: number;
+    oneTimeWithVatSar: number;
   }> = [];
   for (const ic of infrastructureCosts) {
     const sar = ic.amount * rateToSar(ic.currency, currencies);
-    let monthlyBase = sar;
-    if (ic.billingCycle === "annual") monthlyBase = sar / 12;
-    else if (ic.billingCycle === "one_time") monthlyBase = engagementMonths > 0 ? sar / engagementMonths : 0;
     const cm = clientMultiplier(ic.allocationBasis, ic.assignedClientCount, numClients);
-    const monthlyCost = monthlyBase * cm;
-    const monthlySelling = priceWithMargin(monthlyCost, ic.marginPercent);
-    infrastructureMonthlyCost += monthlyCost;
-    infrastructureSellingPriceMonthly += monthlySelling;
-    infrastructureLines.push({
-      id: ic.id,
-      name: ic.name,
-      category: ic.category,
-      monthlyCostSar: monthlyCost,
-      monthlySellingSar: monthlySelling,
-      marginSarMonthly: monthlySelling - monthlyCost,
-    });
+    const isOneTime = ic.billingCycle === "one_time";
+    if (isOneTime) {
+      // One-time: billed per client (cm already handles allocation)
+      const oneTimeCost = sar * cm;
+      const oneTimeSelling = priceWithMargin(oneTimeCost, ic.marginPercent);
+      const oneTimeVat = oneTimeSelling * vatFraction;
+      const oneTimeWithVat = oneTimeSelling + oneTimeVat;
+      infraOneTimeTotalCost += oneTimeCost;
+      infraOneTimeTotalSelling += oneTimeSelling;
+      infraOneTimeTotalWithVat += oneTimeWithVat;
+      infrastructureLines.push({
+        id: ic.id,
+        name: ic.name,
+        category: ic.category,
+        billingCycle: ic.billingCycle,
+        monthlyCostSar: 0,
+        monthlySellingSar: 0,
+        marginSarMonthly: 0,
+        isOneTime: true,
+        oneTimeCostSar: oneTimeCost,
+        oneTimeSellingSar: oneTimeSelling,
+        oneTimeWithVatSar: oneTimeWithVat,
+      });
+    } else {
+      let monthlyBase = sar;
+      if (ic.billingCycle === "annual") monthlyBase = sar / 12;
+      const monthlyCost = monthlyBase * cm;
+      const monthlySelling = priceWithMargin(monthlyCost, ic.marginPercent);
+      infrastructureMonthlyCost += monthlyCost;
+      infrastructureSellingPriceMonthly += monthlySelling;
+      infrastructureLines.push({
+        id: ic.id,
+        name: ic.name,
+        category: ic.category,
+        billingCycle: ic.billingCycle,
+        monthlyCostSar: monthlyCost,
+        monthlySellingSar: monthlySelling,
+        marginSarMonthly: monthlySelling - monthlyCost,
+        isOneTime: false,
+        oneTimeCostSar: 0,
+        oneTimeSellingSar: 0,
+        oneTimeWithVatSar: 0,
+      });
+    }
   }
-  const infrastructurePerClientMonthly =
-    numClients > 0 ? infrastructureMonthlyCost / numClients : 0;
+  // Per-client one-time infra (shared costs divided by numClients already via cm)
+  const infraOneTimeCostPerClient = numClients > 0 ? infraOneTimeTotalCost / numClients : 0;
+  const infraOneTimeSellExVatPerClient = numClients > 0 ? infraOneTimeTotalSelling / numClients : 0;
+  const infraOneTimeSellIncVatPerClient = numClients > 0 ? infraOneTimeTotalWithVat / numClients : 0;
+  const infrastructurePerClientMonthly = numClients > 0 ? infrastructureMonthlyCost / numClients : 0;
 
-  // Per-client economics include sales-support, vendor setup, and infra
+  // ─── Invoice Totals ────────────────────────────────────────────────────────
+  // Invoice #1: Vendor Setup (per client) + Infra One-Time (per client) + Core M1 + MS M1
+  const invoice1TotalExVat = r2(vendorSetupTotalSelling + infraOneTimeSellExVatPerClient + coreSellExVatMonthly + msSellExVatMonthly);
+  const invoice1TotalIncVat = r2(vendorSetupTotalWithVat + infraOneTimeSellIncVatPerClient + coreSellIncVatMonthly + msSellIncVatMonthly);
+
+  // Invoices #2-12: Core + MS recurring only
+  const invoiceRecurringExVat = r2(coreSellExVatMonthly + msSellExVatMonthly);
+  const invoiceRecurringIncVat = r2(combinedIncVatMonthly);
+
+  // Year-1 per client = Invoice #1 + 11 × recurring
+  const year1TotalPerClient = r2(invoice1TotalIncVat + 11 * invoiceRecurringIncVat);
+  const year1TotalAllClients = r2(year1TotalPerClient * numClients);
+
+  // Average monthly margin across 12 invoices per client (ex-VAT basis — VAT is a pass-through)
+  const invoice1CostPerClient = r2(vendorSetupTotalCost + infraOneTimeCostPerClient + coreCostPerClientMonthly + msCostPerClientMonthly);
+  const recurringCostPerClient = r2(coreCostPerClientMonthly + msCostPerClientMonthly);
+  const month1Margin = r2(invoice1TotalExVat - invoice1CostPerClient);
+  const recurringMargin = r2(invoiceRecurringExVat - recurringCostPerClient);
+  const marginMonthlyAvg = r2((month1Margin + 11 * recurringMargin) / 12);
+
+  // ─── Legacy Per-Client Economics (backward compat) ─────────────────────────
   const totalMonthlyCostPerClient =
     costPerClientMonthly +
     overheadPerClientMonthly +
@@ -260,7 +357,6 @@ export function computeScenario(
     infrastructurePerClientMonthly;
   const totalYearlyCostPerClient = totalMonthlyCostPerClient * engagementMonths;
 
-  const marginFraction = normalizeMarginToFraction(marginPercent);
   const sellingPriceWithoutVat =
     marginFraction < 1 ? totalMonthlyCostPerClient / (1 - marginFraction) : totalMonthlyCostPerClient;
   const sellingPriceWithoutVatYearly =
@@ -271,33 +367,28 @@ export function computeScenario(
   const sellingPriceWithVatYearly = sellingPriceWithoutVatYearly * (1 + vatFraction);
   const vatMonthlyPerClient = sellingPriceWithVatMonthly - sellingPriceWithoutVat;
 
+  // ─── Charts ────────────────────────────────────────────────────────────────
   const costAllocationBreakdown = [
     { basis: "Shared dept", amount: Math.round(sharedDeptMonthly) },
     { basis: "Per-client dept", amount: Math.round(perClientDeptMonthly) },
     { basis: "Recurring overhead", amount: Math.round(recurringOverheadMonthly) },
-    { basis: "One-time (amortized)", amount: Math.round(oneTimeAmortizedMonthly) },
-    { basis: "Managed services", amount: Math.round(salesSupportIncludedMonthly) },
+    { basis: "Managed services", amount: Math.round(msTotalEngagementWeightedMonthly) },
     { basis: "Infrastructure", amount: Math.round(infrastructureMonthlyCost) },
   ].filter((row) => row.amount > 0);
 
   const priceWaterfall = [
-    { component: "Team cost", amount: Math.round(costPerClientMonthly) },
-    { component: "Overhead share", amount: Math.round(overheadPerClientMonthly) },
-    { component: "Managed services", amount: Math.round(salesSupportPerClientMonthlyAmortized) },
-    { component: "Infrastructure", amount: Math.round(infrastructurePerClientMonthly) },
-    { component: "Margin", amount: Math.round(marginSarMonthly) },
-    { component: `VAT (${Math.round(vatFraction * 100)}%)`, amount: Math.round(vatMonthlyPerClient) },
+    { component: "Core cost / client", amount: Math.round(coreCostPerClientMonthly) },
+    { component: "MS cost / client", amount: Math.round(msCostPerClientMonthly) },
+    { component: "Margin (Core)", amount: Math.round(coreSellExVatMonthly - coreCostPerClientMonthly) },
+    { component: "Margin (MS)", amount: Math.round(msSellExVatMonthly - msCostPerClientMonthly) },
+    { component: `VAT (${Math.round(vatFraction * 100)}%)`, amount: Math.round((coreSellExVatMonthly + msSellExVatMonthly) * vatFraction) },
   ].filter((row) => row.amount > 0);
 
   const revenueVsCostByMonth: Array<{ month: string; cost: number; revenue: number }> = [];
-  const monthlyRevenueAllClients = sellingPriceWithoutVat * numClients;
-  const recurringMonthlyAllClients =
-    totalDeptCostMonthly +
-    recurringOverheadMonthly +
-    salesSupportIncludedMonthly +
-    infrastructureMonthlyCost;
+  const monthlyRevenueAllClients = combinedExVatMonthly * numClients;
+  const recurringMonthlyAllClients = coreCostMonthly + msTotalEngagementWeightedMonthly + infrastructureMonthlyCost;
   for (let i = 1; i <= engagementMonths; i += 1) {
-    const cost = recurringMonthlyAllClients + (i === 1 ? oneTimeCostsTotal + vendorSetupTotalCost : 0);
+    const cost = recurringMonthlyAllClients + (i === 1 ? (infraOneTimeTotalCost + vendorSetupTotalCost * numClients + oneTimeCostsTotal) : 0);
     revenueVsCostByMonth.push({
       month: `M${i}`,
       cost: Math.round(cost),
@@ -356,6 +447,29 @@ export function computeScenario(
     infrastructureSellingPriceMonthly,
     infrastructurePerClientMonthly,
     infrastructureLines,
+    infraOneTimeTotalCost,
+    infraOneTimeTotalSelling,
+    infraOneTimeTotalWithVat,
+    infraOneTimeCostPerClient,
+    infraOneTimeSellExVatPerClient,
+    infraOneTimeSellIncVatPerClient,
+    coreCostPerClientMonthly: r2(coreCostPerClientMonthly),
+    coreCostPerClientYearly: r2(coreCostPerClientYearly),
+    coreSellExVatMonthly: r2(coreSellExVatMonthly),
+    coreSellIncVatMonthly: r2(coreSellIncVatMonthly),
+    msCostPerClientMonthly: r2(msCostPerClientMonthly),
+    msCostPerClientYearly: r2(msCostPerClientYearly),
+    msSellExVatMonthly: r2(msSellExVatMonthly),
+    msSellIncVatMonthly: r2(msSellIncVatMonthly),
+    combinedExVatMonthly: r2(combinedExVatMonthly),
+    combinedIncVatMonthly: r2(combinedIncVatMonthly),
+    invoice1TotalExVat,
+    invoice1TotalIncVat,
+    invoiceRecurringExVat,
+    invoiceRecurringIncVat,
+    year1TotalPerClient,
+    year1TotalAllClients,
+    marginMonthlyAvg,
     employeeCount: allEmployees.length,
     subscriptionCount: subscriptions.length,
     salesSupportCount: salesResources.length,

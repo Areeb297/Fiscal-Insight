@@ -11,7 +11,7 @@ export const vendorSetupFeesTable = pgTable("vendor_setup_fees", {
   currency: text("currency").notNull().default("SAR"),
   amount: real("amount").notNull().default(0),
   amortizeMonths: integer("amortize_months").notNull().default(12),
-  marginPercent: real("margin_percent").notNull().default(0.20),
+  marginPercent: real("margin_percent").notNull().default(0.30),
   notes: text("notes"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

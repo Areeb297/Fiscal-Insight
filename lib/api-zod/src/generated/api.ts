@@ -27,6 +27,7 @@ export const ListProjectionsResponseItem = zod.object({
   fiscalYear: zod.string(),
   durationYears: zod.number(),
   vatRate: zod.number(),
+  startMonth: zod.string().nullish(),
   autoGenerateInvoices: zod.boolean(),
   invoiceDayOfMonth: zod.number(),
   invoicePaymentTermsDays: zod.number(),
@@ -47,6 +48,7 @@ export const CreateProjectionBody = zod.object({
   sarRate: zod.number().optional(),
   numClients: zod.number().optional(),
   marginPercent: zod.number().optional(),
+  startMonth: zod.string().nullish(),
 });
 
 /**
@@ -66,6 +68,7 @@ export const GetProjectionResponse = zod.object({
   fiscalYear: zod.string(),
   durationYears: zod.number(),
   vatRate: zod.number(),
+  startMonth: zod.string().nullish(),
   autoGenerateInvoices: zod.boolean(),
   invoiceDayOfMonth: zod.number(),
   invoicePaymentTermsDays: zod.number(),
@@ -89,6 +92,7 @@ export const UpdateProjectionBody = zod.object({
   sarRate: zod.number().optional(),
   numClients: zod.number().optional(),
   marginPercent: zod.number().optional(),
+  startMonth: zod.string().nullish(),
   autoGenerateInvoices: zod.boolean().optional(),
   invoiceDayOfMonth: zod.number().optional(),
   invoicePaymentTermsDays: zod.number().optional(),
@@ -104,6 +108,7 @@ export const UpdateProjectionResponse = zod.object({
   fiscalYear: zod.string(),
   durationYears: zod.number(),
   vatRate: zod.number(),
+  startMonth: zod.string().nullish(),
   autoGenerateInvoices: zod.boolean(),
   invoiceDayOfMonth: zod.number(),
   invoicePaymentTermsDays: zod.number(),
@@ -136,6 +141,7 @@ export const GetProjectionSummaryResponse = zod.object({
     fiscalYear: zod.string(),
     durationYears: zod.number(),
     vatRate: zod.number(),
+    startMonth: zod.string().nullish(),
     autoGenerateInvoices: zod.boolean(),
     invoiceDayOfMonth: zod.number(),
     invoicePaymentTermsDays: zod.number(),
@@ -194,6 +200,26 @@ export const GetProjectionSummaryResponse = zod.object({
   salesSupportCount: zod.number(),
   vendorSetupCount: zod.number().optional(),
   infrastructureCount: zod.number().optional(),
+  coreCostPerClientMonthly: zod.number().optional(),
+  coreCostPerClientYearly: zod.number().optional(),
+  coreSellExVatMonthly: zod.number().optional(),
+  coreSellIncVatMonthly: zod.number().optional(),
+  msCostPerClientMonthly: zod.number().optional(),
+  msCostPerClientYearly: zod.number().optional(),
+  msSellExVatMonthly: zod.number().optional(),
+  msSellIncVatMonthly: zod.number().optional(),
+  combinedExVatMonthly: zod.number().optional(),
+  combinedIncVatMonthly: zod.number().optional(),
+  infraOneTimeSellExVatPerClient: zod.number().optional(),
+  infraOneTimeSellIncVatPerClient: zod.number().optional(),
+  infraOneTimeCostPerClient: zod.number().optional(),
+  invoice1TotalIncVat: zod.number().optional(),
+  invoice1TotalExVat: zod.number().optional(),
+  invoiceRecurringIncVat: zod.number().optional(),
+  invoiceRecurringExVat: zod.number().optional(),
+  year1TotalPerClient: zod.number().optional(),
+  year1TotalAllClients: zod.number().optional(),
+  marginMonthlyAvg: zod.number().optional(),
 });
 
 /**
@@ -404,9 +430,12 @@ export const ListSalesSupportResourcesParams = zod.object({
 export const ListSalesSupportResourcesResponseItem = zod.object({
   id: zod.number(),
   projectionId: zod.number(),
+  name: zod.string().optional(),
   title: zod.string(),
+  department: zod.string().optional(),
   country: zod.string(),
   salarySar: zod.number(),
+  ctcSar: zod.number().nullish(),
   months: zod.number(),
   marginPercent: zod.number(),
   allocationPercent: zod
@@ -444,9 +473,12 @@ export const createSalesSupportResourceBodyAllocationPercentMin = 0;
 export const createSalesSupportResourceBodyAllocationPercentMax = 100;
 
 export const CreateSalesSupportResourceBody = zod.object({
+  name: zod.string().optional(),
   title: zod.string(),
+  department: zod.string().optional(),
   country: zod.string(),
   salarySar: zod.number(),
+  ctcSar: zod.number().nullish(),
   months: zod.number().optional(),
   marginPercent: zod.number().optional(),
   allocationPercent: zod
@@ -471,9 +503,12 @@ export const updateSalesSupportResourceBodyAllocationPercentMin = 0;
 export const updateSalesSupportResourceBodyAllocationPercentMax = 100;
 
 export const UpdateSalesSupportResourceBody = zod.object({
+  name: zod.string().optional(),
   title: zod.string().optional(),
+  department: zod.string().optional(),
   country: zod.string().optional(),
   salarySar: zod.number().optional(),
+  ctcSar: zod.number().nullish(),
   months: zod.number().optional(),
   marginPercent: zod.number().optional(),
   allocationPercent: zod
@@ -489,9 +524,12 @@ export const UpdateSalesSupportResourceBody = zod.object({
 export const UpdateSalesSupportResourceResponse = zod.object({
   id: zod.number(),
   projectionId: zod.number(),
+  name: zod.string().optional(),
   title: zod.string(),
+  department: zod.string().optional(),
   country: zod.string(),
   salarySar: zod.number(),
+  ctcSar: zod.number().nullish(),
   months: zod.number(),
   marginPercent: zod.number(),
   allocationPercent: zod
@@ -1096,6 +1134,23 @@ export const GetDashboardSummaryResponse = zod.object({
       salesSupportCount: zod.number(),
       vendorSetupCount: zod.number().optional(),
       infrastructureCount: zod.number().optional(),
+      coreCostPerClientMonthly: zod.number().optional(),
+      coreCostPerClientYearly: zod.number().optional(),
+      coreSellExVatMonthly: zod.number().optional(),
+      coreSellIncVatMonthly: zod.number().optional(),
+      msCostPerClientMonthly: zod.number().optional(),
+      msCostPerClientYearly: zod.number().optional(),
+      msSellExVatMonthly: zod.number().optional(),
+      msSellIncVatMonthly: zod.number().optional(),
+      combinedExVatMonthly: zod.number().optional(),
+      combinedIncVatMonthly: zod.number().optional(),
+      invoice1TotalIncVat: zod.number().optional(),
+      invoice1TotalExVat: zod.number().optional(),
+      invoiceRecurringIncVat: zod.number().optional(),
+      invoiceRecurringExVat: zod.number().optional(),
+      year1TotalPerClient: zod.number().optional(),
+      year1TotalAllClients: zod.number().optional(),
+      marginMonthlyAvg: zod.number().optional(),
     })
     .optional(),
   recentQuotations: zod.array(

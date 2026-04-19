@@ -96,40 +96,94 @@ export default function Dashboard() {
           {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-32 w-full" />)}
         </div>
       ) : summary?.recentProjection ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Dept Cost (Engagement)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(summary.recentProjection.totalDeptCostYearly)}</div>
-              <div className="text-xs text-muted-foreground mt-1">{summary.recentProjection.engagementMonths} mo · {formatCurrency(summary.recentProjection.totalDeptCostMonthly)} / mo</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Cost per Client (Engagement)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(summary.recentProjection.costPerClientYearly)}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Selling Price (Engagement)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(summary.recentProjection.sellingPriceWithVatYearly)}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Margin (Monthly)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(summary.recentProjection.marginSarMonthly)}</div>
-            </CardContent>
-          </Card>
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Selling Price (Engagement)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatCurrency(summary.recentProjection.year1TotalAllClients ?? summary.recentProjection.sellingPriceWithVatYearly)}</div>
+                <div className="text-xs text-muted-foreground mt-1">{summary.recentProjection.projection?.numClients ?? "?"} clients · Year-1 inc. VAT</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Margin (Monthly)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatCurrency(summary.recentProjection.marginMonthlyAvg ?? summary.recentProjection.marginSarMonthly)}</div>
+                <div className="text-xs text-muted-foreground mt-1">ex-VAT avg · per client</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Cost per Client (Engagement)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {(() => {
+                  const p = summary.recentProjection;
+                  const streamCost = (p.coreCostPerClientYearly ?? 0) +
+                    (p.msCostPerClientYearly ?? 0) +
+                    (p.vendorSetupTotalCost ?? 0) +
+                    (p.infraOneTimeCostPerClient ?? 0);
+                  return (
+                    <>
+                      <div className="text-2xl font-bold">{formatCurrency(streamCost || p.totalYearlyCostPerClient)}</div>
+                      <div className="text-xs text-muted-foreground mt-1">Core + MS + Setup + Infra</div>
+                    </>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Year-1 Revenue (All Clients)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatCurrency(summary.recentProjection.year1TotalAllClients ?? summary.recentProjection.sellingPriceWithVatYearly)}</div>
+                <div className="text-xs text-muted-foreground mt-1">{summary.recentProjection.projection?.numClients ?? "?"} clients · inc. VAT</div>
+              </CardContent>
+            </Card>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Invoice #1 per Client</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatCurrency(summary.recentProjection.invoice1TotalIncVat ?? 0)}</div>
+                <div className="text-xs text-muted-foreground mt-1">Setup + Month 1 · inc. VAT</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Recurring Invoice per Client</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatCurrency(summary.recentProjection.invoiceRecurringIncVat ?? summary.recentProjection.sellingPriceWithVatMonthly)}</div>
+                <div className="text-xs text-muted-foreground mt-1">Invoices #2–12 · inc. VAT</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Dept Cost / Month</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatCurrency(summary.recentProjection.totalDeptCostMonthly)}</div>
+                <div className="text-xs text-muted-foreground mt-1">{formatCurrency(summary.recentProjection.totalDeptCostYearly)} / yr</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Core Platform (Monthly)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatCurrency(summary.recentProjection.coreSellIncVatMonthly ?? summary.recentProjection.sellingPriceWithVatMonthly)}</div>
+                <div className="text-xs text-muted-foreground mt-1">{formatCurrency(summary.recentProjection.coreSellExVatMonthly ?? 0)} ex. VAT / mo</div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       ) : (
         <Card className="bg-muted/50 border-dashed">

@@ -10,9 +10,12 @@ import type { SalesSupportResourceCostBasis } from "./salesSupportResourceCostBa
 export interface SalesSupportResource {
   id: number;
   projectionId: number;
+  name?: string;
   title: string;
+  department?: string;
   country: string;
   salarySar: number;
+  ctcSar?: number | null;
   months: number;
   marginPercent: number;
   /** Percentage allocation 0-100 (e.g. 10 = 10% involvement, 100 = full-time). Cost is multiplied by this fraction. */
