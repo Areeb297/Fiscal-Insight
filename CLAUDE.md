@@ -110,6 +110,8 @@ node artifacts/api-server/build.mjs   # must complete with ⚡ Done
 ```
 Only commit after this succeeds. Do not rely on TypeScript type-check passing — esbuild is the build tool and is the source of truth for whether the server will run.
 
+**Git author rule:** Always commit as `Areeb297 <areeb.shafqat@gmail.com>`. Never commit with `areeb-cloudtech` or `areeb.s@cloudtech.com.sa` — Vercel blocks deployments from that author on the Hobby plan.
+
 ---
 
 ## Deployment
