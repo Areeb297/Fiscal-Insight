@@ -18,7 +18,8 @@
       "Bash(python3 -c ':*)",
       "Bash(npx tsx -e ':*)",
       "Bash(node --env-file=.env -e ':*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Read(//tmp/**)"
     ]
   }
 }

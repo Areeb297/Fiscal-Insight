@@ -179,14 +179,8 @@ export function AuthDecorativePanel() {
       {/* Top brand bar */}
       <div className="absolute top-0 left-0 right-0 px-12 xl:px-16 pt-10 z-10">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-md bg-white/10 border border-white/15 flex items-center justify-center backdrop-blur-sm">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 3v18h18" />
-              <path d="M7 14l3-3 3 3 5-6" />
-            </svg>
-          </div>
+          <img src="/ebttikar-logo.png" alt="Ebttikar" className="h-10 w-auto object-contain" style={{ filter: "brightness(0) invert(1)" }} />
           <div>
-            <p className="text-white font-semibold text-sm tracking-wide">Ebttikar</p>
             <p className="text-white/45 text-[10px] uppercase tracking-[0.2em]">Department Projection</p>
           </div>
         </div>
@@ -222,18 +216,6 @@ export function AuthDecorativePanel() {
         </div>
       </div>
 
-      {/* Footer trust line */}
-      <div className="absolute bottom-0 left-0 right-0 px-12 xl:px-16 pb-8 z-10">
-        <div className="flex items-center justify-between text-[11px] text-white/40">
-          <div className="flex items-center gap-2">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-            </svg>
-            <span>SOC 2 · Encrypted · Role-based access</span>
-          </div>
-          <span className="tabular-nums">v2.4 · Onasi-CloudTech</span>
-        </div>
-      </div>
     </div>
   );
 }
@@ -281,23 +263,20 @@ export function AuthContentWrapper({ children }: { children: React.ReactNode }) 
           />
           <div className={`relative w-full max-w-md transition-all duration-700 ease-out ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
             <div className="lg:hidden mb-8 flex items-center gap-3">
-              <div className="w-9 h-9 rounded-md bg-[#0E2841] flex items-center justify-center">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M3 3v18h18" />
-                  <path d="M7 14l3-3 3 3 5-6" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-foreground font-semibold text-sm">Ebttikar</p>
-                <p className="text-muted-foreground text-[10px] uppercase tracking-[0.2em]">Department Projection</p>
-              </div>
+              <img src="/ebttikar-logo.png" alt="Ebttikar" className="h-10 w-auto object-contain" />
+              <p className="text-muted-foreground text-[10px] uppercase tracking-[0.2em]">Department Projection</p>
             </div>
             {children}
           </div>
         </div>
       </div>
-      <footer className="shrink-0 py-3 px-6 text-xs text-muted-foreground text-center bg-background border-t border-border">
-        © 2026 Onasi-CloudTech. All Rights Reserved.
+      {/* Full-width dark footer */}
+      <footer className="shrink-0 py-3 px-6 text-center space-y-0.5" style={{ background: BRAND_DARK }}>
+        <div className="flex items-center justify-center gap-2">
+          <span className="text-xs text-white/50 font-medium">Powered by</span>
+          <img src="/onasi-logo.png" alt="Onasi" className="h-5 w-auto object-contain" style={{ filter: "brightness(0) invert(1)", opacity: 0.7 }} />
+        </div>
+        <p className="text-[11px] text-white/30">© 2026 Onasi-CloudTech. All Rights Reserved.</p>
       </footer>
     </div>
   );

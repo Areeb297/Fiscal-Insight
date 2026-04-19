@@ -49,6 +49,8 @@ const clerkAppearance = {
     identityPreviewEditButton: "text-[#156082]",
     rootBox: "w-full",
     cardBox: "w-full shadow-none",
+    footer: "hidden",
+    badge: "hidden",
   },
   layout: {
     socialButtonsPlacement: "bottom" as const,
@@ -62,6 +64,9 @@ function SignInPage() {
         <div className="lg:hidden space-y-2 mb-6">
           <p className="text-sm font-medium text-primary tracking-wide uppercase">Welcome back</p>
           <h1 className="text-2xl font-bold text-foreground">Sign in to your account</h1>
+        </div>
+        <div className="flex justify-center mb-2">
+          <img src="/ebttikar-logo.png" alt="Ebttikar" className="h-14 w-auto object-contain" />
         </div>
         <SignIn
           routing="path"

@@ -9,7 +9,6 @@ import {
   Settings,
   Receipt,
   LogOut,
-  TrendingUp,
   ChevronRight,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -47,16 +46,10 @@ function AppSidebar() {
     <Sidebar collapsible="icon" className="border-r-0">
       {/* ── Header ── */}
       <SidebarHeader className="px-0 pb-0">
-        <div className="flex h-14 items-center gap-2.5 px-4 border-b border-sidebar-border">
-          {/* Logo mark */}
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary">
-            <TrendingUp className="h-3.5 w-3.5 text-primary-foreground" />
-          </div>
+        <div className="flex h-16 items-center gap-3 px-3 border-b border-sidebar-border">
+          <img src="/ebttikar-logo.png" alt="Ebttikar" className="h-10 w-auto object-contain shrink-0 group-data-[collapsible=icon]:h-7" />
           <div className="flex flex-col min-w-0 group-data-[collapsible=icon]:hidden">
-            <span className="text-sm font-semibold tracking-tight text-sidebar-foreground leading-none">
-              Fiscal Insight
-            </span>
-            <span className="text-[10px] text-sidebar-foreground/50 tracking-wider uppercase mt-0.5">
+            <span className="text-[11px] font-bold text-sidebar-foreground tracking-wider uppercase">
               Dept. Projection
             </span>
           </div>
@@ -170,8 +163,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <div className="w-full px-4 py-4">
               {children}
             </div>
-            <footer className="border-t border-border/50 py-3 px-6 text-[11px] text-muted-foreground/50 text-center">
-              © 2026 Onasi-CloudTech. All Rights Reserved.
+            <footer className="border-t border-border/50 py-3 px-6 text-center space-y-1">
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-xs text-muted-foreground/70 font-medium">Powered by</span>
+                <img src="/onasi-logo.png" alt="Onasi" className="h-6 w-auto object-contain opacity-80" />
+              </div>
+              <p className="text-[11px] text-muted-foreground/50">© 2026 Onasi-CloudTech. All Rights Reserved.</p>
             </footer>
           </main>
         </div>
