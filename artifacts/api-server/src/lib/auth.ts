@@ -1,41 +1,44 @@
-import { getAuth, clerkClient } from "@clerk/express";
+import jwt from "jsonwebtoken";
 import type { Request, Response } from "express";
 
-const ADMIN_EMAILS_DEFAULT = "areeb.shafqat@ebttikar.com,khalid@ebttikar.com";
+const JWT_SECRET = process.env.SESSION_SECRET || "dev-secret-change-in-prod";
+const ADMIN_EMAILS_DEFAULT = "areeb.shafqat@gmail.com,areeb.shafqat@ebttikar.com";
 
-function adminEmails(): string[] {
+export function adminEmails(): string[] {
   return (process.env["ADMIN_EMAILS"] || ADMIN_EMAILS_DEFAULT)
     .split(",")
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean);
 }
 
-export async function getAuthContext(
-  req: Request,
-): Promise<{ userId: string; email: string | null; role: "admin" | "user" } | null> {
-  const auth = getAuth(req);
-  if (!auth.userId) return null;
+export interface AuthContext {
+  userId: string;
+  email: string;
+  role: "admin" | "user";
+}
 
-  let role: "admin" | "user" = "user";
-  let email: string | null = null;
+export function signToken(ctx: AuthContext): string {
+  return jwt.sign(ctx, JWT_SECRET, { expiresIn: "30d" });
+}
 
+export function verifyToken(token: string): AuthContext | null {
   try {
-    const user = await clerkClient.users.getUser(auth.userId);
-    email = user.primaryEmailAddress?.emailAddress?.toLowerCase() ?? null;
-    const metaRole = (user.publicMetadata as Record<string, unknown> | undefined)?.["role"];
-    if (metaRole === "admin") role = "admin";
-    if (email && adminEmails().includes(email)) role = "admin";
+    return jwt.verify(token, JWT_SECRET) as AuthContext;
   } catch {
-    // best-effort: keep defaults
+    return null;
   }
+}
 
-  return { userId: auth.userId, email, role };
+export async function getAuthContext(req: Request): Promise<AuthContext | null> {
+  const header = req.headers.authorization;
+  if (!header?.startsWith("Bearer ")) return null;
+  return verifyToken(header.slice(7));
 }
 
 export async function requireAuth(
   req: Request,
   res: Response,
-): Promise<{ userId: string; email: string | null; role: "admin" | "user" } | null> {
+): Promise<AuthContext | null> {
   const ctx = await getAuthContext(req);
   if (!ctx) {
     res.status(401).json({ error: "Authentication required" });
@@ -47,7 +50,7 @@ export async function requireAuth(
 export async function requireAdmin(
   req: Request,
   res: Response,
-): Promise<{ userId: string; email: string | null; role: "admin" | "user" } | null> {
+): Promise<AuthContext | null> {
   const ctx = await requireAuth(req, res);
   if (!ctx) return null;
   if (ctx.role !== "admin") {

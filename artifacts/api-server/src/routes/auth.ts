@@ -1,10 +1,12 @@
 import { Router, type IRouter } from "express";
+import bcrypt from "bcryptjs";
+import { eq } from "drizzle-orm";
+import { db, usersTable } from "@workspace/db";
+import { signToken, adminEmails } from "../lib/auth";
 
 const router: IRouter = Router();
 
-const CLERK_SECRET_KEY = process.env.CLERK_SECRET_KEY;
-
-router.post("/auth/signup", async (req, res): Promise<void> => {
+router.post("/auth/register", async (req, res): Promise<void> => {
   try {
     const { email, password, firstName, lastName } = req.body ?? {};
     if (!email || !password) {
@@ -15,133 +17,76 @@ router.post("/auth/signup", async (req, res): Promise<void> => {
       res.status(400).json({ error: "Password must be at least 8 characters" });
       return;
     }
-    if (!CLERK_SECRET_KEY) {
-      res.status(500).json({ error: "Auth service is not configured" });
+
+    const existing = await db.select().from(usersTable).where(eq(usersTable.email, email.toLowerCase())).limit(1);
+    if (existing.length > 0) {
+      res.status(400).json({ error: "An account with this email already exists" });
       return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const clerkRes: any = await fetch("https://api.clerk.com/v1/users", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${CLERK_SECRET_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email_address: [email],
-        password,
-        first_name: firstName || undefined,
-        last_name: lastName || undefined,
-        skip_password_checks: true,
-        skip_password_requirement: false,
-        bypass_client_trust: true,
-      }),
-    });
+    const passwordHash = await bcrypt.hash(password, 12);
+    const role = adminEmails().includes(email.toLowerCase()) ? "admin" : "user";
 
-    const data = await clerkRes.json() as any;
-    if (!clerkRes.ok || data.errors) {
-      const msg = data?.errors?.[0]?.long_message || data?.errors?.[0]?.message || "Signup failed";
-      res.status(400).json({ error: msg });
-      return;
-    }
+    const [user] = await db.insert(usersTable).values({
+      email: email.toLowerCase(),
+      passwordHash,
+      firstName: firstName || null,
+      lastName: lastName || null,
+      role,
+    }).returning();
 
-    res.status(201).json({
-      id: data.id,
-      email: data.email_addresses?.[0]?.email_address,
-    });
+    const token = signToken({ userId: user.id, email: user.email, role: user.role as "admin" | "user" });
+    res.status(201).json({ token, user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role } });
   } catch (e: any) {
-    res.status(500).json({ error: e?.message || "Signup error" });
+    res.status(500).json({ error: e?.message || "Registration failed" });
   }
 });
 
-const ADMIN_EMAILS_FALLBACK = "areeb.shafqat@ebttikar.com,khalid@ebttikar.com";
-
-function adminEmailList(): string[] {
-  return (process.env["ADMIN_EMAILS"] || ADMIN_EMAILS_FALLBACK)
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-}
-
-router.post("/auth/admin-reset", async (req, res): Promise<void> => {
+router.post("/auth/login", async (req, res): Promise<void> => {
   try {
     const { email, password } = req.body ?? {};
-    if (!email || typeof email !== "string") {
-      res.status(400).json({ error: "Email is required" });
-      return;
-    }
-    if (!password || typeof password !== "string" || password.length < 8) {
-      res.status(400).json({ error: "Password must be at least 8 characters" });
-      return;
-    }
-    if (!adminEmailList().includes(email.toLowerCase())) {
-      res.status(403).json({ error: "This endpoint is only available for pre-approved admin emails." });
-      return;
-    }
-    if (!CLERK_SECRET_KEY) {
-      res.status(500).json({ error: "Auth service is not configured" });
+    if (!email || !password) {
+      res.status(400).json({ error: "Email and password are required" });
       return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const lookup: any = await fetch(
-      `https://api.clerk.com/v1/users?email_address=${encodeURIComponent(email)}`,
-      { headers: { Authorization: `Bearer ${CLERK_SECRET_KEY}` } },
-    );
-    const found = (await lookup.json()) as any[];
-    let userId: string | undefined = Array.isArray(found) && found[0]?.id;
-
-    if (!userId) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const create: any = await fetch("https://api.clerk.com/v1/users", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${CLERK_SECRET_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email_address: [email],
-          password,
-          skip_password_checks: true,
-          bypass_client_trust: true,
-          public_metadata: { role: "admin" },
-        }),
-      });
-      const createData = (await create.json()) as any;
-      if (!create.ok || createData?.errors) {
-        const msg = createData?.errors?.[0]?.long_message || createData?.errors?.[0]?.message || "Failed to create user";
-        res.status(400).json({ error: msg });
-        return;
-      }
-      userId = createData.id;
-    } else {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const update: any = await fetch(`https://api.clerk.com/v1/users/${userId}`, {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${CLERK_SECRET_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          password,
-          skip_password_checks: true,
-          bypass_client_trust: true,
-          sign_out_of_other_sessions: true,
-          public_metadata: { role: "admin" },
-        }),
-      });
-      const updateData = (await update.json()) as any;
-      if (!update.ok || updateData?.errors) {
-        const msg = updateData?.errors?.[0]?.long_message || updateData?.errors?.[0]?.message || "Failed to update user";
-        res.status(400).json({ error: msg });
-        return;
-      }
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email.toLowerCase())).limit(1);
+    if (!user) {
+      res.status(401).json({ error: "Invalid email or password" });
+      return;
     }
 
-    res.json({ ok: true, id: userId, email });
+    const valid = await bcrypt.compare(password, user.passwordHash);
+    if (!valid) {
+      res.status(401).json({ error: "Invalid email or password" });
+      return;
+    }
+
+    const token = signToken({ userId: user.id, email: user.email, role: user.role as "admin" | "user" });
+    res.json({ token, user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role } });
   } catch (e: any) {
-    res.status(500).json({ error: e?.message || "Admin reset failed" });
+    res.status(500).json({ error: e?.message || "Login failed" });
   }
+});
+
+router.get("/auth/me", async (req, res): Promise<void> => {
+  const header = req.headers.authorization;
+  if (!header?.startsWith("Bearer ")) {
+    res.status(401).json({ error: "Not authenticated" });
+    return;
+  }
+  const { verifyToken } = await import("../lib/auth");
+  const ctx = verifyToken(header.slice(7));
+  if (!ctx) {
+    res.status(401).json({ error: "Invalid token" });
+    return;
+  }
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, ctx.userId)).limit(1);
+  if (!user) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+  res.json({ id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role });
 });
 
 export default router;

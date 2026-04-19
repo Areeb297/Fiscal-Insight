@@ -1,7 +1,7 @@
 "use client";
 
 import { Link, useLocation } from "wouter";
-import { useUser, useClerk } from "@clerk/react";
+import { useAuth } from "@/lib/auth";
 import {
   LayoutDashboard,
   Calculator,
@@ -39,8 +39,7 @@ const NAV_ITEMS = [
 
 function AppSidebar() {
   const [location] = useLocation();
-  const { user } = useUser();
-  const { signOut } = useClerk();
+  const { user, logout } = useAuth();
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
@@ -96,17 +95,16 @@ function AppSidebar() {
         <div className="group-data-[collapsible=icon]:hidden px-2">
           <div className="flex items-center gap-3 mb-3">
             <Avatar className="h-8 w-8 shrink-0 ring-2 ring-primary/20">
-              <AvatarImage src={user?.imageUrl} />
               <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">
-                {user?.firstName?.charAt(0) ?? "U"}
+                {user?.firstName?.charAt(0) ?? user?.email?.charAt(0)?.toUpperCase() ?? "U"}
               </AvatarFallback>
             </Avatar>
             <div className="flex flex-col min-w-0">
               <span className="text-[13px] font-medium text-sidebar-foreground truncate leading-tight">
-                {user?.fullName ?? "User"}
+                {user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : (user?.firstName ?? "User")}
               </span>
               <span className="text-[11px] text-sidebar-foreground/50 truncate">
-                {user?.primaryEmailAddress?.emailAddress}
+                {user?.email}
               </span>
             </div>
           </div>
@@ -114,7 +112,7 @@ function AppSidebar() {
             variant="ghost"
             size="sm"
             className="w-full justify-start h-8 text-[12px] text-sidebar-foreground/60 hover:text-red-500 hover:bg-red-500/8 gap-2 px-2"
-            onClick={() => signOut()}
+            onClick={logout}
           >
             <LogOut className="h-3.5 w-3.5" />
             Sign Out
@@ -124,16 +122,15 @@ function AppSidebar() {
         {/* Collapsed state: just avatar + logout icon */}
         <div className="hidden group-data-[collapsible=icon]:flex flex-col items-center gap-2">
           <Avatar className="h-8 w-8 ring-2 ring-primary/20">
-            <AvatarImage src={user?.imageUrl} />
             <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">
-              {user?.firstName?.charAt(0) ?? "U"}
+              {user?.firstName?.charAt(0) ?? user?.email?.charAt(0)?.toUpperCase() ?? "U"}
             </AvatarFallback>
           </Avatar>
           <Button
             variant="ghost"
             size="icon"
             className="h-8 w-8 text-sidebar-foreground/60 hover:text-red-500 hover:bg-red-500/8"
-            onClick={() => signOut()}
+            onClick={logout}
             title="Sign Out"
           >
             <LogOut className="h-3.5 w-3.5" />
