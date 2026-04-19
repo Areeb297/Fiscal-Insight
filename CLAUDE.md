@@ -116,13 +116,50 @@ Only commit after this succeeds. Do not rely on TypeScript type-check passing �
 
 ## Deployment
 
-| Service | Platform | Notes |
+| Service | Platform | URL |
 |---|---|---|
-| `artifacts/api-server` | Railway | Root dir: `/`, build: `pnpm --filter @workspace/api-server run build`, start: `pnpm --filter @workspace/api-server run start` |
-| `artifacts/projection-app` | Vercel | Root dir: `artifacts/projection-app`, Vite auto-detected |
+| `artifacts/api-server` | Hostinger VPS (PM2 + Traefik) | `https://api.areebshafqatn8n.space` |
+| `artifacts/projection-app` | Vercel | `https://fiscal-insight-projection-app.vercel.app` |
 
-Railway needs: `DATABASE_URL`, `CLERK_SECRET_KEY`, `SESSION_SECRET`, `NODE_ENV=production`  
-Vercel needs: `VITE_CLERK_PUBLISHABLE_KEY`, `VITE_API_BASE_URL` (Railway URL)
+### API Server — Hostinger VPS
+
+- **VPS:** `srv840795.hstgr.cloud` / `145.79.13.137` (KVM 2, Ubuntu 24.04, Jakarta)
+- **SSH:** `ssh root@145.79.13.137`
+- **App location:** `/root/fiscal_insight/Fiscal-Insight/`
+- **Process manager:** PM2 — process name `fiscal-api`, runs on port 8080
+- **Reverse proxy:** Traefik (Docker) — config at `/root/docker-compose.yml`
+- **Dynamic Traefik route:** `/root/traefik-dynamic/fiscal-api.yml` — proxies `api.areebshafqatn8n.space` → `http://172.17.0.1:8080`
+- **SSL:** Let's Encrypt via Traefik TLS challenge (auto-renews)
+- **Health check:** `https://api.areebshafqatn8n.space/api/healthz` → `{"status":"ok"}`
+
+**To update the API after a code change:**
+```bash
+ssh root@145.79.13.137
+cd /root/fiscal_insight/Fiscal-Insight
+git pull
+pnpm --filter @workspace/api-server run build
+pm2 restart fiscal-api
+```
+
+**PM2 commands:**
+```bash
+pm2 status          # check if running
+pm2 logs fiscal-api # view logs
+pm2 restart fiscal-api
+```
+
+**If Traefik stops routing (e.g. after VPS reboot):**
+```bash
+cd /root && docker compose up -d traefik
+```
+
+### Vercel (Frontend)
+
+- **Root Directory:** `artifacts/projection-app`
+- **Required env vars:**
+  - `VITE_CLERK_PUBLISHABLE_KEY` — Clerk publishable key
+  - `VITE_API_BASE_URL` — `https://api.areebshafqatn8n.space`
+- **SPA routing:** `artifacts/projection-app/vercel.json` rewrites all paths to `index.html`
 
 ---
 
