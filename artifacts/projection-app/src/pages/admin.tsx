@@ -16,6 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, Trash, Save, Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { LogoCropper } from "@/components/logo-cropper";
+import { getStoredToken } from "@/lib/auth";
 
 export default function Admin() {
   const { toast } = useToast();
@@ -414,8 +415,9 @@ type AdminUser = {
 function UsersPanel() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const apiBase = import.meta.env.BASE_URL.replace(/\/$/, "");
+  const apiBase = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "";
   const usersUrl = `${apiBase}/api/admin/users`;
+  const authHeader = () => ({ Authorization: `Bearer ${getStoredToken() ?? ""}` });
   const [showCreate, setShowCreate] = useState(false);
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -427,7 +429,7 @@ function UsersPanel() {
   const { data: users, isLoading, error } = useQuery<AdminUser[]>({
     queryKey: [usersUrl],
     queryFn: async () => {
-      const r = await fetch(usersUrl, { credentials: "include" });
+      const r = await fetch(usersUrl, { headers: authHeader() });
       if (!r.ok) throw new Error((await r.json()).error || "Failed");
       return r.json();
     },
@@ -436,8 +438,7 @@ function UsersPanel() {
   async function setRole(id: string, role: "admin" | "user") {
     const r = await fetch(`${apiBase}/api/admin/users/${id}/role`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
+      headers: { "Content-Type": "application/json", ...authHeader() },
       body: JSON.stringify({ role }),
     });
     if (!r.ok) {
@@ -457,8 +458,7 @@ function UsersPanel() {
     }
     const r = await fetch(`${apiBase}/api/admin/users/${id}/reset-password`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
+      headers: { "Content-Type": "application/json", ...authHeader() },
       body: JSON.stringify({ password: pw, signOutOtherSessions: true }),
     });
     if (!r.ok) {
@@ -477,8 +477,7 @@ function UsersPanel() {
     setCreating(true);
     const r = await fetch(usersUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
+      headers: { "Content-Type": "application/json", ...authHeader() },
       body: JSON.stringify({
         email: newEmail,
         password: newPassword,
@@ -502,7 +501,7 @@ function UsersPanel() {
     if (!confirm(`Delete user ${email ?? id}? This cannot be undone.`)) return;
     const r = await fetch(`${apiBase}/api/admin/users/${id}`, {
       method: "DELETE",
-      credentials: "include",
+      headers: authHeader(),
     });
     if (!r.ok && r.status !== 204) {
       toast({ title: "Failed to delete user", description: (await r.json()).error, variant: "destructive" });
