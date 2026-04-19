@@ -16,6 +16,9 @@ import Projection from "@/pages/projection";
 import ProjectionsList from "@/pages/projections-list";
 import QuotationsList from "@/pages/quotations";
 import QuotationForm from "@/pages/quotations/form";
+import InvoicesList from "@/pages/invoices";
+import InvoiceDetail from "@/pages/invoices/detail";
+import PaymentCalendar from "@/pages/invoices/calendar";
 import Admin from "@/pages/admin";
 import Layout from "@/components/layout";
 import NotFound from "@/pages/not-found";
@@ -240,6 +243,9 @@ function ClerkProviderWithRoutes() {
             <Route path="/quotations"><ProtectedRoute component={QuotationsList} /></Route>
             <Route path="/quotations/new"><ProtectedRoute component={QuotationForm} /></Route>
             <Route path="/quotations/:id"><ProtectedRoute component={QuotationForm} /></Route>
+            <Route path="/invoices"><ProtectedRoute component={InvoicesList} /></Route>
+            <Route path="/invoices/calendar"><ProtectedRoute component={PaymentCalendar} /></Route>
+            <Route path="/invoices/:id"><ProtectedRoute component={InvoiceDetail} /></Route>
             <Route path="/admin"><ProtectedRoute component={Admin} /></Route>
             
             <Route component={NotFound} />

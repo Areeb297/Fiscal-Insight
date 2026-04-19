@@ -16,6 +16,9 @@ export interface Projection {
   fiscalYear: string;
   durationYears: number;
   vatRate: number;
+  autoGenerateInvoices: boolean;
+  invoiceDayOfMonth: number;
+  invoicePaymentTermsDays: number;
   createdAt: string;
   updatedAt: string;
 }

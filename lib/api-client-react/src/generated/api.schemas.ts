@@ -19,6 +19,9 @@ export interface Projection {
   fiscalYear: string;
   durationYears: number;
   vatRate: number;
+  autoGenerateInvoices: boolean;
+  invoiceDayOfMonth: number;
+  invoicePaymentTermsDays: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -43,6 +46,9 @@ export interface UpdateProjectionBody {
   sarRate?: number;
   numClients?: number;
   marginPercent?: number;
+  autoGenerateInvoices?: boolean;
+  invoiceDayOfMonth?: number;
+  invoicePaymentTermsDays?: number;
 }
 
 /**
@@ -627,3 +633,152 @@ export interface DashboardSummary {
   recentQuotations: Quotation[];
   charts?: DashboardSummaryCharts;
 }
+
+export type InvoiceStatus = (typeof InvoiceStatus)[keyof typeof InvoiceStatus];
+
+export const InvoiceStatus = {
+  draft: "draft",
+  sent: "sent",
+  paid: "paid",
+  overdue: "overdue",
+} as const;
+
+export interface Invoice {
+  id: number;
+  ownerId?: string | null;
+  projectionId?: number | null;
+  invoiceNumber: string;
+  clientKey: string;
+  clientName: string;
+  companyName: string;
+  /** ISO YYYY-MM */
+  billingMonth: string;
+  issueDate: string;
+  dueDate: string;
+  status: InvoiceStatus;
+  paidDate?: string | null;
+  notes?: string | null;
+  currencyCode: string;
+  vatRate: number;
+  subtotal: number;
+  vatTotal: number;
+  grandTotal: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface InvoiceLineItem {
+  id: number;
+  invoiceId: number;
+  sortOrder: number;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  marginPercent: number;
+  vatRate: number;
+  sourceKind?: string | null;
+  sourceRefId?: number | null;
+  isManual: boolean;
+  lineSubtotal: number;
+  lineVat: number;
+  lineTotal: number;
+}
+
+export type InvoiceWithLineItems = Invoice & {
+  lineItems: InvoiceLineItem[];
+};
+
+export type UpdateInvoiceBodyStatus =
+  (typeof UpdateInvoiceBodyStatus)[keyof typeof UpdateInvoiceBodyStatus];
+
+export const UpdateInvoiceBodyStatus = {
+  draft: "draft",
+  sent: "sent",
+  paid: "paid",
+  overdue: "overdue",
+} as const;
+
+export interface UpdateInvoiceBody {
+  clientName?: string;
+  companyName?: string;
+  issueDate?: string;
+  dueDate?: string;
+  status?: UpdateInvoiceBodyStatus;
+  paidDate?: string | null;
+  notes?: string | null;
+  vatRate?: number;
+}
+
+export interface CreateInvoiceLineItemBody {
+  sortOrder?: number;
+  description: string;
+  quantity?: number;
+  unitPrice?: number;
+  marginPercent?: number;
+  vatRate?: number;
+}
+
+export interface UpdateInvoiceLineItemBody {
+  sortOrder?: number;
+  description?: string;
+  quantity?: number;
+  unitPrice?: number;
+  marginPercent?: number;
+  vatRate?: number;
+}
+
+export interface GenerateInvoicesBody {
+  /** Inclusive ISO month YYYY-MM */
+  fromMonth: string;
+  /** Inclusive ISO month YYYY-MM */
+  toMonth: string;
+}
+
+export interface GenerateInvoicesResponse {
+  created: number;
+  updated: number;
+  skipped: number;
+  invoices: Invoice[];
+}
+
+export type InvoiceCalendarCellStatusCounts = {
+  draft: number;
+  sent: number;
+  paid: number;
+  overdue: number;
+};
+
+export interface InvoiceCalendarCell {
+  /** ISO YYYY-MM */
+  month: string;
+  invoiceCount: number;
+  totalDue: number;
+  totalPaid: number;
+  totalOutstanding: number;
+  statusCounts: InvoiceCalendarCellStatusCounts;
+  invoices: Invoice[];
+}
+
+export type InvoiceCalendarTotals = {
+  invoiceCount: number;
+  totalDue: number;
+  totalPaid: number;
+  totalOutstanding: number;
+};
+
+export interface InvoiceCalendar {
+  months: InvoiceCalendarCell[];
+  totals: InvoiceCalendarTotals;
+}
+
+export type ListInvoicesParams = {
+  projectionId?: number;
+  status?: string;
+  month?: string;
+};
+
+export type GetInvoiceCalendarParams = {
+  projectionId?: number;
+  from?: string;
+  to?: string;
+};

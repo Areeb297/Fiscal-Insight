@@ -15,4 +15,7 @@ export interface UpdateProjectionBody {
   sarRate?: number;
   numClients?: number;
   marginPercent?: number;
+  autoGenerateInvoices?: boolean;
+  invoiceDayOfMonth?: number;
+  invoicePaymentTermsDays?: number;
 }

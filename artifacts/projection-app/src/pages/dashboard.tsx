@@ -1,8 +1,13 @@
+import { useEffect, useRef } from "react";
 import { Link } from "wouter";
 import {
   useGetDashboardSummary,
   getGetDashboardSummaryQueryKey,
+  useListProjections,
+  getListProjectionsQueryKey,
+  generateProjectionInvoices,
 } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -31,10 +36,44 @@ import {
   Cell,
 } from "recharts";
 
+function thisMonthIso() {
+  const d = new Date();
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+function nextMonthIso(month: string) {
+  const [y, m] = month.split("-").map(Number);
+  const ny = m === 12 ? y + 1 : y;
+  const nm = m === 12 ? 1 : m + 1;
+  return `${ny}-${String(nm).padStart(2, "0")}`;
+}
+
 export default function Dashboard() {
+  const queryClient = useQueryClient();
   const { data: summary, isLoading } = useGetDashboardSummary({
     query: { queryKey: getGetDashboardSummaryQueryKey() }
   });
+  const { data: projections } = useListProjections({
+    query: { queryKey: getListProjectionsQueryKey() },
+  });
+
+  const ranAutoGen = useRef(false);
+  useEffect(() => {
+    if (ranAutoGen.current || !projections) return;
+    const eligible = projections.filter((p) => p.autoGenerateInvoices);
+    if (eligible.length === 0) return;
+    ranAutoGen.current = true;
+    const month = thisMonthIso();
+    const lastKey = `invoices:autogen:${month}`;
+    if (typeof window !== "undefined" && window.localStorage.getItem(lastKey) === "done") return;
+    Promise.all(
+      eligible.map((p) =>
+        generateProjectionInvoices(p.id, { fromMonth: month, toMonth: nextMonthIso(month) }).catch(() => null),
+      ),
+    ).then(() => {
+      if (typeof window !== "undefined") window.localStorage.setItem(lastKey, "done");
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+    });
+  }, [projections, queryClient]);
 
   const formatCurrency = (val: number) => new Intl.NumberFormat('en-SA', { style: 'currency', currency: 'SAR' }).format(val);
 

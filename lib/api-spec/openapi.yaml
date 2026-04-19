@@ -18,6 +18,7 @@ tags:
   - name: admin
   - name: chat
   - name: dashboard
+  - name: invoices
 
 paths:
   /healthz:
@@ -980,6 +981,204 @@ paths:
               schema:
                 $ref: "#/components/schemas/DashboardSummary"
 
+  /invoices:
+    get:
+      operationId: listInvoices
+      tags: [invoices]
+      summary: List all invoices for the current user
+      parameters:
+        - name: projectionId
+          in: query
+          required: false
+          schema: { type: integer }
+        - name: status
+          in: query
+          required: false
+          schema: { type: string }
+        - name: month
+          in: query
+          required: false
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Invoice"
+
+  /invoices/calendar:
+    get:
+      operationId: getInvoiceCalendar
+      tags: [invoices]
+      summary: Payment calendar grouped by month with totals & status
+      parameters:
+        - name: projectionId
+          in: query
+          required: false
+          schema: { type: integer }
+        - name: from
+          in: query
+          required: false
+          schema: { type: string }
+        - name: to
+          in: query
+          required: false
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvoiceCalendar"
+
+  /invoices/{id}:
+    get:
+      operationId: getInvoice
+      tags: [invoices]
+      summary: Get an invoice with line items
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvoiceWithLineItems"
+    put:
+      operationId: updateInvoice
+      tags: [invoices]
+      summary: Update invoice header / status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateInvoiceBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvoiceWithLineItems"
+    delete:
+      operationId: deleteInvoice
+      tags: [invoices]
+      summary: Delete an invoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Deleted
+
+  /invoices/{invoiceId}/line-items:
+    post:
+      operationId: createInvoiceLineItem
+      tags: [invoices]
+      summary: Add a line item to an invoice
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInvoiceLineItemBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvoiceLineItem"
+
+  /invoices/{invoiceId}/line-items/{id}:
+    put:
+      operationId: updateInvoiceLineItem
+      tags: [invoices]
+      summary: Update a line item
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateInvoiceLineItemBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvoiceLineItem"
+    delete:
+      operationId: deleteInvoiceLineItem
+      tags: [invoices]
+      summary: Remove a line item
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Deleted
+
+  /projections/{id}/invoices/generate:
+    post:
+      operationId: generateProjectionInvoices
+      tags: [invoices]
+      summary: Generate monthly invoices for a projection over a date range (idempotent per projection/client/month)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateInvoicesBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerateInvoicesResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -1012,11 +1211,17 @@ components:
           type: integer
         vatRate:
           type: number
+        autoGenerateInvoices:
+          type: boolean
+        invoiceDayOfMonth:
+          type: integer
+        invoicePaymentTermsDays:
+          type: integer
         createdAt:
           type: string
         updatedAt:
           type: string
-      required: [id, yearLabel, sarRate, numClients, marginPercent, fiscalYear, durationYears, vatRate, createdAt, updatedAt]
+      required: [id, yearLabel, sarRate, numClients, marginPercent, fiscalYear, durationYears, vatRate, autoGenerateInvoices, invoiceDayOfMonth, invoicePaymentTermsDays, createdAt, updatedAt]
 
     CreateProjectionBody:
       type: object
@@ -1060,6 +1265,12 @@ components:
           type: integer
         marginPercent:
           type: number
+        autoGenerateInvoices:
+          type: boolean
+        invoiceDayOfMonth:
+          type: integer
+        invoicePaymentTermsDays:
+          type: integer
 
     Employee:
       type: object
@@ -1930,3 +2141,173 @@ components:
                 required: [month, cost, revenue]
           required: [costBreakdown, headcountByCountry, projectionTrend, quotationsByStatus]
       required: [totalProjections, totalQuotations, recentQuotations]
+
+    Invoice:
+      type: object
+      properties:
+        id: { type: integer }
+        ownerId:
+          type: string
+          nullable: true
+        projectionId:
+          type: integer
+          nullable: true
+        invoiceNumber: { type: string }
+        clientKey: { type: string }
+        clientName: { type: string }
+        companyName: { type: string }
+        billingMonth: { type: string, description: "ISO YYYY-MM" }
+        issueDate: { type: string }
+        dueDate: { type: string }
+        status:
+          type: string
+          enum: [draft, sent, paid, overdue]
+        paidDate:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        currencyCode: { type: string }
+        vatRate: { type: number }
+        subtotal: { type: number }
+        vatTotal: { type: number }
+        grandTotal: { type: number }
+        createdAt: { type: string }
+        updatedAt: { type: string }
+      required: [id, invoiceNumber, clientKey, clientName, companyName, billingMonth, issueDate, dueDate, status, currencyCode, vatRate, subtotal, vatTotal, grandTotal, createdAt, updatedAt]
+
+    InvoiceLineItem:
+      type: object
+      properties:
+        id: { type: integer }
+        invoiceId: { type: integer }
+        sortOrder: { type: integer }
+        description: { type: string }
+        quantity: { type: number }
+        unitPrice: { type: number }
+        marginPercent: { type: number }
+        vatRate: { type: number }
+        sourceKind:
+          type: string
+          nullable: true
+        sourceRefId:
+          type: integer
+          nullable: true
+        isManual: { type: boolean }
+        lineSubtotal: { type: number }
+        lineVat: { type: number }
+        lineTotal: { type: number }
+      required: [id, invoiceId, sortOrder, description, quantity, unitPrice, marginPercent, vatRate, isManual, lineSubtotal, lineVat, lineTotal]
+
+    InvoiceWithLineItems:
+      allOf:
+        - $ref: "#/components/schemas/Invoice"
+        - type: object
+          properties:
+            lineItems:
+              type: array
+              items:
+                $ref: "#/components/schemas/InvoiceLineItem"
+          required: [lineItems]
+
+    UpdateInvoiceBody:
+      type: object
+      properties:
+        clientName: { type: string }
+        companyName: { type: string }
+        issueDate: { type: string }
+        dueDate: { type: string }
+        status:
+          type: string
+          enum: [draft, sent, paid, overdue]
+        paidDate:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        vatRate: { type: number }
+
+    CreateInvoiceLineItemBody:
+      type: object
+      properties:
+        sortOrder: { type: integer }
+        description: { type: string }
+        quantity: { type: number }
+        unitPrice: { type: number }
+        marginPercent: { type: number }
+        vatRate: { type: number }
+      required: [description]
+
+    UpdateInvoiceLineItemBody:
+      type: object
+      properties:
+        sortOrder: { type: integer }
+        description: { type: string }
+        quantity: { type: number }
+        unitPrice: { type: number }
+        marginPercent: { type: number }
+        vatRate: { type: number }
+
+    GenerateInvoicesBody:
+      type: object
+      properties:
+        fromMonth:
+          type: string
+          description: "Inclusive ISO month YYYY-MM"
+        toMonth:
+          type: string
+          description: "Inclusive ISO month YYYY-MM"
+      required: [fromMonth, toMonth]
+
+    GenerateInvoicesResponse:
+      type: object
+      properties:
+        created: { type: integer }
+        updated: { type: integer }
+        skipped: { type: integer }
+        invoices:
+          type: array
+          items:
+            $ref: "#/components/schemas/Invoice"
+      required: [created, updated, skipped, invoices]
+
+    InvoiceCalendarCell:
+      type: object
+      properties:
+        month: { type: string, description: "ISO YYYY-MM" }
+        invoiceCount: { type: integer }
+        totalDue: { type: number }
+        totalPaid: { type: number }
+        totalOutstanding: { type: number }
+        statusCounts:
+          type: object
+          properties:
+            draft: { type: integer }
+            sent: { type: integer }
+            paid: { type: integer }
+            overdue: { type: integer }
+          required: [draft, sent, paid, overdue]
+        invoices:
+          type: array
+          items:
+            $ref: "#/components/schemas/Invoice"
+      required: [month, invoiceCount, totalDue, totalPaid, totalOutstanding, statusCounts, invoices]
+
+    InvoiceCalendar:
+      type: object
+      properties:
+        months:
+          type: array
+          items:
+            $ref: "#/components/schemas/InvoiceCalendarCell"
+        totals:
+          type: object
+          properties:
+            invoiceCount: { type: integer }
+            totalDue: { type: number }
+            totalPaid: { type: number }
+            totalOutstanding: { type: number }
+          required: [invoiceCount, totalDue, totalPaid, totalOutstanding]
+      required: [months, totals]

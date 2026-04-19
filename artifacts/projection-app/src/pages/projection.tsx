@@ -50,6 +50,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Trash, Save, Calculator, ArrowLeft, Server, Building2, TrendingUp, Wallet, Receipt, Sparkles } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -195,7 +196,7 @@ export default function Projection() {
     );
   };
 
-  const handleUpdateProjectionSettings = (field: string, value: number | string) => {
+  const handleUpdateProjectionSettings = (field: string, value: number | string | boolean) => {
     if (!activeProjectionId) return;
     updateProjection.mutate(
       { id: activeProjectionId, data: { [field]: value } },
@@ -447,6 +448,36 @@ export default function Projection() {
                   className="h-10 bg-background tabular-nums"
                 />
               </div>
+            </div>
+          </div>
+          <div className="mt-4 flex flex-wrap items-end gap-4 rounded-lg border bg-background/60 p-3">
+            <div className="flex items-center gap-2">
+              <Switch
+                id="autoInvoice"
+                checked={activeProjection?.autoGenerateInvoices ?? false}
+                onCheckedChange={(v) => handleUpdateProjectionSettings("autoGenerateInvoices", Boolean(v))}
+              />
+              <Label htmlFor="autoInvoice" className="text-sm font-medium">Auto-generate monthly invoices</Label>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Invoice day</Label>
+              <Input
+                type="number" min="1" max="28"
+                key={`idom-${activeProjection?.id}`}
+                defaultValue={activeProjection?.invoiceDayOfMonth ?? 1}
+                onBlur={(e) => handleUpdateProjectionSettings("invoiceDayOfMonth", parseInt(e.target.value))}
+                className="h-9 w-20 bg-background tabular-nums"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Net terms (days)</Label>
+              <Input
+                type="number" min="0" max="180"
+                key={`pterms-${activeProjection?.id}`}
+                defaultValue={activeProjection?.invoicePaymentTermsDays ?? 30}
+                onBlur={(e) => handleUpdateProjectionSettings("invoicePaymentTermsDays", parseInt(e.target.value))}
+                className="h-9 w-24 bg-background tabular-nums"
+              />
             </div>
           </div>
         </div>

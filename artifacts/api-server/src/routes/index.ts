@@ -11,6 +11,7 @@ import adminRouter from "./admin";
 import chatRouter from "./chat";
 import dashboardRouter from "./dashboard";
 import authRouter from "./auth";
+import invoicesRouter from "./invoices";
 
 const router: IRouter = Router();
 
@@ -26,5 +27,6 @@ router.use(adminRouter);
 router.use(chatRouter);
 router.use(dashboardRouter);
 router.use(authRouter);
+router.use(invoicesRouter);
 
 export default router;

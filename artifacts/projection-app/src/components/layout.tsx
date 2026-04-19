@@ -6,6 +6,7 @@ import {
   Calculator, 
   FileText, 
   Settings,
+  Receipt,
   LogOut,
   Menu,
   PanelLeftClose,
@@ -20,6 +21,7 @@ const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/projection", label: "Projections", icon: Calculator },
   { href: "/quotations", label: "Quotations", icon: FileText },
+  { href: "/invoices", label: "Invoices", icon: Receipt },
   { href: "/admin", label: "Admin", icon: Settings },
 ];
 

@@ -8,3 +8,4 @@ export * from "./salesSupportResources";
 export * from "./vendorSetupFees";
 export * from "./infrastructureCosts";
 export * from "./quotations";
+export * from "./invoices";

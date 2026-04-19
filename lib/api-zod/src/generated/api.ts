@@ -27,6 +27,9 @@ export const ListProjectionsResponseItem = zod.object({
   fiscalYear: zod.string(),
   durationYears: zod.number(),
   vatRate: zod.number(),
+  autoGenerateInvoices: zod.boolean(),
+  invoiceDayOfMonth: zod.number(),
+  invoicePaymentTermsDays: zod.number(),
   createdAt: zod.string(),
   updatedAt: zod.string(),
 });
@@ -63,6 +66,9 @@ export const GetProjectionResponse = zod.object({
   fiscalYear: zod.string(),
   durationYears: zod.number(),
   vatRate: zod.number(),
+  autoGenerateInvoices: zod.boolean(),
+  invoiceDayOfMonth: zod.number(),
+  invoicePaymentTermsDays: zod.number(),
   createdAt: zod.string(),
   updatedAt: zod.string(),
 });
@@ -83,6 +89,9 @@ export const UpdateProjectionBody = zod.object({
   sarRate: zod.number().optional(),
   numClients: zod.number().optional(),
   marginPercent: zod.number().optional(),
+  autoGenerateInvoices: zod.boolean().optional(),
+  invoiceDayOfMonth: zod.number().optional(),
+  invoicePaymentTermsDays: zod.number().optional(),
 });
 
 export const UpdateProjectionResponse = zod.object({
@@ -95,6 +104,9 @@ export const UpdateProjectionResponse = zod.object({
   fiscalYear: zod.string(),
   durationYears: zod.number(),
   vatRate: zod.number(),
+  autoGenerateInvoices: zod.boolean(),
+  invoiceDayOfMonth: zod.number(),
+  invoicePaymentTermsDays: zod.number(),
   createdAt: zod.string(),
   updatedAt: zod.string(),
 });
@@ -124,6 +136,9 @@ export const GetProjectionSummaryResponse = zod.object({
     fiscalYear: zod.string(),
     durationYears: zod.number(),
     vatRate: zod.number(),
+    autoGenerateInvoices: zod.boolean(),
+    invoiceDayOfMonth: zod.number(),
+    invoicePaymentTermsDays: zod.number(),
     createdAt: zod.string(),
     updatedAt: zod.string(),
   }),
@@ -1039,6 +1054,9 @@ export const GetDashboardSummaryResponse = zod.object({
         fiscalYear: zod.string(),
         durationYears: zod.number(),
         vatRate: zod.number(),
+        autoGenerateInvoices: zod.boolean(),
+        invoiceDayOfMonth: zod.number(),
+        invoicePaymentTermsDays: zod.number(),
         createdAt: zod.string(),
         updatedAt: zod.string(),
       }),
@@ -1162,4 +1180,318 @@ export const GetDashboardSummaryResponse = zod.object({
         .optional(),
     })
     .optional(),
+});
+
+/**
+ * @summary List all invoices for the current user
+ */
+export const ListInvoicesQueryParams = zod.object({
+  projectionId: zod.coerce.number().optional(),
+  status: zod.coerce.string().optional(),
+  month: zod.coerce.string().optional(),
+});
+
+export const ListInvoicesResponseItem = zod.object({
+  id: zod.number(),
+  ownerId: zod.string().nullish(),
+  projectionId: zod.number().nullish(),
+  invoiceNumber: zod.string(),
+  clientKey: zod.string(),
+  clientName: zod.string(),
+  companyName: zod.string(),
+  billingMonth: zod.string().describe("ISO YYYY-MM"),
+  issueDate: zod.string(),
+  dueDate: zod.string(),
+  status: zod.enum(["draft", "sent", "paid", "overdue"]),
+  paidDate: zod.string().nullish(),
+  notes: zod.string().nullish(),
+  currencyCode: zod.string(),
+  vatRate: zod.number(),
+  subtotal: zod.number(),
+  vatTotal: zod.number(),
+  grandTotal: zod.number(),
+  createdAt: zod.string(),
+  updatedAt: zod.string(),
+});
+export const ListInvoicesResponse = zod.array(ListInvoicesResponseItem);
+
+/**
+ * @summary Payment calendar grouped by month with totals & status
+ */
+export const GetInvoiceCalendarQueryParams = zod.object({
+  projectionId: zod.coerce.number().optional(),
+  from: zod.coerce.string().optional(),
+  to: zod.coerce.string().optional(),
+});
+
+export const GetInvoiceCalendarResponse = zod.object({
+  months: zod.array(
+    zod.object({
+      month: zod.string().describe("ISO YYYY-MM"),
+      invoiceCount: zod.number(),
+      totalDue: zod.number(),
+      totalPaid: zod.number(),
+      totalOutstanding: zod.number(),
+      statusCounts: zod.object({
+        draft: zod.number(),
+        sent: zod.number(),
+        paid: zod.number(),
+        overdue: zod.number(),
+      }),
+      invoices: zod.array(
+        zod.object({
+          id: zod.number(),
+          ownerId: zod.string().nullish(),
+          projectionId: zod.number().nullish(),
+          invoiceNumber: zod.string(),
+          clientKey: zod.string(),
+          clientName: zod.string(),
+          companyName: zod.string(),
+          billingMonth: zod.string().describe("ISO YYYY-MM"),
+          issueDate: zod.string(),
+          dueDate: zod.string(),
+          status: zod.enum(["draft", "sent", "paid", "overdue"]),
+          paidDate: zod.string().nullish(),
+          notes: zod.string().nullish(),
+          currencyCode: zod.string(),
+          vatRate: zod.number(),
+          subtotal: zod.number(),
+          vatTotal: zod.number(),
+          grandTotal: zod.number(),
+          createdAt: zod.string(),
+          updatedAt: zod.string(),
+        }),
+      ),
+    }),
+  ),
+  totals: zod.object({
+    invoiceCount: zod.number(),
+    totalDue: zod.number(),
+    totalPaid: zod.number(),
+    totalOutstanding: zod.number(),
+  }),
+});
+
+/**
+ * @summary Get an invoice with line items
+ */
+export const GetInvoiceParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetInvoiceResponse = zod
+  .object({
+    id: zod.number(),
+    ownerId: zod.string().nullish(),
+    projectionId: zod.number().nullish(),
+    invoiceNumber: zod.string(),
+    clientKey: zod.string(),
+    clientName: zod.string(),
+    companyName: zod.string(),
+    billingMonth: zod.string().describe("ISO YYYY-MM"),
+    issueDate: zod.string(),
+    dueDate: zod.string(),
+    status: zod.enum(["draft", "sent", "paid", "overdue"]),
+    paidDate: zod.string().nullish(),
+    notes: zod.string().nullish(),
+    currencyCode: zod.string(),
+    vatRate: zod.number(),
+    subtotal: zod.number(),
+    vatTotal: zod.number(),
+    grandTotal: zod.number(),
+    createdAt: zod.string(),
+    updatedAt: zod.string(),
+  })
+  .and(
+    zod.object({
+      lineItems: zod.array(
+        zod.object({
+          id: zod.number(),
+          invoiceId: zod.number(),
+          sortOrder: zod.number(),
+          description: zod.string(),
+          quantity: zod.number(),
+          unitPrice: zod.number(),
+          marginPercent: zod.number(),
+          vatRate: zod.number(),
+          sourceKind: zod.string().nullish(),
+          sourceRefId: zod.number().nullish(),
+          isManual: zod.boolean(),
+          lineSubtotal: zod.number(),
+          lineVat: zod.number(),
+          lineTotal: zod.number(),
+        }),
+      ),
+    }),
+  );
+
+/**
+ * @summary Update invoice header / status
+ */
+export const UpdateInvoiceParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateInvoiceBody = zod.object({
+  clientName: zod.string().optional(),
+  companyName: zod.string().optional(),
+  issueDate: zod.string().optional(),
+  dueDate: zod.string().optional(),
+  status: zod.enum(["draft", "sent", "paid", "overdue"]).optional(),
+  paidDate: zod.string().nullish(),
+  notes: zod.string().nullish(),
+  vatRate: zod.number().optional(),
+});
+
+export const UpdateInvoiceResponse = zod
+  .object({
+    id: zod.number(),
+    ownerId: zod.string().nullish(),
+    projectionId: zod.number().nullish(),
+    invoiceNumber: zod.string(),
+    clientKey: zod.string(),
+    clientName: zod.string(),
+    companyName: zod.string(),
+    billingMonth: zod.string().describe("ISO YYYY-MM"),
+    issueDate: zod.string(),
+    dueDate: zod.string(),
+    status: zod.enum(["draft", "sent", "paid", "overdue"]),
+    paidDate: zod.string().nullish(),
+    notes: zod.string().nullish(),
+    currencyCode: zod.string(),
+    vatRate: zod.number(),
+    subtotal: zod.number(),
+    vatTotal: zod.number(),
+    grandTotal: zod.number(),
+    createdAt: zod.string(),
+    updatedAt: zod.string(),
+  })
+  .and(
+    zod.object({
+      lineItems: zod.array(
+        zod.object({
+          id: zod.number(),
+          invoiceId: zod.number(),
+          sortOrder: zod.number(),
+          description: zod.string(),
+          quantity: zod.number(),
+          unitPrice: zod.number(),
+          marginPercent: zod.number(),
+          vatRate: zod.number(),
+          sourceKind: zod.string().nullish(),
+          sourceRefId: zod.number().nullish(),
+          isManual: zod.boolean(),
+          lineSubtotal: zod.number(),
+          lineVat: zod.number(),
+          lineTotal: zod.number(),
+        }),
+      ),
+    }),
+  );
+
+/**
+ * @summary Delete an invoice
+ */
+export const DeleteInvoiceParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary Add a line item to an invoice
+ */
+export const CreateInvoiceLineItemParams = zod.object({
+  invoiceId: zod.coerce.number(),
+});
+
+export const CreateInvoiceLineItemBody = zod.object({
+  sortOrder: zod.number().optional(),
+  description: zod.string(),
+  quantity: zod.number().optional(),
+  unitPrice: zod.number().optional(),
+  marginPercent: zod.number().optional(),
+  vatRate: zod.number().optional(),
+});
+
+/**
+ * @summary Update a line item
+ */
+export const UpdateInvoiceLineItemParams = zod.object({
+  invoiceId: zod.coerce.number(),
+  id: zod.coerce.number(),
+});
+
+export const UpdateInvoiceLineItemBody = zod.object({
+  sortOrder: zod.number().optional(),
+  description: zod.string().optional(),
+  quantity: zod.number().optional(),
+  unitPrice: zod.number().optional(),
+  marginPercent: zod.number().optional(),
+  vatRate: zod.number().optional(),
+});
+
+export const UpdateInvoiceLineItemResponse = zod.object({
+  id: zod.number(),
+  invoiceId: zod.number(),
+  sortOrder: zod.number(),
+  description: zod.string(),
+  quantity: zod.number(),
+  unitPrice: zod.number(),
+  marginPercent: zod.number(),
+  vatRate: zod.number(),
+  sourceKind: zod.string().nullish(),
+  sourceRefId: zod.number().nullish(),
+  isManual: zod.boolean(),
+  lineSubtotal: zod.number(),
+  lineVat: zod.number(),
+  lineTotal: zod.number(),
+});
+
+/**
+ * @summary Remove a line item
+ */
+export const DeleteInvoiceLineItemParams = zod.object({
+  invoiceId: zod.coerce.number(),
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary Generate monthly invoices for a projection over a date range (idempotent per projection/client/month)
+ */
+export const GenerateProjectionInvoicesParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GenerateProjectionInvoicesBody = zod.object({
+  fromMonth: zod.string().describe("Inclusive ISO month YYYY-MM"),
+  toMonth: zod.string().describe("Inclusive ISO month YYYY-MM"),
+});
+
+export const GenerateProjectionInvoicesResponse = zod.object({
+  created: zod.number(),
+  updated: zod.number(),
+  skipped: zod.number(),
+  invoices: zod.array(
+    zod.object({
+      id: zod.number(),
+      ownerId: zod.string().nullish(),
+      projectionId: zod.number().nullish(),
+      invoiceNumber: zod.string(),
+      clientKey: zod.string(),
+      clientName: zod.string(),
+      companyName: zod.string(),
+      billingMonth: zod.string().describe("ISO YYYY-MM"),
+      issueDate: zod.string(),
+      dueDate: zod.string(),
+      status: zod.enum(["draft", "sent", "paid", "overdue"]),
+      paidDate: zod.string().nullish(),
+      notes: zod.string().nullish(),
+      currencyCode: zod.string(),
+      vatRate: zod.number(),
+      subtotal: zod.number(),
+      vatTotal: zod.number(),
+      grandTotal: zod.number(),
+      createdAt: zod.string(),
+      updatedAt: zod.string(),
+    }),
+  ),
 });
