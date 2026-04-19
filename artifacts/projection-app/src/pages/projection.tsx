@@ -168,35 +168,29 @@ function SectionBand({
 }) {
   const c = SECTION_COLORS[sectionId];
   return (
-    <div id={id} className={cn("rounded-xl border border-l-[3px] overflow-hidden shadow-sm", c.border)}>
+    <div id={id} className={cn("rounded-[14px] border border-[#e5eaf0] border-l-[3px] overflow-hidden", c.border)} style={{ boxShadow: "0 1px 0 rgba(16,24,40,0.03), 0 1px 2px rgba(16,24,40,0.04)" }}>
       <button
         onClick={onToggle}
-        className={cn("w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors group", c.headerBg)}
+        className="w-full flex items-center gap-3.5 px-[18px] py-3.5 text-left bg-white hover:bg-[#fafbfd] transition-colors group min-h-[56px]"
       >
-        <span className={cn("text-[10px] font-mono font-black tracking-widest shrink-0 w-11 opacity-80", c.num)}>{num}</span>
-        <span className={cn("text-[13px] font-semibold leading-tight", c.headerText)}>{title}</span>
+        <ChevronDown className={cn("h-3.5 w-3.5 text-[#8aa0b2] transition-transform duration-180 shrink-0", isOpen && "rotate-180")} />
+        <span className={cn("text-[11px] font-mono font-semibold tracking-[0.1em] shrink-0 opacity-60", c.num)}>{num}</span>
+        <span className="text-[15px] font-semibold tracking-[-0.005em] text-[#0f2c3f]">{title}</span>
         {count !== undefined && (
-          <span className={cn("ml-1 h-5 min-w-[20px] px-1.5 rounded-full text-[10px] font-bold tabular-nums flex items-center justify-center", c.badgeBg)}>
+          <span className="ml-1 h-5 min-w-[20px] px-1.5 rounded-full text-[10.5px] font-semibold tabular-nums flex items-center justify-center bg-[#eef2f7] text-[#5a7184]">
             {count}
           </span>
         )}
         {total && (
-          <span className={cn("ml-2 text-[12px] font-bold tabular-nums opacity-70", c.headerText)}>
+          <span className="ml-2 text-[12.5px] text-[#5a7184] tabular-nums font-medium">
             {total}
           </span>
         )}
         <div className="ml-auto flex items-center gap-2">
           {action && <div onClick={(e) => e.stopPropagation()}>{action}</div>}
-          <ChevronDown
-            className={cn(
-              "h-4 w-4 opacity-40 transition-transform duration-200 group-hover:opacity-70",
-              c.headerText,
-              isOpen && "rotate-180",
-            )}
-          />
         </div>
       </button>
-      {isOpen && <div className="border-t border-border/40 bg-background">{children}</div>}
+      {isOpen && <div className="border-t border-[#e5eaf0] bg-white">{children}</div>}
     </div>
   );
 }
@@ -757,11 +751,11 @@ export default function Projection() {
         </aside>
 
         {/* Main Content Sections */}
-        <div className="flex-1 min-w-0 space-y-2.5 px-4 py-4 pb-20">
+        <div className="flex-1 min-w-0 space-y-5 px-4 py-5 pb-20">
 
           {/* ── Cost Structure Summary (always-visible) ── */}
           {summary && (
-            <div className="rounded-xl border border-border/60 overflow-hidden shadow-sm">
+            <div className="rounded-[14px] border border-[#e5eaf0] overflow-hidden" style={{ boxShadow: "0 1px 0 rgba(16,24,40,0.03), 0 1px 2px rgba(16,24,40,0.04)" }}>
               <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 dark:bg-slate-900">
                 <span className="text-[10px] font-mono font-black tracking-widest text-slate-300 uppercase">Cost Structure</span>
                 <span className="text-[10px] text-slate-400 ml-auto">Monthly · Engagement Total · Per Client / mo</span>
@@ -807,7 +801,7 @@ export default function Projection() {
 
           {/* ── Selling Prices Summary (always-visible) ── */}
           {summary && ((summary.coreSellExVatMonthly ?? 0) > 0 || (summary.msSellExVatMonthly ?? 0) > 0) && (
-            <div className="rounded-xl border border-border/60 overflow-hidden shadow-sm">
+            <div className="rounded-[14px] border border-[#e5eaf0] overflow-hidden" style={{ boxShadow: "0 1px 0 rgba(16,24,40,0.03), 0 1px 2px rgba(16,24,40,0.04)" }}>
               <div className="flex items-center gap-2 px-4 py-2 bg-emerald-800 dark:bg-emerald-900">
                 <span className="text-[10px] font-mono font-black tracking-widest text-emerald-100 uppercase">Selling Prices</span>
                 <span className="text-[10px] text-emerald-300 ml-1">· After {targetMarginPct.toFixed(0)}% Margin + {vat}% VAT</span>
@@ -875,22 +869,22 @@ export default function Projection() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-blue-50/50 dark:bg-blue-950/20">
-                    <TableHead className="w-[220px] text-[11px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400">Name</TableHead>
-                    <TableHead className="w-[160px] text-[11px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400">Title</TableHead>
-                    <TableHead className="w-[140px] text-[11px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400">Country</TableHead>
-                    <TableHead className="w-[150px] text-right text-[11px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400">Salary (SAR)</TableHead>
-                    <TableHead className="w-[90px] text-right text-[11px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400">Months</TableHead>
-                    <TableHead className="w-[90px] text-right text-[11px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400">Alloc %</TableHead>
-                    <TableHead className="w-[160px] text-[11px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400">Basis</TableHead>
-                    <TableHead className="w-[100px] text-right text-[11px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400">CTC</TableHead>
-                    <TableHead className="w-[150px] text-right text-[11px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400">Total</TableHead>
-                    <TableHead className="w-[40px]" />
+                  <TableRow className="bg-[#f6f8fb]">
+                    <TableHead className="w-[220px] text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3 whitespace-nowrap">Name</TableHead>
+                    <TableHead className="w-[160px] text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Title</TableHead>
+                    <TableHead className="w-[140px] text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Country</TableHead>
+                    <TableHead className="w-[150px] text-right text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Salary (SAR)</TableHead>
+                    <TableHead className="w-[90px] text-right text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Months</TableHead>
+                    <TableHead className="w-[90px] text-right text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Alloc %</TableHead>
+                    <TableHead className="w-[160px] text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Basis</TableHead>
+                    <TableHead className="w-[100px] text-right text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">CTC</TableHead>
+                    <TableHead className="w-[150px] text-right text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Total / Yr</TableHead>
+                    <TableHead className="w-[40px] border-b border-[#e5eaf0]" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {employees?.map((emp) => (
-                    <TableRow key={emp.id} className="group/row hover:bg-blue-50/20 dark:hover:bg-blue-950/10">
+                    <TableRow key={emp.id} className="group/row hover:bg-[#fafbfd]">
                       <TableCell className="p-2">
                         <Input defaultValue={emp.name} onBlur={(e) => handleUpdateEmployee(emp.id, "name", e.target.value)} className="h-9 border-transparent hover:border-input focus:border-input bg-transparent text-[13px]" />
                       </TableCell>
@@ -948,14 +942,14 @@ export default function Projection() {
                 </TableBody>
                 {summary && (
                   <TableFooter>
-                    <TableRow className="bg-blue-50/60 dark:bg-blue-950/20">
-                      <TableCell colSpan={8} className="text-right text-[11px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400 py-2.5">Monthly total</TableCell>
-                      <TableCell className="text-right font-bold tabular-nums text-[13px] py-2.5 text-blue-800 dark:text-blue-200">{fmt(summary.totalDeptCostMonthly)}</TableCell>
+                    <TableRow className="bg-[#f8fafc]">
+                      <TableCell colSpan={8} className="text-right text-[11px] font-semibold uppercase tracking-[0.05em] text-[#5a7184] py-[11px] px-3">Monthly total</TableCell>
+                      <TableCell className="text-right font-semibold tabular-nums text-[13px] py-[11px] px-3 text-[#0f2c3f]">{fmt(summary.totalDeptCostMonthly)}</TableCell>
                       <TableCell />
                     </TableRow>
-                    <TableRow className="bg-blue-100/50 dark:bg-blue-950/30">
-                      <TableCell colSpan={8} className="text-right text-[11px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400 py-2.5">Engagement total ({engUnit})</TableCell>
-                      <TableCell className="text-right font-bold text-blue-600 dark:text-blue-300 tabular-nums text-[13px] py-2.5">{fmt(summary.totalDeptCostYearly)}</TableCell>
+                    <TableRow className="bg-[#f8fafc]">
+                      <TableCell colSpan={8} className="text-right text-[11px] font-semibold uppercase tracking-[0.05em] text-[#5a7184] py-[11px] px-3">Engagement total ({engUnit})</TableCell>
+                      <TableCell className="text-right font-semibold tabular-nums text-[13px] py-[11px] px-3 text-[#0f2c3f]">{fmt(summary.totalDeptCostYearly)}</TableCell>
                       <TableCell />
                     </TableRow>
                   </TableFooter>
@@ -983,19 +977,19 @@ export default function Projection() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-slate-100/70 dark:bg-slate-900/40">
-                    <TableHead className="min-w-[260px] text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Name</TableHead>
-                    <TableHead className="w-[140px] text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Type</TableHead>
-                    <TableHead className="w-[110px] text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Currency</TableHead>
-                    <TableHead className="w-[160px] text-right text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Price (orig.)</TableHead>
-                    <TableHead className="w-[140px] text-right text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">SAR / mo</TableHead>
-                    <TableHead className="w-[140px] text-right text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">SAR / yr</TableHead>
-                    <TableHead className="w-[40px]" />
+                  <TableRow className="bg-[#f6f8fb]">
+                    <TableHead className="min-w-[260px] text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Name</TableHead>
+                    <TableHead className="w-[140px] text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Type</TableHead>
+                    <TableHead className="w-[110px] text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Currency</TableHead>
+                    <TableHead className="w-[160px] text-right text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Price (orig.)</TableHead>
+                    <TableHead className="w-[140px] text-right text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">SAR / mo</TableHead>
+                    <TableHead className="w-[140px] text-right text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">SAR / yr</TableHead>
+                    <TableHead className="w-[40px] border-b border-[#e5eaf0]" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {subscriptions?.map((sub) => (
-                    <TableRow key={sub.id} className="group/row hover:bg-slate-50/50 dark:hover:bg-slate-900/20">
+                    <TableRow key={sub.id} className="group/row hover:bg-[#fafbfd]">
                       <TableCell className="p-2">
                         <Input defaultValue={sub.name} onBlur={(e) => handleUpdateSubscription(sub.id, "name", e.target.value)} className="h-9 border-transparent hover:border-input focus:border-input bg-transparent text-[13px]" />
                       </TableCell>
@@ -1032,10 +1026,10 @@ export default function Projection() {
                 </TableBody>
                 {summary && (
                   <TableFooter>
-                    <TableRow className="bg-slate-100/60 dark:bg-slate-900/40">
-                      <TableCell colSpan={4} className="text-right text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 py-2.5">Total</TableCell>
-                      <TableCell className="text-right font-bold tabular-nums text-[13px] py-2.5 text-slate-800 dark:text-slate-200">{fmt(summary.totalOverheadMonthly)}</TableCell>
-                      <TableCell className="text-right font-bold tabular-nums text-[13px] py-2.5 text-slate-800 dark:text-slate-200">{fmt(summary.totalOverheadYearly)}</TableCell>
+                    <TableRow className="bg-[#f8fafc]">
+                      <TableCell colSpan={4} className="text-right text-[11px] font-semibold uppercase tracking-[0.05em] text-[#5a7184] py-[11px] px-3">Total</TableCell>
+                      <TableCell className="text-right font-semibold tabular-nums text-[13px] py-[11px] px-3 text-[#0f2c3f]">{fmt(summary.totalOverheadMonthly)}</TableCell>
+                      <TableCell className="text-right font-semibold tabular-nums text-[13px] py-[11px] px-3 text-[#0f2c3f]">{fmt(summary.totalOverheadYearly)}</TableCell>
                       <TableCell />
                     </TableRow>
                   </TableFooter>
@@ -1063,21 +1057,21 @@ export default function Projection() {
             <div className="overflow-x-auto">
               <Table className="min-w-[2100px]">
                 <TableHeader>
-                  <TableRow className="bg-muted/30">
-                    <TableHead className="w-[170px]">Name</TableHead>
-                    <TableHead className="w-[160px]">Title</TableHead>
-                    <TableHead className="w-[130px]">Dept</TableHead>
-                    <TableHead className="w-[120px]">Country</TableHead>
-                    <TableHead className="w-[140px] text-right">Salary (SAR)</TableHead>
-                    <TableHead className="w-[140px] text-right">CTC / mo</TableHead>
-                    <TableHead className="w-[100px] text-right">Months</TableHead>
-                    <TableHead className="w-[100px] text-right">Alloc %</TableHead>
-                    <TableHead className="w-[200px]">Basis</TableHead>
-                    <TableHead className="w-[80px] text-center">In Totals</TableHead>
-                    <TableHead className="w-[100px] text-right">Margin %</TableHead>
-                    <TableHead className="w-[140px] text-right">Total Cost</TableHead>
-                    <TableHead className="w-[140px] text-right">Selling</TableHead>
-                    <TableHead className="w-[40px]" />
+                  <TableRow className="bg-[#f6f8fb]">
+                    <TableHead className="w-[170px] text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Name</TableHead>
+                    <TableHead className="w-[160px] text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Title</TableHead>
+                    <TableHead className="w-[130px] text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Dept</TableHead>
+                    <TableHead className="w-[120px] text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Country</TableHead>
+                    <TableHead className="w-[140px] text-right text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Salary (SAR)</TableHead>
+                    <TableHead className="w-[140px] text-right text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">CTC / mo</TableHead>
+                    <TableHead className="w-[100px] text-right text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Months</TableHead>
+                    <TableHead className="w-[100px] text-right text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Alloc %</TableHead>
+                    <TableHead className="w-[200px] text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Basis</TableHead>
+                    <TableHead className="w-[80px] text-center text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">In Totals</TableHead>
+                    <TableHead className="w-[100px] text-right text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Margin %</TableHead>
+                    <TableHead className="w-[140px] text-right text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Total Cost</TableHead>
+                    <TableHead className="w-[140px] text-right text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Selling</TableHead>
+                    <TableHead className="w-[40px] border-b border-[#e5eaf0]" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1197,15 +1191,15 @@ export default function Projection() {
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
-                      <TableRow className="bg-muted/30">
-                        <TableHead className="w-8 text-right">#</TableHead>
-                        <TableHead>Item</TableHead>
-                        <TableHead className="text-right">Vendor Cost (SAR)</TableHead>
-                        <TableHead className="text-right">Margin %</TableHead>
-                        <TableHead className="text-right">Margin (SAR)</TableHead>
-                        <TableHead className="text-right">VAT ({vat}%)</TableHead>
-                        <TableHead className="text-right">Total w/ VAT</TableHead>
-                        <TableHead className="w-[40px]" />
+                      <TableRow className="bg-[#f6f8fb]">
+                        <TableHead className="w-8 text-right text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">#</TableHead>
+                        <TableHead className="text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Item</TableHead>
+                        <TableHead className="text-right text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Vendor Cost (SAR)</TableHead>
+                        <TableHead className="text-right text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Margin %</TableHead>
+                        <TableHead className="text-right text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Margin (SAR)</TableHead>
+                        <TableHead className="text-right text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">VAT ({vat}%)</TableHead>
+                        <TableHead className="text-right text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Total w/ VAT</TableHead>
+                        <TableHead className="w-[40px] border-b border-[#e5eaf0]" />
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -1227,13 +1221,13 @@ export default function Projection() {
                         <TableRow><TableCell colSpan={8} className="h-14 text-center text-sm text-muted-foreground">No setup fees yet.</TableCell></TableRow>
                       )}
                       {rows.length > 0 && (
-                        <TableRow className="bg-muted/30 font-semibold">
-                          <TableCell /><TableCell className="p-1.5 text-sm">Total</TableCell>
-                          <TableCell className="p-1.5 text-right tabular-nums text-sm">{fmt(totals.cost)}</TableCell>
+                        <TableRow className="bg-[#f8fafc]">
+                          <TableCell /><TableCell className="py-[11px] px-3 text-[11px] font-semibold uppercase tracking-[0.05em] text-[#5a7184]">Total</TableCell>
+                          <TableCell className="py-[11px] px-3 text-right tabular-nums font-semibold text-[13px] text-[#0f2c3f]">{fmt(totals.cost)}</TableCell>
                           <TableCell />
-                          <TableCell className="p-1.5 text-right tabular-nums text-sm">{fmt(totals.marginSar)}</TableCell>
-                          <TableCell className="p-1.5 text-right tabular-nums text-sm">{fmt(totals.vatAmt)}</TableCell>
-                          <TableCell className="p-1.5 text-right tabular-nums text-primary text-sm">{fmt(totals.totalWithVat)}</TableCell>
+                          <TableCell className="py-[11px] px-3 text-right tabular-nums font-semibold text-[13px] text-[#10B981]">{fmt(totals.marginSar)}</TableCell>
+                          <TableCell className="py-[11px] px-3 text-right tabular-nums font-semibold text-[13px] text-[#5a7184]">{fmt(totals.vatAmt)}</TableCell>
+                          <TableCell className="py-[11px] px-3 text-right tabular-nums font-semibold text-[13px] text-[#0f2c3f]">{fmt(totals.totalWithVat)}</TableCell>
                           <TableCell />
                         </TableRow>
                       )}
@@ -1263,17 +1257,17 @@ export default function Projection() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-muted/30">
-                    <TableHead>Name</TableHead>
-                    <TableHead className="w-[110px]">Category</TableHead>
-                    <TableHead className="w-[90px]">Currency</TableHead>
-                    <TableHead className="w-[110px] text-right">Amount</TableHead>
-                    <TableHead className="w-[110px]">Billing</TableHead>
-                    <TableHead className="w-[110px]">Allocation</TableHead>
-                    <TableHead className="w-[90px] text-right">Margin %</TableHead>
-                    <TableHead className="w-[130px] text-right">Cost (SAR)</TableHead>
-                    <TableHead className="w-[130px] text-right">Selling</TableHead>
-                    <TableHead className="w-[40px]" />
+                  <TableRow className="bg-[#f6f8fb]">
+                    <TableHead className="text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Name</TableHead>
+                    <TableHead className="w-[110px] text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Category</TableHead>
+                    <TableHead className="w-[90px] text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Currency</TableHead>
+                    <TableHead className="w-[110px] text-right text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Amount</TableHead>
+                    <TableHead className="w-[110px] text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Billing</TableHead>
+                    <TableHead className="w-[110px] text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Allocation</TableHead>
+                    <TableHead className="w-[90px] text-right text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Margin %</TableHead>
+                    <TableHead className="w-[130px] text-right text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Cost (SAR)</TableHead>
+                    <TableHead className="w-[130px] text-right text-[11px] font-medium uppercase tracking-[0.05em] text-[#5a7184] border-b border-[#e5eaf0] py-[9px] px-3">Selling</TableHead>
+                    <TableHead className="w-[40px] border-b border-[#e5eaf0]" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1289,7 +1283,7 @@ export default function Projection() {
                     const displayCost = isOneTime ? sarAmount : cycle === "annual" ? sarAmount / 12 : sarAmount;
                     const sellingDisplay = computeSellingPrice(displayCost, line.marginPercent ?? 0);
                     return (
-                      <TableRow key={line.id} className={cn("group/row", isOneTime && "bg-amber-50/30 dark:bg-amber-950/20")}>
+                      <TableRow key={line.id} className={cn("group/row hover:bg-[#fafbfd]", isOneTime && "bg-amber-50/20")}>
                         <TableCell className="p-1.5">
                           <div className="flex items-center gap-1.5">
                             <Input defaultValue={line.name} onBlur={(e) => handleUpdateInfra(line.id, "name", e.target.value)} className="h-8" />

@@ -19,7 +19,18 @@
       "Bash(npx tsx -e ':*)",
       "Bash(node --env-file=.env -e ':*)",
       "Bash(python3:*)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "WebFetch(domain:api.anthropic.com)",
+      "Read(//c/Users/areeb/AppData/Local/Temp/**)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(node ./build.mjs)",
+      "Bash(node artifacts/api-server/build.mjs)",
+      "Bash(pnpm typecheck *)",
+      "Bash(git config *)",
+      "Bash(git commit --allow-empty -m ' *)",
+      "Bash(npx pnpm@9 install --no-frozen-lockfile)"
     ]
   }
 }
