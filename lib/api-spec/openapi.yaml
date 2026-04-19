@@ -16,7 +16,6 @@ tags:
   - name: infrastructureCosts
   - name: quotations
   - name: admin
-  - name: chat
   - name: dashboard
   - name: invoices
 
@@ -948,25 +947,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SystemSettings"
-
-  /chat:
-    post:
-      operationId: sendChatMessage
-      tags: [chat]
-      summary: Send message to AI chatbot
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ChatMessageRequest"
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ChatMessageResponse"
 
   /dashboard/summary:
     get:
@@ -1948,39 +1928,6 @@ components:
           type: string
         baseCurrencyCode:
           type: string
-
-    ChatHistoryItem:
-      type: object
-      properties:
-        role:
-          type: string
-          enum: [user, assistant]
-        content:
-          type: string
-      required: [role, content]
-
-    ChatMessageRequest:
-      type: object
-      properties:
-        message:
-          type: string
-        projectionId:
-          type: integer
-          nullable: true
-        history:
-          type: array
-          items:
-            $ref: "#/components/schemas/ChatHistoryItem"
-      required: [message]
-
-    ChatMessageResponse:
-      type: object
-      properties:
-        reply:
-          type: string
-        replyHtml:
-          type: string
-      required: [reply, replyHtml]
 
     ProjectionSummary:
       type: object

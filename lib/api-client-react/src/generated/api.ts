@@ -17,8 +17,6 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
-  ChatMessageRequest,
-  ChatMessageResponse,
   CreateCtcRuleBody,
   CreateCurrencyBody,
   CreateEmployeeBody,
@@ -4119,92 +4117,6 @@ export const useUpdateSystemSettings = <
   TContext
 > => {
   return useMutation(getUpdateSystemSettingsMutationOptions(options));
-};
-
-/**
- * @summary Send message to AI chatbot
- */
-export const getSendChatMessageUrl = () => {
-  return `/api/chat`;
-};
-
-export const sendChatMessage = async (
-  chatMessageRequest: ChatMessageRequest,
-  options?: RequestInit,
-): Promise<ChatMessageResponse> => {
-  return customFetch<ChatMessageResponse>(getSendChatMessageUrl(), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(chatMessageRequest),
-  });
-};
-
-export const getSendChatMessageMutationOptions = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof sendChatMessage>>,
-    TError,
-    { data: BodyType<ChatMessageRequest> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof sendChatMessage>>,
-  TError,
-  { data: BodyType<ChatMessageRequest> },
-  TContext
-> => {
-  const mutationKey = ["sendChatMessage"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof sendChatMessage>>,
-    { data: BodyType<ChatMessageRequest> }
-  > = (props) => {
-    const { data } = props ?? {};
-
-    return sendChatMessage(data, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type SendChatMessageMutationResult = NonNullable<
-  Awaited<ReturnType<typeof sendChatMessage>>
->;
-export type SendChatMessageMutationBody = BodyType<ChatMessageRequest>;
-export type SendChatMessageMutationError = ErrorType<unknown>;
-
-/**
- * @summary Send message to AI chatbot
- */
-export const useSendChatMessage = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof sendChatMessage>>,
-    TError,
-    { data: BodyType<ChatMessageRequest> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
-  Awaited<ReturnType<typeof sendChatMessage>>,
-  TError,
-  { data: BodyType<ChatMessageRequest> },
-  TContext
-> => {
-  return useMutation(getSendChatMessageMutationOptions(options));
 };
 
 /**

@@ -510,30 +510,6 @@ export interface UpdateSystemSettingsBody {
   baseCurrencyCode?: string;
 }
 
-export type ChatHistoryItemRole =
-  (typeof ChatHistoryItemRole)[keyof typeof ChatHistoryItemRole];
-
-export const ChatHistoryItemRole = {
-  user: "user",
-  assistant: "assistant",
-} as const;
-
-export interface ChatHistoryItem {
-  role: ChatHistoryItemRole;
-  content: string;
-}
-
-export interface ChatMessageRequest {
-  message: string;
-  projectionId?: number | null;
-  history?: ChatHistoryItem[];
-}
-
-export interface ChatMessageResponse {
-  reply: string;
-  replyHtml: string;
-}
-
 export interface ProjectionSummary {
   projection: Projection;
   /** Sum of (salary x CTC x allocation%) across employees - the team's monthly run-rate while engaged. */

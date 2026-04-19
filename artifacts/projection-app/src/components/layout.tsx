@@ -15,7 +15,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import Chatbot from "./chatbot";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -149,7 +148,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </main>
       </div>
 
-      <Chatbot />
     </div>
   );
 }
