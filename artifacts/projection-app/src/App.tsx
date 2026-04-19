@@ -58,10 +58,10 @@ function SignInForm() {
         <Input id="si-password" type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} className="h-10" />
       </div>
       {error && <p className="auth-err">{error}</p>}
-      <Button type="submit" disabled={loading} className="auth-submit-btn w-full h-10">
-        {loading ? "Signing in…" : "Sign in"}
+      <Button type="submit" disabled={loading} className="auth-submit-btn auth-cta w-full h-11">
+        {loading ? "Signing in…" : "Sign in to continue"}
       </Button>
-      <p className="text-sm text-center" style={{ color: "rgba(255,255,255,0.35)", fontFamily: "'DM Sans', sans-serif" }}>
+      <p className="text-sm text-center" style={{ color: "rgba(14,40,65,0.55)", fontFamily: "'Inter Tight', 'DM Sans', sans-serif" }}>
         Don't have an account?{" "}
         <a href={`${basePath}/sign-up`} className="auth-link">Create one</a>
       </p>
@@ -116,10 +116,10 @@ function SignUpForm() {
         <p className="auth-hint">At least 8 characters.</p>
       </div>
       {error && <p className="auth-err">{error}</p>}
-      <Button type="submit" disabled={loading} className="auth-submit-btn w-full h-10">
+      <Button type="submit" disabled={loading} className="auth-submit-btn auth-cta w-full h-11">
         {loading ? "Creating account…" : "Create account"}
       </Button>
-      <p className="text-sm text-center" style={{ color: "rgba(255,255,255,0.35)", fontFamily: "'DM Sans', sans-serif" }}>
+      <p className="text-sm text-center" style={{ color: "rgba(14,40,65,0.55)", fontFamily: "'Inter Tight', 'DM Sans', sans-serif" }}>
         Already have an account?{" "}
         <a href={`${basePath}/sign-in`} className="auth-link">Sign in</a>
       </p>
@@ -131,12 +131,15 @@ function SignInPage() {
   return (
     <AuthContentWrapper>
       <div className="space-y-6">
-        <div className="space-y-1.5">
-          <h1 style={{ fontSize: "22px", fontWeight: 700, color: "white", fontFamily: "'Syne', sans-serif", letterSpacing: "-0.02em", lineHeight: 1.2 }}>
+        <div className="space-y-1">
+          <p style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.22em", textTransform: "uppercase", color: "#39B5A6", fontFamily: "'DM Mono', monospace", marginBottom: 4 }}>
             Welcome back
-          </h1>
-          <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", fontFamily: "'DM Sans', sans-serif" }}>
+          </p>
+          <h1 style={{ fontSize: "28px", fontWeight: 400, color: "#0E2841", fontFamily: "'Instrument Serif', 'Times New Roman', serif", letterSpacing: "-0.02em", lineHeight: 1.1, margin: 0 }}>
             Sign in to your account
+          </h1>
+          <p style={{ fontSize: "13px", color: "rgba(14,40,65,0.55)", fontFamily: "'Inter Tight', 'DM Sans', sans-serif", marginTop: 8 }}>
+            Enter your credentials to access the projection workspace.
           </p>
         </div>
         <SignInForm />
@@ -149,12 +152,15 @@ function SignUpPage() {
   return (
     <AuthContentWrapper>
       <div className="space-y-6">
-        <div className="space-y-1.5">
-          <h1 style={{ fontSize: "22px", fontWeight: 700, color: "white", fontFamily: "'Syne', sans-serif", letterSpacing: "-0.02em", lineHeight: 1.2 }}>
-            Create account
+        <div className="space-y-1">
+          <p style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.22em", textTransform: "uppercase", color: "#39B5A6", fontFamily: "'DM Mono', monospace", marginBottom: 4 }}>
+            Get started
+          </p>
+          <h1 style={{ fontSize: "28px", fontWeight: 400, color: "#0E2841", fontFamily: "'Instrument Serif', 'Times New Roman', serif", letterSpacing: "-0.02em", lineHeight: 1.1, margin: 0 }}>
+            Create your account
           </h1>
-          <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", fontFamily: "'DM Sans', sans-serif" }}>
-            Get started with Fiscal Insight
+          <p style={{ fontSize: "13px", color: "rgba(14,40,65,0.55)", fontFamily: "'Inter Tight', 'DM Sans', sans-serif", marginTop: 8 }}>
+            Join your department's finance intelligence workspace.
           </p>
         </div>
         <SignUpForm />
