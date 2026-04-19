@@ -1,10 +1,13 @@
 import express, { type Express } from "express";
 import cors from "cors";
-import pinoHttp from "pino-http";
+import * as pinoHttpModule from "pino-http";
 import { clerkMiddleware } from "@clerk/express";
 import { CLERK_PROXY_PATH, clerkProxyMiddleware } from "./middlewares/clerkProxyMiddleware";
 import router from "./routes";
 import { logger } from "./lib/logger";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const pinoHttp: any = (pinoHttpModule as any).default ?? pinoHttpModule;
 
 const app: Express = express();
 
@@ -12,17 +15,11 @@ app.use(
   pinoHttp({
     logger,
     serializers: {
-      req(req) {
-        return {
-          id: req.id,
-          method: req.method,
-          url: req.url?.split("?")[0],
-        };
+      req(req: { id: unknown; method: string; url?: string }) {
+        return { id: req.id, method: req.method, url: req.url?.split("?")[0] };
       },
-      res(res) {
-        return {
-          statusCode: res.statusCode,
-        };
+      res(res: { statusCode: number }) {
+        return { statusCode: res.statusCode };
       },
     },
   }),
