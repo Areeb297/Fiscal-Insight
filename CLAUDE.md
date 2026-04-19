@@ -102,6 +102,28 @@ TailwindCSS v4 with `@tailwindcss/vite` plugin. Path alias `@/` maps to `artifac
 
 ---
 
+## Pre-Commit Build Rule
+
+**Always verify the build passes before committing and pushing.** Run:
+```bash
+node artifacts/api-server/build.mjs   # must complete with ⚡ Done
+```
+Only commit after this succeeds. Do not rely on TypeScript type-check passing — esbuild is the build tool and is the source of truth for whether the server will run.
+
+---
+
+## Deployment
+
+| Service | Platform | Notes |
+|---|---|---|
+| `artifacts/api-server` | Railway | Root dir: `/`, build: `pnpm --filter @workspace/api-server run build`, start: `pnpm --filter @workspace/api-server run start` |
+| `artifacts/projection-app` | Vercel | Root dir: `artifacts/projection-app`, Vite auto-detected |
+
+Railway needs: `DATABASE_URL`, `CLERK_SECRET_KEY`, `SESSION_SECRET`, `NODE_ENV=production`  
+Vercel needs: `VITE_CLERK_PUBLISHABLE_KEY`, `VITE_API_BASE_URL` (Railway URL)
+
+---
+
 ## Adding a New API Endpoint
 
 1. Add the route to `lib/api-spec/openapi.yaml`
