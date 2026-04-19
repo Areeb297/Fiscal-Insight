@@ -188,9 +188,9 @@ export function AuthDecorativePanel() {
 
       {/* Main content */}
       <div
-        className={`relative z-10 flex flex-col justify-center px-12 xl:px-16 transition-all duration-700 ease-out ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"}`}
+        className={`relative z-10 flex flex-col justify-center px-12 xl:px-16 pt-20 pb-6 transition-all duration-700 ease-out ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"}`}
       >
-        <div className="max-w-md space-y-8">
+        <div className="max-w-md space-y-5">
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white/8 border border-white/10 backdrop-blur-sm">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -240,10 +240,10 @@ export function AuthContentWrapper({ children }: { children: React.ReactNode }) 
   }, [reducedMotion]);
 
   return (
-    <div className="min-h-screen w-full flex flex-col bg-background">
-      <div className="flex flex-1">
+    <div className="h-screen w-full flex flex-col bg-background overflow-hidden">
+      <div className="flex flex-1 min-h-0">
         <AuthDecorativePanel />
-        <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-10 bg-background relative overflow-hidden">
+        <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-8 bg-background relative overflow-auto">
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0"
