@@ -8,8 +8,11 @@ import { logger } from "./lib/logger";
 
 const app: Express = express();
 
+// pino-http uses `export =` which TypeScript 5.9 + moduleResolution:bundler treats
+// as a namespace type rather than a callable — cast to any to satisfy the checker.
 app.use(
-  pinoHttp({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (pinoHttp as any)({
     logger,
     serializers: {
       req(req: { id: unknown; method: string; url?: string }) {
