@@ -6,3 +6,9 @@ id = "ZHFRiHIwoSyOE4Ti7a5W3"
 uri = "file://PRD-and-Scope-of-Work.md"
 type = "text"
 title = "PRD & Scope of Work v1.1 — Department Projection App"
+
+[[outputs]]
+id = "f8Xjt3D6bXa-VB0nSI6VZ"
+uri = "file://RUNNING_LOCALLY.md"
+type = "text"
+title = "Run locally — setup guide"
