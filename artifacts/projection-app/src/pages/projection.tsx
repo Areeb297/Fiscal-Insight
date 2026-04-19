@@ -143,7 +143,7 @@ export default function Projection() {
   const handleAddVendor = () => {
     if (!activeProjectionId) return;
     createVendor.mutate(
-      { projectionId: activeProjectionId, data: { name: "New Vendor Setup", vendorName: "", currency: "SAR", amount: 0, amortizeMonths: summary?.engagementMonths || 12, marginPercent: 20 } },
+      { projectionId: activeProjectionId, data: { name: "New Setup Item", vendorName: "", currency: "SAR", amount: 0, amortizeMonths: 1, marginPercent: 20 } },
       { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListVendorSetupFeesQueryKey(activeProjectionId) }); invalidateAll(); } }
     );
   };
@@ -489,9 +489,10 @@ export default function Projection() {
           const months = summary.engagementMonths;
           const engUnit = months === 1 ? "month" : `${months} mo`;
           return (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
               {[
                 { tone: "slate", icon: Wallet, label: "Total Department Cost", primary: formatCurrency(totalCostMonthly), unit: "/ mo", sub: `${formatCurrency(totalCostEngagement)} over ${engUnit}`, hint: "All team salaries + overheads (what we spend)" },
+                { tone: "violet", icon: Wallet, label: "Cost / Client", primary: formatCurrency(summary.totalMonthlyCostPerClient), unit: "/ mo", sub: `${formatCurrency(summary.totalYearlyCostPerClient)} / ${engUnit}`, hint: `Full delivery cost per client (team + overhead + services + infra)` },
                 { tone: "emerald", icon: TrendingUp, label: "Revenue · Monthly", primary: formatCurrency(summary.sellingPriceWithoutVat * (activeProjection?.numClients || 1)), unit: "/ mo", sub: `${formatCurrency(summary.sellingPriceWithoutVat)} × ${activeProjection?.numClients} clients`, hint: "Selling price excl. VAT, all clients combined" },
                 { tone: "indigo", icon: TrendingUp, label: `Revenue · ${engUnit}`, primary: formatCurrency(summary.sellingPriceWithoutVatYearly * (activeProjection?.numClients || 1)), unit: `/ ${engUnit}`, sub: `${formatCurrency(summary.sellingPriceWithoutVatYearly)} × ${activeProjection?.numClients} clients`, hint: `Selling price excl. VAT over the ${engUnit} engagement` },
                 { tone: "amber", icon: Receipt, label: `VAT (${activeProjection?.vatRate ?? 15}%)`, primary: formatCurrency(vatEngagement * (activeProjection?.numClients || 1)), unit: `/ ${engUnit}`, sub: `${formatCurrency(vatMonthly * (activeProjection?.numClients || 1))} / month`, hint: `Charge incl. VAT: ${formatCurrency(summary.sellingPriceWithVatYearly * (activeProjection?.numClients || 1))} / ${engUnit}` },
@@ -501,6 +502,7 @@ export default function Projection() {
                   emerald: { ring: "ring-emerald-200/60 dark:ring-emerald-700/40", text: "text-emerald-700 dark:text-emerald-300", gradient: "from-emerald-100/70 via-background to-background dark:from-emerald-900/30", iconBg: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300" },
                   indigo: { ring: "ring-indigo-200/60 dark:ring-indigo-700/40", text: "text-indigo-700 dark:text-indigo-300", gradient: "from-indigo-100/70 via-background to-background dark:from-indigo-900/30", iconBg: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-300" },
                   amber: { ring: "ring-amber-200/60 dark:ring-amber-700/40", text: "text-amber-700 dark:text-amber-300", gradient: "from-amber-100/70 via-background to-background dark:from-amber-900/30", iconBg: "bg-amber-500/10 text-amber-600 dark:text-amber-300" },
+                  violet: { ring: "ring-violet-200/60 dark:ring-violet-700/40", text: "text-violet-700 dark:text-violet-300", gradient: "from-violet-100/70 via-background to-background dark:from-violet-900/30", iconBg: "bg-violet-500/10 text-violet-600 dark:text-violet-300" },
                 };
                 const t = toneMap[kpi.tone];
                 const Icon = kpi.icon;
@@ -1015,74 +1017,90 @@ export default function Projection() {
         </CardContent>
       </Card>
 
-      {/* Vendor Setup Fees */}
+      {/* One Time Setup Fees */}
       <Card className="overflow-hidden">
         <CardHeader className="pb-4 flex flex-row items-start justify-between gap-4">
           <div>
-            <CardTitle className="flex items-center gap-2"><Building2 className="h-5 w-5 text-primary" /> Vendor Setup Fees</CardTitle>
-            <CardDescription className="mt-1">One-off vendor onboarding & implementation costs, amortized across the engagement.</CardDescription>
+            <CardTitle className="flex items-center gap-2"><Building2 className="h-5 w-5 text-primary" /> One Time Setup Fees</CardTitle>
+            <CardDescription className="mt-1">Single upfront charges billed once at project start (not amortized into monthly).</CardDescription>
           </div>
           <Button onClick={handleAddVendor} size="sm" className="shrink-0"><Plus className="h-4 w-4 mr-1.5" /> Add line</Button>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/40">
-                  <TableHead>Name</TableHead>
-                  <TableHead>Vendor</TableHead>
-                  <TableHead>Currency</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead className="text-right">Amortize (mo)</TableHead>
-                  <TableHead className="text-right">Margin %</TableHead>
-                  <TableHead className="text-right">Monthly cost (SAR)</TableHead>
-                  <TableHead className="text-right">Selling / mo</TableHead>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {vendorSetupFees?.map((v) => {
-                  const fxToSar = (cur: string) => {
-                    if (cur === "SAR") return 1;
-                    if (cur === "USD") return activeProjection?.sarRate ?? 3.75;
-                    const c = currencies?.find(x => x.code === cur);
-                    return c?.rateToSar ?? 1;
-                  };
-                  const sarAmount = (v.amount || 0) * fxToSar(v.currency || "SAR");
-                  const months = Math.max(1, v.amortizeMonths || 1);
-                  const monthlyCost = sarAmount / months;
-                  const sellingMonthly = computeSellingPrice(monthlyCost, v.marginPercent ?? 0);
-                  return (
-                    <TableRow key={v.id}>
-                      <TableCell className="p-2"><Input defaultValue={v.name} onBlur={(e) => handleUpdateVendor(v.id, "name", e.target.value)} className="h-9" /></TableCell>
-                      <TableCell className="p-2"><Input defaultValue={v.vendorName ?? ""} onBlur={(e) => handleUpdateVendor(v.id, "vendorName", e.target.value)} className="h-9" placeholder="e.g. AWS, Microsoft" /></TableCell>
-                      <TableCell className="p-2">
-                        <Select value={v.currency || "SAR"} onValueChange={(val) => handleUpdateVendor(v.id, "currency", val)}>
-                          <SelectTrigger className="h-9 w-24"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            {(currencies && currencies.length > 0 ? currencies.map(c => c.code) : ["SAR", "USD"]).map(code => (
-                              <SelectItem key={code} value={code}>{code}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell className="p-2"><Input type="number" step="0.01" defaultValue={v.amount} onBlur={(e) => handleUpdateVendor(v.id, "amount", parseFloat(e.target.value))} className="h-9 text-right tabular-nums" /></TableCell>
-                      <TableCell className="p-2"><Input type="number" min="1" step="1" defaultValue={v.amortizeMonths} onBlur={(e) => handleUpdateVendor(v.id, "amortizeMonths", parseInt(e.target.value))} className="h-9 text-right tabular-nums" /></TableCell>
-                      <TableCell className="p-2"><Input type="number" step="0.5" defaultValue={v.marginPercent} onBlur={(e) => handleUpdateVendor(v.id, "marginPercent", parseFloat(e.target.value))} className="h-9 text-right tabular-nums" /></TableCell>
-                      <TableCell className="p-2 text-right font-mono text-sm text-muted-foreground tabular-nums">{formatCurrency(monthlyCost)}</TableCell>
-                      <TableCell className="p-2 text-right font-bold text-primary tabular-nums">{formatCurrency(sellingMonthly)}</TableCell>
-                      <TableCell className="p-2 text-right">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteVendor(v.id)}><Trash className="h-4 w-4" /></Button>
-                      </TableCell>
+          {(() => {
+            const vatPct = activeProjection?.vatRate ?? 15;
+            const rows = (vendorSetupFees || []).map((v) => {
+              const fxToSar = (cur: string) => {
+                if (!cur || cur === "SAR") return 1;
+                if (cur === "USD") return activeProjection?.sarRate ?? 3.75;
+                return currencies?.find(x => x.code === cur)?.rateToSar ?? 1;
+              };
+              const cost = (v.amount || 0) * fxToSar(v.currency || "SAR");
+              const selling = computeSellingPrice(cost, v.marginPercent ?? 0);
+              const marginSar = selling - cost;
+              const vat = selling * (vatPct / 100);
+              const totalWithVat = selling + vat;
+              return { v, cost, marginSar, vat, totalWithVat };
+            });
+            const totals = rows.reduce(
+              (acc, r) => ({
+                cost: acc.cost + r.cost,
+                marginSar: acc.marginSar + r.marginSar,
+                vat: acc.vat + r.vat,
+                totalWithVat: acc.totalWithVat + r.totalWithVat,
+              }),
+              { cost: 0, marginSar: 0, vat: 0, totalWithVat: 0 },
+            );
+            return (
+              <div className="rounded-md border overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/40">
+                      <TableHead className="w-10 text-right">#</TableHead>
+                      <TableHead>Item</TableHead>
+                      <TableHead className="text-right">Vendor Cost (SAR)</TableHead>
+                      <TableHead className="text-right">Margin %</TableHead>
+                      <TableHead className="text-right">Margin (SAR)</TableHead>
+                      <TableHead className="text-right">VAT ({vatPct}%)</TableHead>
+                      <TableHead className="text-right">Total w/ VAT</TableHead>
+                      <TableHead></TableHead>
                     </TableRow>
-                  );
-                })}
-                {!vendorSetupFees?.length && (
-                  <TableRow><TableCell colSpan={9} className="h-20 text-center text-muted-foreground">No vendor setup fees yet. Add your first line to amortize one-off costs.</TableCell></TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                  </TableHeader>
+                  <TableBody>
+                    {rows.map(({ v, cost, marginSar, vat, totalWithVat }, idx) => (
+                      <TableRow key={v.id}>
+                        <TableCell className="p-2 text-right text-muted-foreground tabular-nums">{idx + 1}</TableCell>
+                        <TableCell className="p-2"><Input defaultValue={v.name} onBlur={(e) => handleUpdateVendor(v.id, "name", e.target.value)} className="h-9" placeholder="e.g. Implementation, License" /></TableCell>
+                        <TableCell className="p-2"><Input type="number" step="0.01" defaultValue={cost} onBlur={(e) => handleUpdateVendor(v.id, "amount", parseFloat(e.target.value))} className="h-9 text-right tabular-nums" /></TableCell>
+                        <TableCell className="p-2"><Input type="number" step="0.5" defaultValue={v.marginPercent} onBlur={(e) => handleUpdateVendor(v.id, "marginPercent", parseFloat(e.target.value))} className="h-9 text-right tabular-nums" /></TableCell>
+                        <TableCell className="p-2 text-right font-mono text-sm tabular-nums">{formatCurrency(marginSar)}</TableCell>
+                        <TableCell className="p-2 text-right font-mono text-sm text-muted-foreground tabular-nums">{formatCurrency(vat)}</TableCell>
+                        <TableCell className="p-2 text-right font-bold text-primary tabular-nums">{formatCurrency(totalWithVat)}</TableCell>
+                        <TableCell className="p-2 text-right">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteVendor(v.id)}><Trash className="h-4 w-4" /></Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {!rows.length && (
+                      <TableRow><TableCell colSpan={8} className="h-20 text-center text-muted-foreground">No one-time setup fees yet. Add your first line.</TableCell></TableRow>
+                    )}
+                    {rows.length > 0 && (
+                      <TableRow className="bg-muted/30 font-semibold">
+                        <TableCell className="p-2"></TableCell>
+                        <TableCell className="p-2">Total</TableCell>
+                        <TableCell className="p-2 text-right tabular-nums">{formatCurrency(totals.cost)}</TableCell>
+                        <TableCell className="p-2"></TableCell>
+                        <TableCell className="p-2 text-right tabular-nums">{formatCurrency(totals.marginSar)}</TableCell>
+                        <TableCell className="p-2 text-right tabular-nums">{formatCurrency(totals.vat)}</TableCell>
+                        <TableCell className="p-2 text-right tabular-nums text-primary">{formatCurrency(totals.totalWithVat)}</TableCell>
+                        <TableCell className="p-2"></TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            );
+          })()}
         </CardContent>
       </Card>
 

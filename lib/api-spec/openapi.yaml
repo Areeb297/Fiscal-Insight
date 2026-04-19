@@ -2034,11 +2034,21 @@ components:
           type: number
         vendorSetupTotalCost:
           type: number
+        vendorSetupTotalSelling:
+          type: number
+        vendorSetupTotalWithVat:
+          type: number
         vendorSetupMonthlyAmortized:
           type: number
         vendorSetupSellingPriceMonthly:
           type: number
         vendorSetupPerClientMonthly:
+          type: number
+        oneTimeSetupTotal:
+          type: number
+        oneTimeSetupSellingExclVat:
+          type: number
+        oneTimeSetupTotalWithVat:
           type: number
         infrastructureMonthlyCost:
           type: number

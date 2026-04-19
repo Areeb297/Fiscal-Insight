@@ -180,41 +180,43 @@ export function computeScenario(
   const salesSupportPerClientMonthlyAmortized =
     numClients > 0 ? salesSupportIncludedMonthly / numClients : 0;
 
-  // Vendor setup fees: amortize lump-sum across `amortizeMonths` (or engagement if 0)
+  // One-time setup fees: treated as a single up-front charge, NOT folded into monthly recurring.
   let vendorSetupTotalCost = 0;
-  let vendorSetupMonthlyAmortized = 0;
-  let vendorSetupSellingPriceMonthly = 0;
+  let vendorSetupTotalSelling = 0;
+  let vendorSetupTotalWithVat = 0;
   const vendorSetupLines: Array<{
     id: number;
     name: string;
     vendorName: string;
     amountSar: number;
-    monthlyCostSar: number;
-    monthlySellingSar: number;
-    marginSarMonthly: number;
-    amortizeMonths: number;
+    sellingSar: number;
+    marginSar: number;
+    vatSar: number;
+    totalWithVatSar: number;
   }> = [];
   for (const v of vendorSetupFees) {
     const amountSar = v.amount * rateToSar(v.currency, currencies);
-    const months = v.amortizeMonths > 0 ? v.amortizeMonths : engagementMonths;
-    const monthlyCost = months > 0 ? amountSar / months : 0;
-    const monthlySelling = priceWithMargin(monthlyCost, v.marginPercent);
+    const sellingSar = priceWithMargin(amountSar, v.marginPercent);
+    const vatSar = sellingSar * vatFraction;
+    const totalWithVatSar = sellingSar + vatSar;
     vendorSetupTotalCost += amountSar;
-    vendorSetupMonthlyAmortized += monthlyCost;
-    vendorSetupSellingPriceMonthly += monthlySelling;
+    vendorSetupTotalSelling += sellingSar;
+    vendorSetupTotalWithVat += totalWithVatSar;
     vendorSetupLines.push({
       id: v.id,
       name: v.name,
       vendorName: v.vendorName ?? "",
       amountSar,
-      monthlyCostSar: monthlyCost,
-      monthlySellingSar: monthlySelling,
-      marginSarMonthly: monthlySelling - monthlyCost,
-      amortizeMonths: months,
+      sellingSar,
+      marginSar: sellingSar - amountSar,
+      vatSar,
+      totalWithVatSar,
     });
   }
-  const vendorSetupPerClientMonthly =
-    numClients > 0 ? vendorSetupMonthlyAmortized / numClients : 0;
+  // Kept at 0 — one-time setup is no longer amortized into per-client monthly cost.
+  const vendorSetupMonthlyAmortized = 0;
+  const vendorSetupSellingPriceMonthly = 0;
+  const vendorSetupPerClientMonthly = 0;
 
   // Infrastructure costs
   let infrastructureMonthlyCost = 0;
@@ -275,7 +277,6 @@ export function computeScenario(
     { basis: "Recurring overhead", amount: Math.round(recurringOverheadMonthly) },
     { basis: "One-time (amortized)", amount: Math.round(oneTimeAmortizedMonthly) },
     { basis: "Managed services", amount: Math.round(salesSupportIncludedMonthly) },
-    { basis: "Vendor setup", amount: Math.round(vendorSetupMonthlyAmortized) },
     { basis: "Infrastructure", amount: Math.round(infrastructureMonthlyCost) },
   ].filter((row) => row.amount > 0);
 
@@ -283,7 +284,6 @@ export function computeScenario(
     { component: "Team cost", amount: Math.round(costPerClientMonthly) },
     { component: "Overhead share", amount: Math.round(overheadPerClientMonthly) },
     { component: "Managed services", amount: Math.round(salesSupportPerClientMonthlyAmortized) },
-    { component: "Vendor setup", amount: Math.round(vendorSetupPerClientMonthly) },
     { component: "Infrastructure", amount: Math.round(infrastructurePerClientMonthly) },
     { component: "Margin", amount: Math.round(marginSarMonthly) },
     { component: `VAT (${Math.round(vatFraction * 100)}%)`, amount: Math.round(vatMonthlyPerClient) },
@@ -295,10 +295,9 @@ export function computeScenario(
     totalDeptCostMonthly +
     recurringOverheadMonthly +
     salesSupportIncludedMonthly +
-    vendorSetupMonthlyAmortized +
     infrastructureMonthlyCost;
   for (let i = 1; i <= engagementMonths; i += 1) {
-    const cost = recurringMonthlyAllClients + (i === 1 ? oneTimeCostsTotal : 0);
+    const cost = recurringMonthlyAllClients + (i === 1 ? oneTimeCostsTotal + vendorSetupTotalCost : 0);
     revenueVsCostByMonth.push({
       month: `M${i}`,
       cost: Math.round(cost),
@@ -344,10 +343,15 @@ export function computeScenario(
     salesSupportIncludedMonthly,
     salesSupportPerClientMonthlyAmortized,
     vendorSetupTotalCost,
+    vendorSetupTotalSelling,
+    vendorSetupTotalWithVat,
     vendorSetupMonthlyAmortized,
     vendorSetupSellingPriceMonthly,
     vendorSetupPerClientMonthly,
     vendorSetupLines,
+    oneTimeSetupTotal: vendorSetupTotalCost,
+    oneTimeSetupSellingExclVat: vendorSetupTotalSelling,
+    oneTimeSetupTotalWithVat: vendorSetupTotalWithVat,
     infrastructureMonthlyCost,
     infrastructureSellingPriceMonthly,
     infrastructurePerClientMonthly,
