@@ -1,0 +1,367 @@
+# Projection Sheet — Fiscal Insight Replit Brief
+
+Source of truth: **Atif Ahsan — Projection Sheet (Profit Calculations).xlsx** (1-year, FY 2026-27)
+Target system: `fiscal-insight.replit.app` → Projection 36 (2026)
+
+---
+
+## PART 1 — Canonical Data Extract (What The System Must Reproduce)
+
+### 1.1 Global Parameters
+
+| Parameter           | Value     |
+|---------------------|-----------|
+| Year Label          | 2026-27   |
+| Duration            | 1 year    |
+| No. of Clients      | 5         |
+| Target Margin       | 30 %      |
+| VAT                 | 15 %      |
+| SAR/USD Rate        | 3.75      |
+
+### 1.2 Department Cost (Team) — Core Service
+
+| # | Resource | Country      | Salary (SAR) | CTC (SAR) | Months | Alloc % | Total (SAR/yr) |
+|---|----------|--------------|-------------:|----------:|-------:|--------:|---------------:|
+| 1 | Atif     | Saudi Arabia |       10,000 |    15,000 |     12 |    100  |       180,000  |
+| 2 | Imran    | Pakistan     |        6,000 |     6,000 |     12 |    100  |        72,000  |
+| 3 | Osama    | Pakistan     |        3,000 |     3,000 |     12 |    100  |        36,000  |
+| 4 | Zeeshan  | Pakistan     |        3,000 |     3,000 |     12 |    100  |        36,000  |
+| 5 | Hassan   | Pakistan     |        3,000 |     3,000 |     12 |    100  |        36,000  |
+| 6 | Areeb    | Saudi Arabia |        8,500 |    12,750 |      3 |    100  |        38,250  |
+| 7 | Eyad     | Saudi Arabia |        6,500 |     9,750 |      3 |    100  |        29,250  |
+| **Total Department Cost** |||||||   **427,500**  |
+
+**Formula:** Total per resource = CTC × Months × (Alloc % / 100)
+
+### 1.3 Tools & Subscriptions (Recurring Overheads)
+
+| # | Service / Tool                   | Units | Monthly (USD) | Monthly (SAR) | Yearly (SAR) |
+|---|----------------------------------|------:|--------------:|--------------:|-------------:|
+| 1 | Claude AI                        |     1 |         115   |       431.25  |     5,175.00 |
+| 2 | Apple Store (iOS)                |     1 |         115   |       431.25  |     5,175.00 |
+| 3 | Google Play Store (Android)      |     1 |          30   |       112.50  |     1,350.00 |
+| 4 | ClickUp Business (2 seats)       |     1 |          30   |       112.50  |     1,350.00 |
+| 5 | WhatsApp Business (Recurring)    |     1 |         250   |       937.50  |    11,250.00 |
+| 6 | Teleconference Hosting           |     1 |      **10**   |        37.50  |       450.00 |
+| 7 | iON HR Module Subscription       |     1 |         800   |     3,000.00  |    36,000.00 |
+| 8 | ZATCA Claims (Recurring)         |    50 |          27   |       101.25  |     1,215.00 |
+| **Total Subscriptions/Tools Cost** ||||       **5,163.75**  | **61,965.00** |
+
+> ⚠ **BUG in current system:** Teleconference Hosting is entered as USD 37.5 — that's the SAR value leaking into the USD field. Correct USD is **10**, giving SAR 37.50/mo and SAR 450/yr. This single bug inflates annual overhead by SAR 1,237.50 (63,202.50 vs correct 61,965.00).
+
+### 1.4 Managed Services & SLA Support — **Separate Add-On** (not bundled into core)
+
+| # | Resource             | Dept | Country  | Salary (SAR) | CTC (SAR) | % Involv. | Months | Annual Cost (SAR) |
+|---|----------------------|------|----------|-------------:|----------:|----------:|-------:|------------------:|
+| 1 | Project Manager (PM) | HC   | Pakistan |       20,000 |  **30,000** |      5 %  |     12 |           18,000  |
+| 2 | System Analyst (SA)  | HC   | Pakistan |       10,500 |    10,500 |     30 %  |     12 |           37,800  |
+| 3 | Engineer 1           | HC   | Pakistan |        5,500 |     5,500 |    100 %  |     12 |           66,000  |
+| **TOTAL — Managed Services Cost (Annual SAR)** |||||||  **121,800**  |
+
+> ⚠ **BUG in current system:** PM CTC shown as 20,000 (= salary). Correct CTC is **30,000** (per Excel). System also has no **Department** column and no **Resource Name** field — only a Title field. Both must be added.
+
+**Formula:** Annual Cost = CTC × Months × (% Involvement / 100)
+
+### 1.5 One-Time Setup Fees (Billed once, on Day 1)
+
+| # | Item                     | Vendor Cost (SAR) | Margin % | Sell ex-VAT (SAR) | VAT (SAR) | Total inc-VAT (SAR) |
+|---|--------------------------|------------------:|---------:|------------------:|----------:|--------------------:|
+| 1 | ZATCA E-Invoicing Setup  |            3,000  |     30 % |         4,285.71  |    642.86 |           4,928.57  |
+| 2 | WhatsApp API Integration |            4,000  |     30 % |         5,714.29  |    857.14 |           6,571.43  |
+| **Total**                  |     **7,000.00**  |          |    **10,000.00**  |**1,500**  |        **11,500.00**|
+
+### 1.6 Infrastructure (Server Package) — **ONE-TIME**, 5% margin, per client
+
+| # | Part No.     | Description                                         | Category         | Qty | Unit (SAR) | Total (SAR) |
+|---|--------------|-----------------------------------------------------|------------------|----:|-----------:|------------:|
+| 1 | P77235-425   | HPE ProLiant DL380 Gen11 — 4514Y 2.0GHz 16c 2×32GB-R 8SFF 2×2.4TB HDD | Server HW        |   1 |     25,080 |      25,080 |
+| 2 | P73-08328    | Windows Server Standard 2022 (16 Core)              | OS License       |   1 |      3,650 |       3,650 |
+| 3 | APC SMV100I  | APC Easy UPS 1000VA — Power Backup                  | UPS / Power      |   1 |      1,150 |       1,150 |
+| 4 | Services     | Professional Services — Install, Config & 1-Yr SLA  | Professional     |   1 |      3,500 |       3,500 |
+| **Server Package Total (ex-VAT, inc. 5% margin)** ||||||       **33,380** |
+| **Total Infrastructure Cost (inc. 15% VAT)**      ||||||       **38,387** |
+
+> ⚠ **BUG in current system:** Infrastructure is configured as **Monthly Recurring** at **30 % margin**. Excel treats it as a **One-Time** charge on Day 1 at **5 % margin**. At the current setting, each client is being charged SAR 33,380 × 12 × 1.4286 = ~SAR 572K/year for a server — this is massively over-billed.
+
+### 1.7 Cost Summary (Key Figures at a Glance)
+
+| Cost Category            | Annual (SAR) | Monthly (SAR) |
+|--------------------------|-------------:|--------------:|
+| Team / Department Cost   |     427,500  |      35,625   |
+| Subscriptions & Tools    |      61,965  |       5,163.75|
+| **GRAND TOTAL (Core Service)** | **489,465** | **40,788.75** |
+| Managed Services         |     121,800  |      10,150   |
+| **Cost per Client (Core)** |    **97,893** |   **8,157.75** |
+
+> 📏 The monthly Team figure (35,625) uses **engagement-weighted math** — `427,500 ÷ 12 = 35,625` — which correctly handles the fact that Areeb and Eyad only work 3 months. The system's current "Grand Total Monthly: SAR 52,500" is just the sum of current-month salaries (which only holds for the first 3 months) and disagrees with the annual figure when divided back.
+
+### 1.8 Selling Prices — After 30 % Margin + 15 % VAT
+
+| Line Item                         | Sell ex-VAT (SAR) | Sell inc-VAT (SAR) |
+|-----------------------------------|------------------:|-------------------:|
+| Core Platform Service / Month     |        11,653.93  |         13,402.02  |
+| Managed Services Add-On / Month   |        14,500.00  |         16,675.00  |
+| **TOTAL MONTHLY (Combined)**      |   **26,153.93**   |     **30,077.02**  |
+| One-Time Setup Fees (Total)       |        10,000.00  |         11,500.00  |
+| Infrastructure / Server (Total)   |        33,380.00  |         38,387.00  |
+
+**Formula:** Sell ex-VAT = Cost ÷ (1 − Margin %). For 30 % margin: `Sell = Cost ÷ 0.7`. Inc-VAT = Sell × 1.15.
+
+### 1.9 Invoice Structure
+
+**Invoice #1 — Day 1 (Setup + Server + 1st Month Service), per client**
+
+| # | Line Item                                     | Type              | Cost (SAR) | Sell ex-VAT | Inc-VAT (Client Pays) | Profit   | Margin |
+|---|-----------------------------------------------|-------------------|-----------:|------------:|----------------------:|---------:|-------:|
+| 1 | ZATCA E-Invoicing Setup                       | One-Time          |      3,000 |    4,285.71 |              4,928.57 | 1,285.71 |   30 % |
+| 2 | WhatsApp API Integration                      | One-Time          |      4,000 |    5,714.29 |              6,571.43 | 1,714.29 |   30 % |
+| 3 | Server Package (HPE + OS + UPS + 1-Yr SLA)    | One-Time Hardware | 31,790.48  |   33,380.00 |             38,387.00 | 1,589.52 |  ~5 %  |
+| 4 | Core Platform Service — Month 1               | Month 1           |   8,157.75 |   11,653.93 |             13,402.02 | 3,496.18 |   30 % |
+| 5 | Managed Services Add-On — Month 1             | Month 1           |  10,150.00 |   14,500.00 |             16,675.00 | 4,350.00 |   30 % |
+| **INVOICE 1 TOTAL**                             |                   |            |             |         **79,964.02** |**12,435.70**|      |
+
+**Invoices #2 to #12 — Recurring Monthly (per client, identical each month)**
+
+| # | Description                                | Type      | Cost (SAR) | Sell ex-VAT | Client Pays inc-VAT | Profit  | Margin |
+|---|--------------------------------------------|-----------|-----------:|------------:|--------------------:|--------:|-------:|
+| 1 | Core Platform Service (30 % margin)        | Recurring |   8,157.75 |   11,653.93 |           13,402.02 | 3,496.18|   30 % |
+| 2 | Managed Services Add-On (30 % margin)      | Recurring |  10,150.00 |   14,500.00 |           16,675.00 | 4,350.00|   30 % |
+| **MONTHLY INVOICE TOTAL (Months 2–12)**      |           |            |   26,153.93|        **30,077.02**|**7,846.18**|      |
+
+### 1.10 Payment Calendar (Year 1, per client)
+
+| Invoice | Month   | Inclusions                                 | Amount inc-VAT | Profit/month | Running Total |
+|--------:|---------|--------------------------------------------|---------------:|-------------:|--------------:|
+|       1 | Month 1 | Setup + Server + 1st Month Service + MS    |      79,964.02 |    12,435.70 |      79,964.02 |
+|       2 | Month 2 | Core Platform + Managed Services           |      30,077.02 |     7,846.18 |     110,041.04 |
+|       3 | Month 3 | Core Platform + Managed Services           |      30,077.02 |     7,846.18 |     140,118.05 |
+|       4 | Month 4 | Core Platform + Managed Services           |      30,077.02 |     7,846.18 |     170,195.07 |
+|       5 | Month 5 | Core Platform + Managed Services           |      30,077.02 |     7,846.18 |     200,272.09 |
+|       6 | Month 6 | Core Platform + Managed Services           |      30,077.02 |     7,846.18 |     230,349.11 |
+|       7 | Month 7 | Core Platform + Managed Services           |      30,077.02 |     7,846.18 |     260,426.12 |
+|       8 | Month 8 | Core Platform + Managed Services           |      30,077.02 |     7,846.18 |     290,503.14 |
+|       9 | Month 9 | Core Platform + Managed Services           |      30,077.02 |     7,846.18 |     320,580.16 |
+|      10 | Month 10| Core Platform + Managed Services           |      30,077.02 |     7,846.18 |     350,657.18 |
+|      11 | Month 11| Core Platform + Managed Services           |      30,077.02 |     7,846.18 |     380,734.20 |
+|      12 | Month 12| Core Platform + Managed Services           |      30,077.02 |     7,846.18 |     410,811.21 |
+| **YEAR 1 GRAND TOTAL (per client)**          |                              | **410,811.21** | **98,743.67** |               |
+
+**All 5 clients, Year 1 Grand Total: 5 × 410,811.21 = SAR 2,054,056.07 inc-VAT**
+
+---
+
+## PART 2 — Gap Analysis: Current System vs Canonical Excel
+
+| # | Area                                 | Current System (Projection 36)                            | Excel (Target)                                             | Impact                                       |
+|--:|--------------------------------------|-----------------------------------------------------------|------------------------------------------------------------|----------------------------------------------|
+| 1 | **Teleconference Hosting — USD field** | USD = 37.5 → SAR 140.63/mo → SAR 1,687.50/yr              | USD = 10 → SAR 37.50/mo → SAR 450/yr                       | Overhead inflated by SAR 1,237.50/yr (data fix) |
+| 2 | **Total Overhead / Monthly**         | SAR 5,266.88/mo · 63,202.50/yr                            | SAR 5,163.75/mo · 61,965.00/yr                             | Consequence of #1                            |
+| 3 | **Cost-per-client model**            | Bundles Team + Overhead + Sales Support + Infra → SAR 20,159.38/mo | Core (Team + Tools) = SAR 8,157.75/mo; Managed Services = separate SAR 10,150/mo add-on; Infra = one-time; Setup = one-time | **Fundamental model change.** System is over-costing the client and misstating margin composition |
+| 4 | **Selling price per client**         | SAR 28,799.11/mo (ex-VAT) — single bundled line          | Core SAR 11,653.93 + MS SAR 14,500.00 = SAR 26,153.93/mo (ex-VAT) — two distinct lines | Different revenue math; client should see both lines |
+| 5 | **Team cost / client — monthly ↔ annual consistency** | Monthly 10,500 AND Annual 85,500 (10,500 × 12 = 126,000, not 85,500) | Engagement-weighted: 427,500 ÷ 5 ÷ 12 = **7,125/mo**, annual 85,500 | Internal math contradiction; use `Σ(CTC × Months × Alloc%) ÷ 12` |
+| 6 | **Sales Support — missing "Name" column** | Only has Title                                          | Excel has Resource name (e.g. "Project Manager (PM)")     | Can't identify who the resource is          |
+| 7 | **Sales Support — missing "Department" (Dept) column** | No Dept field at all                              | Excel has Dept column (e.g. "HC" = Healthcare)            | Required for multi-department scaling; **you flagged this** |
+| 8 | **PM CTC**                           | SAR 20,000 (= salary, uneditable CTC link)                | SAR 30,000 (loaded CTC, different from base salary)       | Under-costs PM by 33 %; understates MS cost by SAR 6,000/yr |
+| 9 | **Infrastructure billing cycle**     | Monthly Recurring                                         | **One-Time** (Day 1 charge)                                | Over-bills SAR ~572K/client/yr on server alone |
+|10 | **Infrastructure margin**            | 30 % (same as services)                                   | ~5 % on server hardware (thin-margin hardware passthrough) | Wrong profitability signal on hardware      |
+|11 | **One-Time Setup Fees — billing**    | Configured as separate section ✓ (good)                   | Same ✓                                                    | **OK** — but must be attached to Invoice #1 automatically |
+|12 | **Invoice structure**                | All invoices identical (SAR 10,967.72 each in screenshot) | **Invoice #1 is fat (SAR 79,964.02)** = Setup + Server + 1st month core + 1st month MS. Invoices #2-12 are SAR 30,077.02 recurring | Major redesign of invoice generator         |
+|13 | **Year Label**                       | "2026" only                                               | "2026-27" (fiscal-year range)                              | Minor — but affects fiscal-year disclosures |
+|14 | **Managed Services — "In Totals" toggle** | Has a checkbox, but when ticked it bundles into cost/client | Excel: always SEPARATE, never bundled. Remove toggle or rename to "Include as Add-On Line on Invoices" | Clarity of revenue streams                  |
+|15 | **Dashboard "Selling Price (Engagement)"** | SAR 397,427.68                                        | Per client = 410,811.21 (inc-VAT, including Month 1 setup+server). Total for 5 clients = 2,054,056.07 | Big understatement — ignores one-time items |
+|16 | **Dashboard "Margin (Monthly)"**     | SAR 8,639.73                                              | Per client Month 1 profit = 12,435.70; Months 2-12 = 7,846.18/ea; **Average** = 8,228.30 | Calculation doesn't match Excel's per-invoice profit model |
+
+---
+
+## PART 3 — Replit Prompt (copy-paste this to your Replit agent)
+
+> Below is the ready-to-send prompt. Paste it verbatim into Replit. It references this same document (Part 1) as the spec — attach the Excel file to the Replit chat too so the agent can cross-check numbers cell-by-cell.
+
+```
+I need to overhaul the projection calculation model in fiscal-insight.replit.app
+so it matches my canonical Excel (Atif Ahsan — Projection Sheet, FY 2026-27).
+
+Attached is the Excel file and a markdown brief that lays out (a) the exact
+cell values, (b) every calculation formula, (c) the gap analysis between what
+the app is showing today on Projection 36 and what the Excel says. Please read
+both before changing any code.
+
+THE PROBLEM IN ONE SENTENCE
+The app bundles EVERYTHING (team, overhead, sales support, infrastructure)
+into one inflated "cost per client" and then applies a single 30% margin.
+The Excel splits the offer into 4 distinct streams, each billed differently,
+and the invoice structure has a fat Month-1 invoice followed by 11 uniform
+recurring invoices. Until this is fixed, quotes and invoices going out of the
+system will be both wrong-priced and mis-structured.
+
+THE 4 REVENUE STREAMS (must be modelled as separate entities)
+
+  STREAM A — Core Platform Service (RECURRING, monthly, 30% margin)
+    Cost basis per year = Team (Σ CTC × Months × Alloc%) + Tools/Subs (annual)
+    Cost per client / month = (Team annual + Tools annual) / Clients / 12
+    Sell ex-VAT / month  = Cost / (1 − margin)
+    Sell inc-VAT / month = Sell × (1 + VAT)
+    Billed: every month, all 12 months.
+
+  STREAM B — Managed Services & SLA (RECURRING, monthly, 30% margin, SEPARATE ADD-ON)
+    Cost per client / year = Σ (CTC × Months × %Involvement) for each MS resource
+    Cost per client / month = annual / 12
+    Sell ex-VAT / month  = Cost / (1 − margin)
+    Billed: every month as a SEPARATE LINE on the same invoice as Stream A.
+    Do NOT bundle this into Stream A's cost/margin.
+
+  STREAM C — One-Time Setup Fees (ONCE, Day 1, 30% margin)
+    Line items: ZATCA Service (3,000 SAR cost), WhatsApp API (4,000 SAR cost)
+    Sell ex-VAT per item = Cost / 0.7
+    Billed: ONLY on Invoice #1, never again.
+
+  STREAM D — Infrastructure / Server Package (ONCE, Day 1, 5% margin by DEFAULT)
+    Line items (sum to SAR 33,380 ex-VAT):
+      HPE ProLiant DL380 Gen11 — SAR 25,080
+      Windows Server Standard 2022 — SAR 3,650
+      APC SMV100I UPS — SAR 1,150
+      Professional Services (install + 1-yr SLA) — SAR 3,500
+    Margin is configurable per line but defaults to 5% (hardware passthrough),
+    NOT 30%. Billing cycle must be "One-Time", not Monthly.
+    Billed: ONLY on Invoice #1, never again.
+
+CHANGES REQUIRED (in order — do these as separate commits so I can review)
+
+1. DATA FIX — Projection 36, Tools & Subscriptions, row "Teleconference Hosting"
+   Current USD value: 37.5  →  Correct USD value: 10
+   After fix: SAR 37.50 / mo, SAR 450.00 / yr. Verify Total Overhead becomes
+   SAR 5,163.75 / mo and SAR 61,965.00 / yr.
+
+2. SALES SUPPORT / MANAGED SERVICES TABLE — add missing columns
+   Current columns: Title, Country, Salary, CTC, Months, Alloc%, Basis,
+                    In Totals, Margin%, Total Cost, Selling Price
+   ADD: "Name" (free text, before Title)  — e.g. "Sarah Khan"
+   ADD: "Department" (dropdown, after Country) — options: HC (Healthcare),
+        FIN (Finance), OPS (Operations), IT, CS, Other (free text fallback)
+   Persist these in the projection schema.
+   Also: make CTC independently editable (today it mirrors Salary for PM).
+   Update the default data so PM has CTC = 30,000 (salary = 20,000).
+
+3. INFRASTRUCTURE SECTION — change billing semantics
+   Replace the "Billing: Monthly/Yearly" dropdown with one that includes
+   "One-Time" and make "One-Time" the default for this section.
+   Default Margin% for this section should be 5 (not 30).
+   When Billing = One-Time, the line must NOT flow into monthly cost/client;
+   it must flow into Invoice #1 only.
+
+4. PER-CLIENT ECONOMICS CARD — restructure
+   Today it shows a single "Total cost / client" = 20,159.38/mo mixing
+   everything. Replace it with this breakdown:
+
+     CORE PLATFORM SERVICE
+        Team cost / client / mo          = (Σ team annual) / Clients / 12
+        Overhead / client / mo           = (Overhead annual) / Clients / 12
+        Core cost / client / mo          = sum above
+        Core sell ex-VAT                 = Core cost / (1 − margin)
+        Core sell inc-VAT                = × 1.15
+
+     MANAGED SERVICES (SEPARATE ADD-ON)
+        MS cost / client / mo            = (Σ MS annual) / Clients / 12
+        MS sell ex-VAT                   = MS cost / (1 − margin)
+        MS sell inc-VAT                  = × 1.15
+
+     ONE-TIME (Shown in a separate card or callout)
+        Setup fees total                 = Σ setup lines
+        Infrastructure total             = Σ infra lines
+
+     MONTHLY RECURRING TOTAL PER CLIENT (ex-VAT)  = Core + MS
+     MONTHLY RECURRING TOTAL PER CLIENT (inc-VAT) = × 1.15
+
+   Key consistency rule: Monthly × 12 MUST equal Annual for every line.
+   Right now the system shows Team 10,500/mo and 85,500/yr which is
+   inconsistent (10,500 × 12 ≠ 85,500). The correct formula is
+   "annual ÷ 12" = 7,125/mo (engagement-weighted), not "Σ current monthly
+   salaries". Use engagement-weighted everywhere.
+
+5. INVOICE GENERATION — rewrite to match Excel's structure
+   For each client (so N clients × 1 projection):
+
+     INVOICE #1 (issue date = projection start date; due = start + net terms)
+       Line 01: ZATCA E-Invoicing Setup         — One-Time   — from Stream C
+       Line 02: WhatsApp API Integration        — One-Time   — from Stream C
+       Line 03: Server Package (HPE + OS + UPS + SLA) — One-Time Hardware — Stream D
+       Line 04: Core Platform Service — Month 1 — Monthly    — from Stream A
+       Line 05: Managed Services Add-On — Month 1 — Monthly  — from Stream B
+       Expected total inc-VAT for default projection: SAR 79,964.02
+
+     INVOICES #2 through #12 (monthly cadence from Month 2)
+       Line 01: Core Platform Service (30% margin) — Recurring — Stream A
+       Line 02: Managed Services Add-On (30% margin) — Recurring — Stream B
+       Expected total inc-VAT each: SAR 30,077.02
+
+     YEAR 1 TOTAL per client: SAR 410,811.21
+     YEAR 1 TOTAL all 5 clients: SAR 2,054,056.07
+
+   Replace the current flat generator (which produced SAR 10,967.72 × 10
+   identical invoices for April–May — completely wrong) with this logic.
+
+6. DASHBOARD KPI CARDS — recompute
+   - "Selling Price (Engagement)" must equal Year-1 inc-VAT total per client
+     (410,811.21 for the default projection) × number of clients.
+   - "Margin (Monthly)" must be an average across all 12 invoices for one
+     client: (12,435.70 + 11 × 7,846.18) / 12 = 8,228.30 for the default.
+   - "Cost per Client (Engagement)" must equal:
+     (Core cost annual per client) + (MS cost annual per client) + (Setup
+     cost total) + (Infra cost total), i.e. the COST basis of everything
+     that gets billed in Year 1.
+
+7. YEAR LABEL — allow fiscal-year range
+   Accept "2026-27" format (not just "2026"). Display it in the Projection
+   header and propagate into invoice numbering/metadata.
+
+8. UI LAYOUT POLISH (do this last, after math is correct)
+   - Group the 4 streams into 4 cards in the Projection workspace:
+     [Core Platform] [Managed Services] [One-Time Setup] [Infrastructure]
+   - Under Per-Client Economics, show a 2-column split: "Recurring (Monthly)"
+     and "One-Time (Day 1)" so it's obvious which charges are once-only.
+   - On the Invoices list, add a badge that says "Setup Invoice" on Invoice
+     #1 and "Recurring" on #2-12, so they're visually distinct.
+
+VALIDATION CHECKLIST (please self-check before handing back to me)
+
+Using the default data in the brief (5 clients, 30% margin, 15% VAT):
+  [ ] Total Department Cost = SAR 427,500 / yr
+  [ ] Total Overhead        = SAR 61,965 / yr (after Teleconference fix)
+  [ ] Managed Services annual = SAR 121,800 (requires PM CTC = 30,000)
+  [ ] Core cost / client / mo  = SAR 8,157.75
+  [ ] MS cost / client / mo    = SAR 10,150
+  [ ] Core sell ex-VAT / mo    = SAR 11,653.93
+  [ ] MS sell ex-VAT / mo      = SAR 14,500.00
+  [ ] Combined ex-VAT / mo     = SAR 26,153.93
+  [ ] Combined inc-VAT / mo    = SAR 30,077.02
+  [ ] Invoice #1 inc-VAT       = SAR 79,964.02
+  [ ] Invoices #2-12 inc-VAT   = SAR 30,077.02 each
+  [ ] Year-1 total per client  = SAR 410,811.21
+  [ ] Year-1 total × 5 clients = SAR 2,054,056.07
+
+If any of the above doesn't match to within 0.01 SAR, stop and tell me
+before moving on. Do not adjust the Excel to match the app; the Excel is
+the source of truth.
+```
+
+---
+
+## Appendix — Quick Reference Formulas
+
+```
+Team total / resource / year       = CTC × Months × (Alloc % / 100)
+Team total annual                  = Σ resources
+Overhead / line / month SAR        = USD × FX rate
+Overhead / line / year SAR         = Monthly SAR × 12
+MS cost / resource / year          = CTC × Months × (Involvement % / 100)
+Core cost / client / month         = (Team annual + Overhead annual) / Clients / 12
+MS cost / client / month           = MS annual / 12              (NOT / Clients — MS is per-client team)
+Sell ex-VAT                        = Cost / (1 − Margin %)
+Sell inc-VAT                       = Sell ex-VAT × (1 + VAT %)
+Invoice #1 inc-VAT                 = Setup inc-VAT + Infra inc-VAT + Core inc-VAT + MS inc-VAT
+Invoice #N (N = 2..12) inc-VAT     = Core inc-VAT + MS inc-VAT
+Year-1 total / client inc-VAT      = Invoice #1 + 11 × Invoice #N
+Year-1 profit / client             = Invoice #1 profit + 11 × Invoice #N profit
+```
+
+> ❗ Note on Managed Services allocation: Excel's 121,800/yr is the cost to staff the MS pod for ONE client's worth of service (PM at 5%, SA at 30%, Engineer at 100%). If you're serving 5 clients, you need 5× that pod — so MS annual cost = 121,800 × Clients = 609,000, and MS cost / client / month = 121,800 / 12 = 10,150. Don't divide by Clients a second time.
