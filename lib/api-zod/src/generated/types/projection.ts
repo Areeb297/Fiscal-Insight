@@ -13,6 +13,9 @@ export interface Projection {
   sarRate: number;
   numClients: number;
   marginPercent: number;
+  fiscalYear: string;
+  durationYears: number;
+  vatRate: number;
   createdAt: string;
   updatedAt: string;
 }

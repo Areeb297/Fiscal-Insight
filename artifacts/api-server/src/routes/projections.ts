@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and, or, isNull } from "drizzle-orm";
-import { db, projectionsTable, employeesTable, subscriptionsTable, salesSupportResourcesTable, ctcRulesTable, currenciesTable } from "@workspace/db";
+import { db, projectionsTable, employeesTable, subscriptionsTable, salesSupportResourcesTable, vendorSetupFeesTable, infrastructureCostsTable, ctcRulesTable, currenciesTable } from "@workspace/db";
 import {
   CreateProjectionBody,
   GetProjectionParams,
@@ -148,10 +148,12 @@ router.get("/projections/:id/summary", async (req, res): Promise<void> => {
     return;
   }
 
-  const [employees, subs, salesResources, ctcRules, currencies] = await Promise.all([
+  const [employees, subs, salesResources, vendorSetupFees, infrastructureCosts, ctcRules, currencies] = await Promise.all([
     db.select().from(employeesTable).where(eq(employeesTable.projectionId, params.data.id)),
     db.select().from(subscriptionsTable).where(eq(subscriptionsTable.projectionId, params.data.id)),
     db.select().from(salesSupportResourcesTable).where(eq(salesSupportResourcesTable.projectionId, params.data.id)),
+    db.select().from(vendorSetupFeesTable).where(eq(vendorSetupFeesTable.projectionId, params.data.id)),
+    db.select().from(infrastructureCostsTable).where(eq(infrastructureCostsTable.projectionId, params.data.id)),
     db.select().from(ctcRulesTable),
     db.select().from(currenciesTable),
   ]);
@@ -161,6 +163,8 @@ router.get("/projections/:id/summary", async (req, res): Promise<void> => {
     employees,
     subscriptions: subs,
     salesResources,
+    vendorSetupFees,
+    infrastructureCosts,
     ctcRules,
     currencies,
   });

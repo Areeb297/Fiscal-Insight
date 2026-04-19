@@ -5,4 +5,6 @@ export * from "./projections";
 export * from "./employees";
 export * from "./subscriptions";
 export * from "./salesSupportResources";
+export * from "./vendorSetupFees";
+export * from "./infrastructureCosts";
 export * from "./quotations";

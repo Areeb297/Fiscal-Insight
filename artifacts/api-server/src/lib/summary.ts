@@ -3,6 +3,8 @@ import type {
   employeesTable,
   subscriptionsTable,
   salesSupportResourcesTable,
+  vendorSetupFeesTable,
+  infrastructureCostsTable,
   ctcRulesTable,
   currenciesTable,
 } from "@workspace/db";
@@ -11,6 +13,8 @@ type Projection = typeof projectionsTable.$inferSelect;
 type Employee = typeof employeesTable.$inferSelect;
 type Subscription = typeof subscriptionsTable.$inferSelect;
 type SalesSupport = typeof salesSupportResourcesTable.$inferSelect;
+type VendorSetupFee = typeof vendorSetupFeesTable.$inferSelect;
+type InfrastructureCost = typeof infrastructureCostsTable.$inferSelect;
 type CtcRule = typeof ctcRulesTable.$inferSelect;
 type Currency = typeof currenciesTable.$inferSelect;
 
@@ -19,6 +23,8 @@ export type ScenarioInputs = {
   employees: Employee[];
   subscriptions: Subscription[];
   salesResources: SalesSupport[];
+  vendorSetupFees?: VendorSetupFee[];
+  infrastructureCosts?: InfrastructureCost[];
   ctcRules: CtcRule[];
   currencies: Currency[];
 };
@@ -26,11 +32,8 @@ export type ScenarioInputs = {
 export type ScenarioOverrides = {
   numClients?: number;
   marginPercent?: number;
-  /** Add an extra fixed monthly overhead in SAR */
   addMonthlyOverheadSar?: number;
-  /** Multiply every employee salary by this factor (e.g. 1.10 for +10%) */
   scaleEmployeeSalariesBy?: number;
-  /** Add hypothetical employees: monthly salary in SAR + country code */
   addEmployees?: Array<{ salarySar: number; country: string; monthsFte?: number }>;
 };
 
@@ -55,11 +58,6 @@ function rateToSar(currencyCode: string, currencies: Currency[]): number {
   return c ? c.rateToSar : 1.0;
 }
 
-/**
- * Resolve the per-row cost-basis multiplier:
- *   - "shared"     → contributes 1× (cost is divided across all clients later)
- *   - "per_client" → contributes assignedClientCount× (defaults to numClients)
- */
 function clientMultiplier(
   costBasis: string | null | undefined,
   assignedClientCount: number | null | undefined,
@@ -72,16 +70,34 @@ function clientMultiplier(
   return 1;
 }
 
+function priceWithMargin(cost: number, marginRaw: number): number {
+  const f = normalizeMarginToFraction(marginRaw);
+  return f < 1 ? cost / (1 - f) : cost;
+}
+
 export function computeScenario(
   inputs: ScenarioInputs,
   overrides: ScenarioOverrides = {},
 ) {
-  const { projection, employees, subscriptions, salesResources, ctcRules, currencies } = inputs;
+  const {
+    projection,
+    employees,
+    subscriptions,
+    salesResources,
+    vendorSetupFees = [],
+    infrastructureCosts = [],
+    ctcRules,
+    currencies,
+  } = inputs;
 
   const numClients = overrides.numClients ?? projection.numClients;
   const marginPercent = overrides.marginPercent ?? projection.marginPercent;
   const salaryScale = overrides.scaleEmployeeSalariesBy ?? 1;
   const extraMonthlyOverhead = overrides.addMonthlyOverheadSar ?? 0;
+  const vatFraction = projection.vatRate && projection.vatRate > 0
+    ? (projection.vatRate > 1 ? projection.vatRate / 100 : projection.vatRate)
+    : 0.15;
+  const durationYears = projection.durationYears && projection.durationYears > 0 ? projection.durationYears : 1;
 
   const allEmployees = [
     ...employees.map((e) => ({
@@ -122,7 +138,7 @@ export function computeScenario(
     if (emp.monthsFte > maxEmployeeMonths) maxEmployeeMonths = emp.monthsFte;
   }
   const maxSalesSupportMonths = salesResources.reduce((m, r) => Math.max(m, r.months ?? 0), 0);
-  const engagementMonths = Math.max(maxEmployeeMonths, maxSalesSupportMonths, 12);
+  const engagementMonths = Math.max(maxEmployeeMonths, maxSalesSupportMonths, durationYears * 12, 12);
 
   const costPerClientMonthly = numClients > 0 ? totalDeptCostMonthly / numClients : 0;
   const costPerClientYearly = numClients > 0 ? totalDeptCostYearly / numClients : 0;
@@ -152,7 +168,6 @@ export function computeScenario(
     const monthlyContribution = r.salarySar * m * allocFraction * cm;
     salesSupportTotalCost += monthlyContribution * r.months;
     if (r.includeInTotals) {
-      // Amortize across the engagement so it appears as a monthly run-rate item
       const amortized = engagementMonths > 0 ? (monthlyContribution * r.months) / engagementMonths : 0;
       salesSupportIncludedMonthly += amortized;
     }
@@ -165,9 +180,82 @@ export function computeScenario(
   const salesSupportPerClientMonthlyAmortized =
     numClients > 0 ? salesSupportIncludedMonthly / numClients : 0;
 
-  // Per-client economics now optionally include sales-support items
+  // Vendor setup fees: amortize lump-sum across `amortizeMonths` (or engagement if 0)
+  let vendorSetupTotalCost = 0;
+  let vendorSetupMonthlyAmortized = 0;
+  let vendorSetupSellingPriceMonthly = 0;
+  const vendorSetupLines: Array<{
+    id: number;
+    name: string;
+    vendorName: string;
+    amountSar: number;
+    monthlyCostSar: number;
+    monthlySellingSar: number;
+    marginSarMonthly: number;
+    amortizeMonths: number;
+  }> = [];
+  for (const v of vendorSetupFees) {
+    const amountSar = v.amount * rateToSar(v.currency, currencies);
+    const months = v.amortizeMonths > 0 ? v.amortizeMonths : engagementMonths;
+    const monthlyCost = months > 0 ? amountSar / months : 0;
+    const monthlySelling = priceWithMargin(monthlyCost, v.marginPercent);
+    vendorSetupTotalCost += amountSar;
+    vendorSetupMonthlyAmortized += monthlyCost;
+    vendorSetupSellingPriceMonthly += monthlySelling;
+    vendorSetupLines.push({
+      id: v.id,
+      name: v.name,
+      vendorName: v.vendorName ?? "",
+      amountSar,
+      monthlyCostSar: monthlyCost,
+      monthlySellingSar: monthlySelling,
+      marginSarMonthly: monthlySelling - monthlyCost,
+      amortizeMonths: months,
+    });
+  }
+  const vendorSetupPerClientMonthly =
+    numClients > 0 ? vendorSetupMonthlyAmortized / numClients : 0;
+
+  // Infrastructure costs
+  let infrastructureMonthlyCost = 0;
+  let infrastructureSellingPriceMonthly = 0;
+  const infrastructureLines: Array<{
+    id: number;
+    name: string;
+    category: string;
+    monthlyCostSar: number;
+    monthlySellingSar: number;
+    marginSarMonthly: number;
+  }> = [];
+  for (const ic of infrastructureCosts) {
+    const sar = ic.amount * rateToSar(ic.currency, currencies);
+    let monthlyBase = sar;
+    if (ic.billingCycle === "annual") monthlyBase = sar / 12;
+    else if (ic.billingCycle === "one_time") monthlyBase = engagementMonths > 0 ? sar / engagementMonths : 0;
+    const cm = clientMultiplier(ic.allocationBasis, ic.assignedClientCount, numClients);
+    const monthlyCost = monthlyBase * cm;
+    const monthlySelling = priceWithMargin(monthlyCost, ic.marginPercent);
+    infrastructureMonthlyCost += monthlyCost;
+    infrastructureSellingPriceMonthly += monthlySelling;
+    infrastructureLines.push({
+      id: ic.id,
+      name: ic.name,
+      category: ic.category,
+      monthlyCostSar: monthlyCost,
+      monthlySellingSar: monthlySelling,
+      marginSarMonthly: monthlySelling - monthlyCost,
+    });
+  }
+  const infrastructurePerClientMonthly =
+    numClients > 0 ? infrastructureMonthlyCost / numClients : 0;
+
+  // Per-client economics include sales-support, vendor setup, and infra
   const totalMonthlyCostPerClient =
-    costPerClientMonthly + overheadPerClientMonthly + salesSupportPerClientMonthlyAmortized;
+    costPerClientMonthly +
+    overheadPerClientMonthly +
+    salesSupportPerClientMonthlyAmortized +
+    vendorSetupPerClientMonthly +
+    infrastructurePerClientMonthly;
   const totalYearlyCostPerClient = totalMonthlyCostPerClient * engagementMonths;
 
   const marginFraction = normalizeMarginToFraction(marginPercent);
@@ -177,32 +265,38 @@ export function computeScenario(
     marginFraction < 1 ? totalYearlyCostPerClient / (1 - marginFraction) : totalYearlyCostPerClient;
   const marginSarMonthly = sellingPriceWithoutVat - totalMonthlyCostPerClient;
   const marginSarYearly = sellingPriceWithoutVatYearly - totalYearlyCostPerClient;
-  const sellingPriceWithVatMonthly = sellingPriceWithoutVat * 1.15;
-  const sellingPriceWithVatYearly = sellingPriceWithoutVatYearly * 1.15;
+  const sellingPriceWithVatMonthly = sellingPriceWithoutVat * (1 + vatFraction);
+  const sellingPriceWithVatYearly = sellingPriceWithoutVatYearly * (1 + vatFraction);
   const vatMonthlyPerClient = sellingPriceWithVatMonthly - sellingPriceWithoutVat;
 
-  // Donut data: cost by allocation basis
   const costAllocationBreakdown = [
     { basis: "Shared dept", amount: Math.round(sharedDeptMonthly) },
     { basis: "Per-client dept", amount: Math.round(perClientDeptMonthly) },
     { basis: "Recurring overhead", amount: Math.round(recurringOverheadMonthly) },
     { basis: "One-time (amortized)", amount: Math.round(oneTimeAmortizedMonthly) },
     { basis: "Managed services", amount: Math.round(salesSupportIncludedMonthly) },
+    { basis: "Vendor setup", amount: Math.round(vendorSetupMonthlyAmortized) },
+    { basis: "Infrastructure", amount: Math.round(infrastructureMonthlyCost) },
   ].filter((row) => row.amount > 0);
 
-  // Horizontal bar: per-client price waterfall
   const priceWaterfall = [
     { component: "Team cost", amount: Math.round(costPerClientMonthly) },
     { component: "Overhead share", amount: Math.round(overheadPerClientMonthly) },
     { component: "Managed services", amount: Math.round(salesSupportPerClientMonthlyAmortized) },
+    { component: "Vendor setup", amount: Math.round(vendorSetupPerClientMonthly) },
+    { component: "Infrastructure", amount: Math.round(infrastructurePerClientMonthly) },
     { component: "Margin", amount: Math.round(marginSarMonthly) },
-    { component: "VAT (15%)", amount: Math.round(vatMonthlyPerClient) },
+    { component: `VAT (${Math.round(vatFraction * 100)}%)`, amount: Math.round(vatMonthlyPerClient) },
   ].filter((row) => row.amount > 0);
 
-  // Area chart: revenue vs cost across engagement months (one-time hits month 1)
   const revenueVsCostByMonth: Array<{ month: string; cost: number; revenue: number }> = [];
   const monthlyRevenueAllClients = sellingPriceWithoutVat * numClients;
-  const recurringMonthlyAllClients = totalDeptCostMonthly + recurringOverheadMonthly + salesSupportIncludedMonthly;
+  const recurringMonthlyAllClients =
+    totalDeptCostMonthly +
+    recurringOverheadMonthly +
+    salesSupportIncludedMonthly +
+    vendorSetupMonthlyAmortized +
+    infrastructureMonthlyCost;
   for (let i = 1; i <= engagementMonths; i += 1) {
     const cost = recurringMonthlyAllClients + (i === 1 ? oneTimeCostsTotal : 0);
     revenueVsCostByMonth.push({
@@ -225,6 +319,8 @@ export function computeScenario(
     sharedDeptMonthly,
     perClientDeptMonthly,
     engagementMonths,
+    durationYears,
+    vatRate: vatFraction,
     costPerClientYearly,
     costPerClientMonthly,
     totalOverheadMonthly,
@@ -247,9 +343,20 @@ export function computeScenario(
     salesSupportSellingPrice,
     salesSupportIncludedMonthly,
     salesSupportPerClientMonthlyAmortized,
+    vendorSetupTotalCost,
+    vendorSetupMonthlyAmortized,
+    vendorSetupSellingPriceMonthly,
+    vendorSetupPerClientMonthly,
+    vendorSetupLines,
+    infrastructureMonthlyCost,
+    infrastructureSellingPriceMonthly,
+    infrastructurePerClientMonthly,
+    infrastructureLines,
     employeeCount: allEmployees.length,
     subscriptionCount: subscriptions.length,
     salesSupportCount: salesResources.length,
+    vendorSetupCount: vendorSetupFees.length,
+    infrastructureCount: infrastructureCosts.length,
     costAllocationBreakdown,
     priceWaterfall,
     revenueVsCostByMonth,

@@ -22,16 +22,19 @@ import type {
   CreateCtcRuleBody,
   CreateCurrencyBody,
   CreateEmployeeBody,
+  CreateInfrastructureCostBody,
   CreateLineItemBody,
   CreateProjectionBody,
   CreateQuotationBody,
   CreateSalesSupportBody,
   CreateSubscriptionBody,
+  CreateVendorSetupFeeBody,
   CtcRule,
   Currency,
   DashboardSummary,
   Employee,
   HealthStatus,
+  InfrastructureCost,
   Projection,
   ProjectionSummary,
   Quotation,
@@ -43,12 +46,15 @@ import type {
   UpdateCtcRuleBody,
   UpdateCurrencyBody,
   UpdateEmployeeBody,
+  UpdateInfrastructureCostBody,
   UpdateLineItemBody,
   UpdateProjectionBody,
   UpdateQuotationBody,
   UpdateSalesSupportBody,
   UpdateSubscriptionBody,
   UpdateSystemSettingsBody,
+  UpdateVendorSetupFeeBody,
+  VendorSetupFee,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -1723,6 +1729,781 @@ export const useDeleteSalesSupportResource = <
   TContext
 > => {
   return useMutation(getDeleteSalesSupportResourceMutationOptions(options));
+};
+
+/**
+ * @summary List vendor setup fees
+ */
+export const getListVendorSetupFeesUrl = (projectionId: number) => {
+  return `/api/projections/${projectionId}/vendor-setup-fees`;
+};
+
+export const listVendorSetupFees = async (
+  projectionId: number,
+  options?: RequestInit,
+): Promise<VendorSetupFee[]> => {
+  return customFetch<VendorSetupFee[]>(
+    getListVendorSetupFeesUrl(projectionId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getListVendorSetupFeesQueryKey = (projectionId: number) => {
+  return [`/api/projections/${projectionId}/vendor-setup-fees`] as const;
+};
+
+export const getListVendorSetupFeesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listVendorSetupFees>>,
+  TError = ErrorType<unknown>,
+>(
+  projectionId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listVendorSetupFees>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListVendorSetupFeesQueryKey(projectionId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listVendorSetupFees>>
+  > = ({ signal }) =>
+    listVendorSetupFees(projectionId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!projectionId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listVendorSetupFees>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListVendorSetupFeesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listVendorSetupFees>>
+>;
+export type ListVendorSetupFeesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List vendor setup fees
+ */
+
+export function useListVendorSetupFees<
+  TData = Awaited<ReturnType<typeof listVendorSetupFees>>,
+  TError = ErrorType<unknown>,
+>(
+  projectionId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listVendorSetupFees>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListVendorSetupFeesQueryOptions(
+    projectionId,
+    options,
+  );
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Add vendor setup fee
+ */
+export const getCreateVendorSetupFeeUrl = (projectionId: number) => {
+  return `/api/projections/${projectionId}/vendor-setup-fees`;
+};
+
+export const createVendorSetupFee = async (
+  projectionId: number,
+  createVendorSetupFeeBody: CreateVendorSetupFeeBody,
+  options?: RequestInit,
+): Promise<VendorSetupFee> => {
+  return customFetch<VendorSetupFee>(getCreateVendorSetupFeeUrl(projectionId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createVendorSetupFeeBody),
+  });
+};
+
+export const getCreateVendorSetupFeeMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createVendorSetupFee>>,
+    TError,
+    { projectionId: number; data: BodyType<CreateVendorSetupFeeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createVendorSetupFee>>,
+  TError,
+  { projectionId: number; data: BodyType<CreateVendorSetupFeeBody> },
+  TContext
+> => {
+  const mutationKey = ["createVendorSetupFee"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createVendorSetupFee>>,
+    { projectionId: number; data: BodyType<CreateVendorSetupFeeBody> }
+  > = (props) => {
+    const { projectionId, data } = props ?? {};
+
+    return createVendorSetupFee(projectionId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateVendorSetupFeeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createVendorSetupFee>>
+>;
+export type CreateVendorSetupFeeMutationBody =
+  BodyType<CreateVendorSetupFeeBody>;
+export type CreateVendorSetupFeeMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Add vendor setup fee
+ */
+export const useCreateVendorSetupFee = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createVendorSetupFee>>,
+    TError,
+    { projectionId: number; data: BodyType<CreateVendorSetupFeeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createVendorSetupFee>>,
+  TError,
+  { projectionId: number; data: BodyType<CreateVendorSetupFeeBody> },
+  TContext
+> => {
+  return useMutation(getCreateVendorSetupFeeMutationOptions(options));
+};
+
+/**
+ * @summary Update vendor setup fee
+ */
+export const getUpdateVendorSetupFeeUrl = (
+  projectionId: number,
+  id: number,
+) => {
+  return `/api/projections/${projectionId}/vendor-setup-fees/${id}`;
+};
+
+export const updateVendorSetupFee = async (
+  projectionId: number,
+  id: number,
+  updateVendorSetupFeeBody: UpdateVendorSetupFeeBody,
+  options?: RequestInit,
+): Promise<VendorSetupFee> => {
+  return customFetch<VendorSetupFee>(
+    getUpdateVendorSetupFeeUrl(projectionId, id),
+    {
+      ...options,
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(updateVendorSetupFeeBody),
+    },
+  );
+};
+
+export const getUpdateVendorSetupFeeMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateVendorSetupFee>>,
+    TError,
+    {
+      projectionId: number;
+      id: number;
+      data: BodyType<UpdateVendorSetupFeeBody>;
+    },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateVendorSetupFee>>,
+  TError,
+  {
+    projectionId: number;
+    id: number;
+    data: BodyType<UpdateVendorSetupFeeBody>;
+  },
+  TContext
+> => {
+  const mutationKey = ["updateVendorSetupFee"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateVendorSetupFee>>,
+    {
+      projectionId: number;
+      id: number;
+      data: BodyType<UpdateVendorSetupFeeBody>;
+    }
+  > = (props) => {
+    const { projectionId, id, data } = props ?? {};
+
+    return updateVendorSetupFee(projectionId, id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateVendorSetupFeeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateVendorSetupFee>>
+>;
+export type UpdateVendorSetupFeeMutationBody =
+  BodyType<UpdateVendorSetupFeeBody>;
+export type UpdateVendorSetupFeeMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Update vendor setup fee
+ */
+export const useUpdateVendorSetupFee = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateVendorSetupFee>>,
+    TError,
+    {
+      projectionId: number;
+      id: number;
+      data: BodyType<UpdateVendorSetupFeeBody>;
+    },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateVendorSetupFee>>,
+  TError,
+  {
+    projectionId: number;
+    id: number;
+    data: BodyType<UpdateVendorSetupFeeBody>;
+  },
+  TContext
+> => {
+  return useMutation(getUpdateVendorSetupFeeMutationOptions(options));
+};
+
+/**
+ * @summary Remove vendor setup fee
+ */
+export const getDeleteVendorSetupFeeUrl = (
+  projectionId: number,
+  id: number,
+) => {
+  return `/api/projections/${projectionId}/vendor-setup-fees/${id}`;
+};
+
+export const deleteVendorSetupFee = async (
+  projectionId: number,
+  id: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteVendorSetupFeeUrl(projectionId, id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteVendorSetupFeeMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteVendorSetupFee>>,
+    TError,
+    { projectionId: number; id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteVendorSetupFee>>,
+  TError,
+  { projectionId: number; id: number },
+  TContext
+> => {
+  const mutationKey = ["deleteVendorSetupFee"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteVendorSetupFee>>,
+    { projectionId: number; id: number }
+  > = (props) => {
+    const { projectionId, id } = props ?? {};
+
+    return deleteVendorSetupFee(projectionId, id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteVendorSetupFeeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteVendorSetupFee>>
+>;
+
+export type DeleteVendorSetupFeeMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Remove vendor setup fee
+ */
+export const useDeleteVendorSetupFee = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteVendorSetupFee>>,
+    TError,
+    { projectionId: number; id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteVendorSetupFee>>,
+  TError,
+  { projectionId: number; id: number },
+  TContext
+> => {
+  return useMutation(getDeleteVendorSetupFeeMutationOptions(options));
+};
+
+/**
+ * @summary List infrastructure costs
+ */
+export const getListInfrastructureCostsUrl = (projectionId: number) => {
+  return `/api/projections/${projectionId}/infrastructure-costs`;
+};
+
+export const listInfrastructureCosts = async (
+  projectionId: number,
+  options?: RequestInit,
+): Promise<InfrastructureCost[]> => {
+  return customFetch<InfrastructureCost[]>(
+    getListInfrastructureCostsUrl(projectionId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getListInfrastructureCostsQueryKey = (projectionId: number) => {
+  return [`/api/projections/${projectionId}/infrastructure-costs`] as const;
+};
+
+export const getListInfrastructureCostsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listInfrastructureCosts>>,
+  TError = ErrorType<unknown>,
+>(
+  projectionId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listInfrastructureCosts>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListInfrastructureCostsQueryKey(projectionId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listInfrastructureCosts>>
+  > = ({ signal }) =>
+    listInfrastructureCosts(projectionId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!projectionId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listInfrastructureCosts>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListInfrastructureCostsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listInfrastructureCosts>>
+>;
+export type ListInfrastructureCostsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List infrastructure costs
+ */
+
+export function useListInfrastructureCosts<
+  TData = Awaited<ReturnType<typeof listInfrastructureCosts>>,
+  TError = ErrorType<unknown>,
+>(
+  projectionId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listInfrastructureCosts>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListInfrastructureCostsQueryOptions(
+    projectionId,
+    options,
+  );
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Add infrastructure cost
+ */
+export const getCreateInfrastructureCostUrl = (projectionId: number) => {
+  return `/api/projections/${projectionId}/infrastructure-costs`;
+};
+
+export const createInfrastructureCost = async (
+  projectionId: number,
+  createInfrastructureCostBody: CreateInfrastructureCostBody,
+  options?: RequestInit,
+): Promise<InfrastructureCost> => {
+  return customFetch<InfrastructureCost>(
+    getCreateInfrastructureCostUrl(projectionId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(createInfrastructureCostBody),
+    },
+  );
+};
+
+export const getCreateInfrastructureCostMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createInfrastructureCost>>,
+    TError,
+    { projectionId: number; data: BodyType<CreateInfrastructureCostBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createInfrastructureCost>>,
+  TError,
+  { projectionId: number; data: BodyType<CreateInfrastructureCostBody> },
+  TContext
+> => {
+  const mutationKey = ["createInfrastructureCost"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createInfrastructureCost>>,
+    { projectionId: number; data: BodyType<CreateInfrastructureCostBody> }
+  > = (props) => {
+    const { projectionId, data } = props ?? {};
+
+    return createInfrastructureCost(projectionId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateInfrastructureCostMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createInfrastructureCost>>
+>;
+export type CreateInfrastructureCostMutationBody =
+  BodyType<CreateInfrastructureCostBody>;
+export type CreateInfrastructureCostMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Add infrastructure cost
+ */
+export const useCreateInfrastructureCost = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createInfrastructureCost>>,
+    TError,
+    { projectionId: number; data: BodyType<CreateInfrastructureCostBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createInfrastructureCost>>,
+  TError,
+  { projectionId: number; data: BodyType<CreateInfrastructureCostBody> },
+  TContext
+> => {
+  return useMutation(getCreateInfrastructureCostMutationOptions(options));
+};
+
+/**
+ * @summary Update infrastructure cost
+ */
+export const getUpdateInfrastructureCostUrl = (
+  projectionId: number,
+  id: number,
+) => {
+  return `/api/projections/${projectionId}/infrastructure-costs/${id}`;
+};
+
+export const updateInfrastructureCost = async (
+  projectionId: number,
+  id: number,
+  updateInfrastructureCostBody: UpdateInfrastructureCostBody,
+  options?: RequestInit,
+): Promise<InfrastructureCost> => {
+  return customFetch<InfrastructureCost>(
+    getUpdateInfrastructureCostUrl(projectionId, id),
+    {
+      ...options,
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(updateInfrastructureCostBody),
+    },
+  );
+};
+
+export const getUpdateInfrastructureCostMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateInfrastructureCost>>,
+    TError,
+    {
+      projectionId: number;
+      id: number;
+      data: BodyType<UpdateInfrastructureCostBody>;
+    },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateInfrastructureCost>>,
+  TError,
+  {
+    projectionId: number;
+    id: number;
+    data: BodyType<UpdateInfrastructureCostBody>;
+  },
+  TContext
+> => {
+  const mutationKey = ["updateInfrastructureCost"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateInfrastructureCost>>,
+    {
+      projectionId: number;
+      id: number;
+      data: BodyType<UpdateInfrastructureCostBody>;
+    }
+  > = (props) => {
+    const { projectionId, id, data } = props ?? {};
+
+    return updateInfrastructureCost(projectionId, id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateInfrastructureCostMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateInfrastructureCost>>
+>;
+export type UpdateInfrastructureCostMutationBody =
+  BodyType<UpdateInfrastructureCostBody>;
+export type UpdateInfrastructureCostMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Update infrastructure cost
+ */
+export const useUpdateInfrastructureCost = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateInfrastructureCost>>,
+    TError,
+    {
+      projectionId: number;
+      id: number;
+      data: BodyType<UpdateInfrastructureCostBody>;
+    },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateInfrastructureCost>>,
+  TError,
+  {
+    projectionId: number;
+    id: number;
+    data: BodyType<UpdateInfrastructureCostBody>;
+  },
+  TContext
+> => {
+  return useMutation(getUpdateInfrastructureCostMutationOptions(options));
+};
+
+/**
+ * @summary Remove infrastructure cost
+ */
+export const getDeleteInfrastructureCostUrl = (
+  projectionId: number,
+  id: number,
+) => {
+  return `/api/projections/${projectionId}/infrastructure-costs/${id}`;
+};
+
+export const deleteInfrastructureCost = async (
+  projectionId: number,
+  id: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteInfrastructureCostUrl(projectionId, id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteInfrastructureCostMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteInfrastructureCost>>,
+    TError,
+    { projectionId: number; id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteInfrastructureCost>>,
+  TError,
+  { projectionId: number; id: number },
+  TContext
+> => {
+  const mutationKey = ["deleteInfrastructureCost"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteInfrastructureCost>>,
+    { projectionId: number; id: number }
+  > = (props) => {
+    const { projectionId, id } = props ?? {};
+
+    return deleteInfrastructureCost(projectionId, id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteInfrastructureCostMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteInfrastructureCost>>
+>;
+
+export type DeleteInfrastructureCostMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Remove infrastructure cost
+ */
+export const useDeleteInfrastructureCost = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteInfrastructureCost>>,
+    TError,
+    { projectionId: number; id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteInfrastructureCost>>,
+  TError,
+  { projectionId: number; id: number },
+  TContext
+> => {
+  return useMutation(getDeleteInfrastructureCostMutationOptions(options));
 };
 
 /**

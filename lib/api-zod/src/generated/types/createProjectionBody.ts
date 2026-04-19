@@ -9,6 +9,9 @@
 export interface CreateProjectionBody {
   name?: string | null;
   yearLabel: string;
+  fiscalYear?: string;
+  durationYears?: number;
+  vatRate?: number;
   sarRate?: number;
   numClients?: number;
   marginPercent?: number;

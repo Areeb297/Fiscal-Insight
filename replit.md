@@ -76,6 +76,8 @@ All routes prefixed with `/api`:
 - `GET/POST /projections/:projectionId/employees`, `PUT/DELETE .../employees/:id`
 - `GET/POST /projections/:projectionId/subscriptions`, `PUT/DELETE .../subscriptions/:id`
 - `GET/POST /projections/:projectionId/sales-support`, `PUT/DELETE .../sales-support/:id`
+- `GET/POST /projections/:projectionId/vendor-setup-fees`, `PUT/DELETE .../vendor-setup-fees/:id`
+- `GET/POST /projections/:projectionId/infrastructure-costs`, `PUT/DELETE .../infrastructure-costs/:id`
 - `GET/POST /quotations`, `GET/PUT/DELETE /quotations/:id`
 - `POST /quotations/:quotationId/line-items`, `PUT/DELETE .../line-items/:id`
 - `GET/POST /admin/currencies`, `PUT/DELETE /admin/currencies/:id`

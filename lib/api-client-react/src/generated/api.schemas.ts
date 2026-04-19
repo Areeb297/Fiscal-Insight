@@ -16,6 +16,9 @@ export interface Projection {
   sarRate: number;
   numClients: number;
   marginPercent: number;
+  fiscalYear: string;
+  durationYears: number;
+  vatRate: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -23,6 +26,9 @@ export interface Projection {
 export interface CreateProjectionBody {
   name?: string | null;
   yearLabel: string;
+  fiscalYear?: string;
+  durationYears?: number;
+  vatRate?: number;
   sarRate?: number;
   numClients?: number;
   marginPercent?: number;
@@ -31,6 +37,9 @@ export interface CreateProjectionBody {
 export interface UpdateProjectionBody {
   name?: string | null;
   yearLabel?: string;
+  fiscalYear?: string;
+  durationYears?: number;
+  vatRate?: number;
   sarRate?: number;
   numClients?: number;
   marginPercent?: number;
@@ -216,6 +225,129 @@ export interface UpdateSalesSupportBody {
   costBasis?: UpdateSalesSupportBodyCostBasis;
   assignedClientCount?: number | null;
   includeInTotals?: boolean;
+}
+
+export interface VendorSetupFee {
+  id: number;
+  projectionId: number;
+  name: string;
+  vendorName: string;
+  currency: string;
+  amount: number;
+  amortizeMonths: number;
+  marginPercent: number;
+  notes?: string | null;
+  createdAt: string;
+}
+
+export interface CreateVendorSetupFeeBody {
+  name: string;
+  vendorName?: string;
+  currency?: string;
+  amount?: number;
+  amortizeMonths?: number;
+  marginPercent?: number;
+  notes?: string | null;
+}
+
+export interface UpdateVendorSetupFeeBody {
+  name?: string;
+  vendorName?: string;
+  currency?: string;
+  amount?: number;
+  amortizeMonths?: number;
+  marginPercent?: number;
+  notes?: string | null;
+}
+
+export type InfrastructureCostBillingCycle =
+  (typeof InfrastructureCostBillingCycle)[keyof typeof InfrastructureCostBillingCycle];
+
+export const InfrastructureCostBillingCycle = {
+  monthly: "monthly",
+  annual: "annual",
+  one_time: "one_time",
+} as const;
+
+export type InfrastructureCostAllocationBasis =
+  (typeof InfrastructureCostAllocationBasis)[keyof typeof InfrastructureCostAllocationBasis];
+
+export const InfrastructureCostAllocationBasis = {
+  shared: "shared",
+  per_client: "per_client",
+} as const;
+
+export interface InfrastructureCost {
+  id: number;
+  projectionId: number;
+  name: string;
+  category: string;
+  currency: string;
+  amount: number;
+  billingCycle: InfrastructureCostBillingCycle;
+  marginPercent: number;
+  allocationBasis: InfrastructureCostAllocationBasis;
+  assignedClientCount?: number | null;
+  notes?: string | null;
+  createdAt: string;
+}
+
+export type CreateInfrastructureCostBodyBillingCycle =
+  (typeof CreateInfrastructureCostBodyBillingCycle)[keyof typeof CreateInfrastructureCostBodyBillingCycle];
+
+export const CreateInfrastructureCostBodyBillingCycle = {
+  monthly: "monthly",
+  annual: "annual",
+  one_time: "one_time",
+} as const;
+
+export type CreateInfrastructureCostBodyAllocationBasis =
+  (typeof CreateInfrastructureCostBodyAllocationBasis)[keyof typeof CreateInfrastructureCostBodyAllocationBasis];
+
+export const CreateInfrastructureCostBodyAllocationBasis = {
+  shared: "shared",
+  per_client: "per_client",
+} as const;
+
+export interface CreateInfrastructureCostBody {
+  name: string;
+  category?: string;
+  currency?: string;
+  amount?: number;
+  billingCycle?: CreateInfrastructureCostBodyBillingCycle;
+  marginPercent?: number;
+  allocationBasis?: CreateInfrastructureCostBodyAllocationBasis;
+  assignedClientCount?: number | null;
+  notes?: string | null;
+}
+
+export type UpdateInfrastructureCostBodyBillingCycle =
+  (typeof UpdateInfrastructureCostBodyBillingCycle)[keyof typeof UpdateInfrastructureCostBodyBillingCycle];
+
+export const UpdateInfrastructureCostBodyBillingCycle = {
+  monthly: "monthly",
+  annual: "annual",
+  one_time: "one_time",
+} as const;
+
+export type UpdateInfrastructureCostBodyAllocationBasis =
+  (typeof UpdateInfrastructureCostBodyAllocationBasis)[keyof typeof UpdateInfrastructureCostBodyAllocationBasis];
+
+export const UpdateInfrastructureCostBodyAllocationBasis = {
+  shared: "shared",
+  per_client: "per_client",
+} as const;
+
+export interface UpdateInfrastructureCostBody {
+  name?: string;
+  category?: string;
+  currency?: string;
+  amount?: number;
+  billingCycle?: UpdateInfrastructureCostBodyBillingCycle;
+  marginPercent?: number;
+  allocationBasis?: UpdateInfrastructureCostBodyAllocationBasis;
+  assignedClientCount?: number | null;
+  notes?: string | null;
 }
 
 export interface Quotation {
@@ -422,9 +554,20 @@ export interface ProjectionSummary {
   sellingPriceWithVatYearly: number;
   salesSupportTotalCost: number;
   salesSupportSellingPrice: number;
+  vendorSetupTotalCost?: number;
+  vendorSetupMonthlyAmortized?: number;
+  vendorSetupSellingPriceMonthly?: number;
+  vendorSetupPerClientMonthly?: number;
+  infrastructureMonthlyCost?: number;
+  infrastructureSellingPriceMonthly?: number;
+  infrastructurePerClientMonthly?: number;
+  durationYears?: number;
+  vatRate?: number;
   employeeCount: number;
   subscriptionCount: number;
   salesSupportCount: number;
+  vendorSetupCount?: number;
+  infrastructureCount?: number;
 }
 
 export type DashboardSummaryChartsCostBreakdownItem = {

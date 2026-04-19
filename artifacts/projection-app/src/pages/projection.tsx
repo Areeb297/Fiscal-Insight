@@ -25,14 +25,25 @@ import {
   useCreateSalesSupportResource,
   useUpdateSalesSupportResource,
   useDeleteSalesSupportResource,
+  useListVendorSetupFees,
+  getListVendorSetupFeesQueryKey,
+  useCreateVendorSetupFee,
+  useUpdateVendorSetupFee,
+  useDeleteVendorSetupFee,
+  useListInfrastructureCosts,
+  getListInfrastructureCostsQueryKey,
+  useCreateInfrastructureCost,
+  useUpdateInfrastructureCost,
+  useDeleteInfrastructureCost,
   useListCtcRules,
   getListCtcRulesQueryKey,
   useListCurrencies,
   getListCurrenciesQueryKey,
   type Employee,
   type Subscription,
-  type SalesSupportResource
+  type SalesSupportResource,
 } from "@workspace/api-client-react";
+import { motion } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,7 +51,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Trash, Save, Calculator, ArrowLeft } from "lucide-react";
+import { Plus, Trash, Save, Calculator, ArrowLeft, Server, Building2, TrendingUp, Wallet, Receipt, Sparkles } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
@@ -83,6 +94,14 @@ export default function Projection() {
     query: { enabled: !!activeProjectionId, queryKey: getListSalesSupportResourcesQueryKey(activeProjectionId || 0) }
   });
 
+  const { data: vendorSetupFees } = useListVendorSetupFees(activeProjectionId || 0, {
+    query: { enabled: !!activeProjectionId, queryKey: getListVendorSetupFeesQueryKey(activeProjectionId || 0) }
+  });
+
+  const { data: infrastructureCosts } = useListInfrastructureCosts(activeProjectionId || 0, {
+    query: { enabled: !!activeProjectionId, queryKey: getListInfrastructureCostsQueryKey(activeProjectionId || 0) }
+  });
+
   const { data: ctcRules } = useListCtcRules({
     query: { queryKey: getListCtcRulesQueryKey() }
   });
@@ -106,6 +125,64 @@ export default function Projection() {
   const updateSalesSupport = useUpdateSalesSupportResource();
   const deleteSalesSupport = useDeleteSalesSupportResource();
 
+  const createVendor = useCreateVendorSetupFee();
+  const updateVendor = useUpdateVendorSetupFee();
+  const deleteVendor = useDeleteVendorSetupFee();
+
+  const createInfra = useCreateInfrastructureCost();
+  const updateInfra = useUpdateInfrastructureCost();
+  const deleteInfra = useDeleteInfrastructureCost();
+
+  const invalidateAll = () => {
+    if (!activeProjectionId) return;
+    queryClient.invalidateQueries({ queryKey: getGetProjectionSummaryQueryKey(activeProjectionId) });
+    queryClient.invalidateQueries({ queryKey: getGetDashboardSummaryQueryKey() });
+  };
+
+  const handleAddVendor = () => {
+    if (!activeProjectionId) return;
+    createVendor.mutate(
+      { projectionId: activeProjectionId, data: { name: "New Vendor Setup", vendorName: "", currency: "SAR", amount: 0, amortizeMonths: summary?.engagementMonths || 12, marginPercent: 20 } },
+      { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListVendorSetupFeesQueryKey(activeProjectionId) }); invalidateAll(); } }
+    );
+  };
+  const handleUpdateVendor = (id: number, field: string, value: any) => {
+    if (!activeProjectionId) return;
+    updateVendor.mutate(
+      { projectionId: activeProjectionId, id, data: { [field]: value } },
+      { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListVendorSetupFeesQueryKey(activeProjectionId) }); invalidateAll(); } }
+    );
+  };
+  const handleDeleteVendor = (id: number) => {
+    if (!activeProjectionId) return;
+    deleteVendor.mutate(
+      { projectionId: activeProjectionId, id },
+      { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListVendorSetupFeesQueryKey(activeProjectionId) }); invalidateAll(); } }
+    );
+  };
+
+  const handleAddInfra = () => {
+    if (!activeProjectionId) return;
+    createInfra.mutate(
+      { projectionId: activeProjectionId, data: { name: "New Infrastructure Line", category: "compute", currency: "SAR", amount: 0, billingCycle: "monthly", marginPercent: 20, allocationBasis: "shared" } },
+      { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListInfrastructureCostsQueryKey(activeProjectionId) }); invalidateAll(); } }
+    );
+  };
+  const handleUpdateInfra = (id: number, field: string, value: any) => {
+    if (!activeProjectionId) return;
+    updateInfra.mutate(
+      { projectionId: activeProjectionId, id, data: { [field]: value } },
+      { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListInfrastructureCostsQueryKey(activeProjectionId) }); invalidateAll(); } }
+    );
+  };
+  const handleDeleteInfra = (id: number) => {
+    if (!activeProjectionId) return;
+    deleteInfra.mutate(
+      { projectionId: activeProjectionId, id },
+      { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListInfrastructureCostsQueryKey(activeProjectionId) }); invalidateAll(); } }
+    );
+  };
+
   const handleCreateInitialProjection = () => {
     createProjection.mutate(
       { data: { yearLabel: new Date().getFullYear().toString(), sarRate: 3.75, numClients: 1, marginPercent: 30 } },
@@ -118,7 +195,7 @@ export default function Projection() {
     );
   };
 
-  const handleUpdateProjectionSettings = (field: string, value: number) => {
+  const handleUpdateProjectionSettings = (field: string, value: number | string) => {
     if (!activeProjectionId) return;
     updateProjection.mutate(
       { id: activeProjectionId, data: { [field]: value } },
@@ -302,14 +379,75 @@ export default function Projection() {
 
   return (
     <div className="p-4 sm:p-6 md:p-8 max-w-[1600px] mx-auto space-y-6 md:space-y-8 pb-24">
-      <div className="space-y-6">
-        <div className="flex items-start gap-4">
-          <Link href="/projection">
-            <Button variant="ghost" size="icon" className="mt-1"><ArrowLeft className="h-5 w-5" /></Button>
-          </Link>
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold tracking-tight">{headerName}</h1>
-            <p className="text-muted-foreground mt-1">Manage departmental costs, margins, and client economics</p>
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        className="space-y-6"
+      >
+        <div className="rounded-2xl border bg-gradient-to-br from-primary/5 via-background to-background p-5 md:p-6 shadow-sm">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <Link href="/projection">
+                <Button variant="ghost" size="icon" className="mt-1"><ArrowLeft className="h-5 w-5" /></Button>
+              </Link>
+              <div>
+                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary/80">
+                  <Sparkles className="h-3.5 w-3.5" /> Projection workspace
+                </div>
+                <h1 className="text-3xl md:text-4xl font-bold tracking-tight mt-1">{headerName}</h1>
+                <p className="text-muted-foreground mt-1.5 text-sm">Departmental cost engineering · per-client unit economics · price-to-margin modelling</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4 md:min-w-[520px]">
+              <div className="space-y-1.5">
+                <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Year label</Label>
+                <Input
+                  key={`yl-${activeProjection?.id}`}
+                  defaultValue={activeProjection?.yearLabel ?? ""}
+                  onBlur={(e) => handleUpdateProjectionSettings("yearLabel", e.target.value)}
+                  className="h-10 bg-background"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Fiscal year</Label>
+                <Input
+                  type="number"
+                  min="2020"
+                  max="2099"
+                  key={`fy-${activeProjection?.id}`}
+                  defaultValue={activeProjection?.fiscalYear ?? new Date().getFullYear()}
+                  onBlur={(e) => handleUpdateProjectionSettings("fiscalYear", parseInt(e.target.value))}
+                  className="h-10 bg-background tabular-nums"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Duration (yrs)</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="10"
+                  step="0.5"
+                  key={`dy-${activeProjection?.id}`}
+                  defaultValue={activeProjection?.durationYears ?? 1}
+                  onBlur={(e) => handleUpdateProjectionSettings("durationYears", parseFloat(e.target.value))}
+                  className="h-10 bg-background tabular-nums"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">VAT %</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.5"
+                  key={`vat-${activeProjection?.id}`}
+                  defaultValue={activeProjection?.vatRate ?? 15}
+                  onBlur={(e) => handleUpdateProjectionSettings("vatRate", parseFloat(e.target.value))}
+                  className="h-10 bg-background tabular-nums"
+                />
+              </div>
+            </div>
           </div>
         </div>
         {summary && (() => {
@@ -321,42 +459,45 @@ export default function Projection() {
           const engUnit = months === 1 ? "month" : `${months} mo`;
           return (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-              <Card className="border-l-4 border-l-slate-400 dark:border-l-slate-500">
-                <CardContent className="pt-5 pb-4">
-                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Department Cost</div>
-                  <div className="mt-2 text-2xl font-bold tabular-nums">{formatCurrency(totalCostMonthly)}<span className="text-xs font-medium text-muted-foreground ml-1">/ mo</span></div>
-                  <div className="text-xs text-muted-foreground mt-1 tabular-nums">{formatCurrency(totalCostEngagement)} over {engUnit}</div>
-                  <div className="text-[10px] text-muted-foreground mt-1.5">All team salaries + overheads (what we spend)</div>
-                </CardContent>
-              </Card>
-              <Card className="border-l-4 border-l-primary">
-                <CardContent className="pt-5 pb-4">
-                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Revenue (Monthly)</div>
-                  <div className="mt-2 text-2xl font-bold text-primary tabular-nums">{formatCurrency(summary.sellingPriceWithoutVat * (activeProjection?.numClients || 1))}<span className="text-xs font-medium text-muted-foreground ml-1">/ mo</span></div>
-                  <div className="text-xs text-muted-foreground mt-1 tabular-nums">{formatCurrency(summary.sellingPriceWithoutVat)} × {activeProjection?.numClients} clients</div>
-                  <div className="text-[10px] text-muted-foreground mt-1.5">Selling price excl. VAT, all clients combined</div>
-                </CardContent>
-              </Card>
-              <Card className="border-l-4 border-l-primary">
-                <CardContent className="pt-5 pb-4">
-                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Revenue (Engagement)</div>
-                  <div className="mt-2 text-2xl font-bold text-primary tabular-nums">{formatCurrency(summary.sellingPriceWithoutVatYearly * (activeProjection?.numClients || 1))}<span className="text-xs font-medium text-muted-foreground ml-1">/ {engUnit}</span></div>
-                  <div className="text-xs text-muted-foreground mt-1 tabular-nums">{formatCurrency(summary.sellingPriceWithoutVatYearly)} × {activeProjection?.numClients} clients</div>
-                  <div className="text-[10px] text-muted-foreground mt-1.5">Selling price excl. VAT over the {engUnit} engagement</div>
-                </CardContent>
-              </Card>
-              <Card className="border-l-4 border-l-amber-500">
-                <CardContent className="pt-5 pb-4">
-                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">VAT (15%)</div>
-                  <div className="mt-2 text-2xl font-bold text-amber-600 dark:text-amber-400 tabular-nums">{formatCurrency(vatEngagement * (activeProjection?.numClients || 1))}<span className="text-xs font-medium text-muted-foreground ml-1">/ {engUnit}</span></div>
-                  <div className="text-xs text-muted-foreground mt-1 tabular-nums">{formatCurrency(vatMonthly * (activeProjection?.numClients || 1))} / month</div>
-                  <div className="text-[10px] text-muted-foreground mt-1.5">Charge incl. VAT: <span className="tabular-nums font-medium">{formatCurrency(summary.sellingPriceWithVatYearly * (activeProjection?.numClients || 1))}</span> / {engUnit}</div>
-                </CardContent>
-              </Card>
+              {[
+                { tone: "slate", icon: Wallet, label: "Total Department Cost", primary: formatCurrency(totalCostMonthly), unit: "/ mo", sub: `${formatCurrency(totalCostEngagement)} over ${engUnit}`, hint: "All team salaries + overheads (what we spend)" },
+                { tone: "emerald", icon: TrendingUp, label: "Revenue · Monthly", primary: formatCurrency(summary.sellingPriceWithoutVat * (activeProjection?.numClients || 1)), unit: "/ mo", sub: `${formatCurrency(summary.sellingPriceWithoutVat)} × ${activeProjection?.numClients} clients`, hint: "Selling price excl. VAT, all clients combined" },
+                { tone: "indigo", icon: TrendingUp, label: `Revenue · ${engUnit}`, primary: formatCurrency(summary.sellingPriceWithoutVatYearly * (activeProjection?.numClients || 1)), unit: `/ ${engUnit}`, sub: `${formatCurrency(summary.sellingPriceWithoutVatYearly)} × ${activeProjection?.numClients} clients`, hint: `Selling price excl. VAT over the ${engUnit} engagement` },
+                { tone: "amber", icon: Receipt, label: `VAT (${activeProjection?.vatRate ?? 15}%)`, primary: formatCurrency(vatEngagement * (activeProjection?.numClients || 1)), unit: `/ ${engUnit}`, sub: `${formatCurrency(vatMonthly * (activeProjection?.numClients || 1))} / month`, hint: `Charge incl. VAT: ${formatCurrency(summary.sellingPriceWithVatYearly * (activeProjection?.numClients || 1))} / ${engUnit}` },
+              ].map((kpi, i) => {
+                const toneMap: Record<string, { ring: string; text: string; gradient: string; iconBg: string }> = {
+                  slate: { ring: "ring-slate-200/60 dark:ring-slate-700/60", text: "text-slate-700 dark:text-slate-200", gradient: "from-slate-100/70 via-background to-background dark:from-slate-800/40", iconBg: "bg-slate-500/10 text-slate-600 dark:text-slate-300" },
+                  emerald: { ring: "ring-emerald-200/60 dark:ring-emerald-700/40", text: "text-emerald-700 dark:text-emerald-300", gradient: "from-emerald-100/70 via-background to-background dark:from-emerald-900/30", iconBg: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300" },
+                  indigo: { ring: "ring-indigo-200/60 dark:ring-indigo-700/40", text: "text-indigo-700 dark:text-indigo-300", gradient: "from-indigo-100/70 via-background to-background dark:from-indigo-900/30", iconBg: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-300" },
+                  amber: { ring: "ring-amber-200/60 dark:ring-amber-700/40", text: "text-amber-700 dark:text-amber-300", gradient: "from-amber-100/70 via-background to-background dark:from-amber-900/30", iconBg: "bg-amber-500/10 text-amber-600 dark:text-amber-300" },
+                };
+                const t = toneMap[kpi.tone];
+                const Icon = kpi.icon;
+                return (
+                  <motion.div
+                    key={kpi.label}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.35, delay: 0.05 * i }}
+                  >
+                    <Card className={`relative overflow-hidden ring-1 ${t.ring} bg-gradient-to-br ${t.gradient} shadow-sm hover:shadow-md transition-shadow`}>
+                      <CardContent className="pt-5 pb-4">
+                        <div className="flex items-start justify-between">
+                          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{kpi.label}</div>
+                          <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${t.iconBg}`}><Icon className="h-4 w-4" /></div>
+                        </div>
+                        <div className={`mt-3 text-2xl font-bold tabular-nums ${t.text}`}>{kpi.primary}<span className="text-xs font-medium text-muted-foreground ml-1">{kpi.unit}</span></div>
+                        <div className="text-xs text-muted-foreground mt-1 tabular-nums">{kpi.sub}</div>
+                        <div className="text-[10px] text-muted-foreground mt-1.5 leading-snug">{kpi.hint}</div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                );
+              })}
             </div>
           );
         })()}
-      </div>
+      </motion.div>
 
       {/* Global Settings */}
       <Card>
@@ -836,6 +977,180 @@ export default function Projection() {
                   <TableRow>
                     <TableCell colSpan={10} className="h-24 text-center text-muted-foreground">No sales support resources added.</TableCell>
                   </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Vendor Setup Fees */}
+      <Card className="overflow-hidden">
+        <CardHeader className="pb-4 flex flex-row items-start justify-between gap-4">
+          <div>
+            <CardTitle className="flex items-center gap-2"><Building2 className="h-5 w-5 text-primary" /> Vendor Setup Fees</CardTitle>
+            <CardDescription className="mt-1">One-off vendor onboarding & implementation costs, amortized across the engagement.</CardDescription>
+          </div>
+          <Button onClick={handleAddVendor} size="sm" className="shrink-0"><Plus className="h-4 w-4 mr-1.5" /> Add line</Button>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/40">
+                  <TableHead>Name</TableHead>
+                  <TableHead>Vendor</TableHead>
+                  <TableHead>Currency</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="text-right">Amortize (mo)</TableHead>
+                  <TableHead className="text-right">Margin %</TableHead>
+                  <TableHead className="text-right">Monthly cost (SAR)</TableHead>
+                  <TableHead className="text-right">Selling / mo</TableHead>
+                  <TableHead></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {vendorSetupFees?.map((v) => {
+                  const fxToSar = (cur: string) => {
+                    if (cur === "SAR") return 1;
+                    if (cur === "USD") return activeProjection?.sarRate ?? 3.75;
+                    const c = currencies?.find(x => x.code === cur);
+                    return c?.rateToSar ?? 1;
+                  };
+                  const sarAmount = (v.amount || 0) * fxToSar(v.currency || "SAR");
+                  const months = Math.max(1, v.amortizeMonths || 1);
+                  const monthlyCost = sarAmount / months;
+                  const sellingMonthly = computeSellingPrice(monthlyCost, v.marginPercent ?? 0);
+                  return (
+                    <TableRow key={v.id}>
+                      <TableCell className="p-2"><Input defaultValue={v.name} onBlur={(e) => handleUpdateVendor(v.id, "name", e.target.value)} className="h-9" /></TableCell>
+                      <TableCell className="p-2"><Input defaultValue={v.vendorName ?? ""} onBlur={(e) => handleUpdateVendor(v.id, "vendorName", e.target.value)} className="h-9" placeholder="e.g. AWS, Microsoft" /></TableCell>
+                      <TableCell className="p-2">
+                        <Select value={v.currency || "SAR"} onValueChange={(val) => handleUpdateVendor(v.id, "currency", val)}>
+                          <SelectTrigger className="h-9 w-24"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {(currencies && currencies.length > 0 ? currencies.map(c => c.code) : ["SAR", "USD"]).map(code => (
+                              <SelectItem key={code} value={code}>{code}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell className="p-2"><Input type="number" step="0.01" defaultValue={v.amount} onBlur={(e) => handleUpdateVendor(v.id, "amount", parseFloat(e.target.value))} className="h-9 text-right tabular-nums" /></TableCell>
+                      <TableCell className="p-2"><Input type="number" min="1" step="1" defaultValue={v.amortizeMonths} onBlur={(e) => handleUpdateVendor(v.id, "amortizeMonths", parseInt(e.target.value))} className="h-9 text-right tabular-nums" /></TableCell>
+                      <TableCell className="p-2"><Input type="number" step="0.5" defaultValue={v.marginPercent} onBlur={(e) => handleUpdateVendor(v.id, "marginPercent", parseFloat(e.target.value))} className="h-9 text-right tabular-nums" /></TableCell>
+                      <TableCell className="p-2 text-right font-mono text-sm text-muted-foreground tabular-nums">{formatCurrency(monthlyCost)}</TableCell>
+                      <TableCell className="p-2 text-right font-bold text-primary tabular-nums">{formatCurrency(sellingMonthly)}</TableCell>
+                      <TableCell className="p-2 text-right">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteVendor(v.id)}><Trash className="h-4 w-4" /></Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+                {!vendorSetupFees?.length && (
+                  <TableRow><TableCell colSpan={9} className="h-20 text-center text-muted-foreground">No vendor setup fees yet. Add your first line to amortize one-off costs.</TableCell></TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Infrastructure Costs */}
+      <Card className="overflow-hidden">
+        <CardHeader className="pb-4 flex flex-row items-start justify-between gap-4">
+          <div>
+            <CardTitle className="flex items-center gap-2"><Server className="h-5 w-5 text-primary" /> Infrastructure Costs</CardTitle>
+            <CardDescription className="mt-1">Recurring infrastructure (compute, storage, SaaS, networking) with billing cycle, margin and allocation basis.</CardDescription>
+          </div>
+          <Button onClick={handleAddInfra} size="sm" className="shrink-0"><Plus className="h-4 w-4 mr-1.5" /> Add line</Button>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/40">
+                  <TableHead>Name</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Currency</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead>Billing</TableHead>
+                  <TableHead>Allocation</TableHead>
+                  <TableHead className="text-right">Margin %</TableHead>
+                  <TableHead className="text-right">Monthly cost (SAR)</TableHead>
+                  <TableHead className="text-right">Selling / mo</TableHead>
+                  <TableHead></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {infrastructureCosts?.map((line) => {
+                  const fxToSar = (cur: string) => {
+                    if (cur === "SAR") return 1;
+                    if (cur === "USD") return activeProjection?.sarRate ?? 3.75;
+                    const c = currencies?.find(x => x.code === cur);
+                    return c?.rateToSar ?? 1;
+                  };
+                  const sarAmount = (line.amount || 0) * fxToSar(line.currency || "SAR");
+                  const cycle = line.billingCycle || "monthly";
+                  const engagementMonths = summary?.engagementMonths || 12;
+                  const monthlyCost = cycle === "monthly" ? sarAmount : cycle === "annual" ? sarAmount / 12 : sarAmount / Math.max(1, engagementMonths);
+                  const sellingMonthly = computeSellingPrice(monthlyCost, line.marginPercent ?? 0);
+                  return (
+                    <TableRow key={line.id}>
+                      <TableCell className="p-2"><Input defaultValue={line.name} onBlur={(e) => handleUpdateInfra(line.id, "name", e.target.value)} className="h-9" /></TableCell>
+                      <TableCell className="p-2">
+                        <Select value={line.category || "compute"} onValueChange={(val) => handleUpdateInfra(line.id, "category", val)}>
+                          <SelectTrigger className="h-9 w-32"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="compute">Compute</SelectItem>
+                            <SelectItem value="storage">Storage</SelectItem>
+                            <SelectItem value="network">Network</SelectItem>
+                            <SelectItem value="saas">SaaS</SelectItem>
+                            <SelectItem value="security">Security</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell className="p-2">
+                        <Select value={line.currency || "SAR"} onValueChange={(val) => handleUpdateInfra(line.id, "currency", val)}>
+                          <SelectTrigger className="h-9 w-24"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {(currencies && currencies.length > 0 ? currencies.map(c => c.code) : ["SAR", "USD"]).map(code => (
+                              <SelectItem key={code} value={code}>{code}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell className="p-2"><Input type="number" step="0.01" defaultValue={line.amount} onBlur={(e) => handleUpdateInfra(line.id, "amount", parseFloat(e.target.value))} className="h-9 text-right tabular-nums" /></TableCell>
+                      <TableCell className="p-2">
+                        <Select value={cycle} onValueChange={(val) => handleUpdateInfra(line.id, "billingCycle", val)}>
+                          <SelectTrigger className="h-9 w-32"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="monthly">Monthly</SelectItem>
+                            <SelectItem value="annual">Annual</SelectItem>
+                            <SelectItem value="one_time">One-time</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell className="p-2">
+                        <Select value={line.allocationBasis || "shared"} onValueChange={(val) => handleUpdateInfra(line.id, "allocationBasis", val)}>
+                          <SelectTrigger className="h-9 w-32" title="Shared = pooled across all clients. Per-client = cost is incurred per client."><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="shared">Shared</SelectItem>
+                            <SelectItem value="per_client">Per-client</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell className="p-2"><Input type="number" step="0.5" defaultValue={line.marginPercent} onBlur={(e) => handleUpdateInfra(line.id, "marginPercent", parseFloat(e.target.value))} className="h-9 text-right tabular-nums" /></TableCell>
+                      <TableCell className="p-2 text-right font-mono text-sm text-muted-foreground tabular-nums">{formatCurrency(monthlyCost)}</TableCell>
+                      <TableCell className="p-2 text-right font-bold text-primary tabular-nums">{formatCurrency(sellingMonthly)}</TableCell>
+                      <TableCell className="p-2 text-right">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteInfra(line.id)}><Trash className="h-4 w-4" /></Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+                {!infrastructureCosts?.length && (
+                  <TableRow><TableCell colSpan={10} className="h-20 text-center text-muted-foreground">No infrastructure lines yet. Add cloud/SaaS/networking costs to model recurring overhead.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>

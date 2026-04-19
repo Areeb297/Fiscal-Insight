@@ -5,6 +5,8 @@ import {
   employeesTable,
   subscriptionsTable,
   salesSupportResourcesTable,
+  vendorSetupFeesTable,
+  infrastructureCostsTable,
   quotationsTable,
   ctcRulesTable,
   currenciesTable,
@@ -34,12 +36,22 @@ router.get("/dashboard/summary", async (_req, res): Promise<void> => {
       .select()
       .from(salesSupportResourcesTable)
       .where(eq(salesSupportResourcesTable.projectionId, p.id));
+    const vendorSetupFees = await db
+      .select()
+      .from(vendorSetupFeesTable)
+      .where(eq(vendorSetupFeesTable.projectionId, p.id));
+    const infrastructureCosts = await db
+      .select()
+      .from(infrastructureCostsTable)
+      .where(eq(infrastructureCostsTable.projectionId, p.id));
 
     const scenario = computeScenario({
       projection: p,
       employees,
       subscriptions: subs,
       salesResources,
+      vendorSetupFees,
+      infrastructureCosts,
       ctcRules,
       currencies,
     });
@@ -102,11 +114,21 @@ router.get("/dashboard/summary", async (_req, res): Promise<void> => {
       .select()
       .from(salesSupportResourcesTable)
       .where(eq(salesSupportResourcesTable.projectionId, p.id));
+    const vendorSetupFees = await db
+      .select()
+      .from(vendorSetupFeesTable)
+      .where(eq(vendorSetupFeesTable.projectionId, p.id));
+    const infrastructureCosts = await db
+      .select()
+      .from(infrastructureCostsTable)
+      .where(eq(infrastructureCostsTable.projectionId, p.id));
     const sc = computeScenario({
       projection: p,
       employees,
       subscriptions: subs,
       salesResources,
+      vendorSetupFees,
+      infrastructureCosts,
       ctcRules,
       currencies,
     });

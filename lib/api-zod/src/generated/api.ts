@@ -24,6 +24,9 @@ export const ListProjectionsResponseItem = zod.object({
   sarRate: zod.number(),
   numClients: zod.number(),
   marginPercent: zod.number(),
+  fiscalYear: zod.string(),
+  durationYears: zod.number(),
+  vatRate: zod.number(),
   createdAt: zod.string(),
   updatedAt: zod.string(),
 });
@@ -35,6 +38,9 @@ export const ListProjectionsResponse = zod.array(ListProjectionsResponseItem);
 export const CreateProjectionBody = zod.object({
   name: zod.string().nullish(),
   yearLabel: zod.string(),
+  fiscalYear: zod.string().optional(),
+  durationYears: zod.number().optional(),
+  vatRate: zod.number().optional(),
   sarRate: zod.number().optional(),
   numClients: zod.number().optional(),
   marginPercent: zod.number().optional(),
@@ -54,6 +60,9 @@ export const GetProjectionResponse = zod.object({
   sarRate: zod.number(),
   numClients: zod.number(),
   marginPercent: zod.number(),
+  fiscalYear: zod.string(),
+  durationYears: zod.number(),
+  vatRate: zod.number(),
   createdAt: zod.string(),
   updatedAt: zod.string(),
 });
@@ -68,6 +77,9 @@ export const UpdateProjectionParams = zod.object({
 export const UpdateProjectionBody = zod.object({
   name: zod.string().nullish(),
   yearLabel: zod.string().optional(),
+  fiscalYear: zod.string().optional(),
+  durationYears: zod.number().optional(),
+  vatRate: zod.number().optional(),
   sarRate: zod.number().optional(),
   numClients: zod.number().optional(),
   marginPercent: zod.number().optional(),
@@ -80,6 +92,9 @@ export const UpdateProjectionResponse = zod.object({
   sarRate: zod.number(),
   numClients: zod.number(),
   marginPercent: zod.number(),
+  fiscalYear: zod.string(),
+  durationYears: zod.number(),
+  vatRate: zod.number(),
   createdAt: zod.string(),
   updatedAt: zod.string(),
 });
@@ -106,6 +121,9 @@ export const GetProjectionSummaryResponse = zod.object({
     sarRate: zod.number(),
     numClients: zod.number(),
     marginPercent: zod.number(),
+    fiscalYear: zod.string(),
+    durationYears: zod.number(),
+    vatRate: zod.number(),
     createdAt: zod.string(),
     updatedAt: zod.string(),
   }),
@@ -142,9 +160,20 @@ export const GetProjectionSummaryResponse = zod.object({
   sellingPriceWithVatYearly: zod.number(),
   salesSupportTotalCost: zod.number(),
   salesSupportSellingPrice: zod.number(),
+  vendorSetupTotalCost: zod.number().optional(),
+  vendorSetupMonthlyAmortized: zod.number().optional(),
+  vendorSetupSellingPriceMonthly: zod.number().optional(),
+  vendorSetupPerClientMonthly: zod.number().optional(),
+  infrastructureMonthlyCost: zod.number().optional(),
+  infrastructureSellingPriceMonthly: zod.number().optional(),
+  infrastructurePerClientMonthly: zod.number().optional(),
+  durationYears: zod.number().optional(),
+  vatRate: zod.number().optional(),
   employeeCount: zod.number(),
   subscriptionCount: zod.number(),
   salesSupportCount: zod.number(),
+  vendorSetupCount: zod.number().optional(),
+  infrastructureCount: zod.number().optional(),
 });
 
 /**
@@ -470,6 +499,172 @@ export const UpdateSalesSupportResourceResponse = zod.object({
  * @summary Remove sales support resource
  */
 export const DeleteSalesSupportResourceParams = zod.object({
+  projectionId: zod.coerce.number(),
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary List vendor setup fees
+ */
+export const ListVendorSetupFeesParams = zod.object({
+  projectionId: zod.coerce.number(),
+});
+
+export const ListVendorSetupFeesResponseItem = zod.object({
+  id: zod.number(),
+  projectionId: zod.number(),
+  name: zod.string(),
+  vendorName: zod.string(),
+  currency: zod.string(),
+  amount: zod.number(),
+  amortizeMonths: zod.number(),
+  marginPercent: zod.number(),
+  notes: zod.string().nullish(),
+  createdAt: zod.string(),
+});
+export const ListVendorSetupFeesResponse = zod.array(
+  ListVendorSetupFeesResponseItem,
+);
+
+/**
+ * @summary Add vendor setup fee
+ */
+export const CreateVendorSetupFeeParams = zod.object({
+  projectionId: zod.coerce.number(),
+});
+
+export const CreateVendorSetupFeeBody = zod.object({
+  name: zod.string(),
+  vendorName: zod.string().optional(),
+  currency: zod.string().optional(),
+  amount: zod.number().optional(),
+  amortizeMonths: zod.number().optional(),
+  marginPercent: zod.number().optional(),
+  notes: zod.string().nullish(),
+});
+
+/**
+ * @summary Update vendor setup fee
+ */
+export const UpdateVendorSetupFeeParams = zod.object({
+  projectionId: zod.coerce.number(),
+  id: zod.coerce.number(),
+});
+
+export const UpdateVendorSetupFeeBody = zod.object({
+  name: zod.string().optional(),
+  vendorName: zod.string().optional(),
+  currency: zod.string().optional(),
+  amount: zod.number().optional(),
+  amortizeMonths: zod.number().optional(),
+  marginPercent: zod.number().optional(),
+  notes: zod.string().nullish(),
+});
+
+export const UpdateVendorSetupFeeResponse = zod.object({
+  id: zod.number(),
+  projectionId: zod.number(),
+  name: zod.string(),
+  vendorName: zod.string(),
+  currency: zod.string(),
+  amount: zod.number(),
+  amortizeMonths: zod.number(),
+  marginPercent: zod.number(),
+  notes: zod.string().nullish(),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary Remove vendor setup fee
+ */
+export const DeleteVendorSetupFeeParams = zod.object({
+  projectionId: zod.coerce.number(),
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary List infrastructure costs
+ */
+export const ListInfrastructureCostsParams = zod.object({
+  projectionId: zod.coerce.number(),
+});
+
+export const ListInfrastructureCostsResponseItem = zod.object({
+  id: zod.number(),
+  projectionId: zod.number(),
+  name: zod.string(),
+  category: zod.string(),
+  currency: zod.string(),
+  amount: zod.number(),
+  billingCycle: zod.enum(["monthly", "annual", "one_time"]),
+  marginPercent: zod.number(),
+  allocationBasis: zod.enum(["shared", "per_client"]),
+  assignedClientCount: zod.number().nullish(),
+  notes: zod.string().nullish(),
+  createdAt: zod.string(),
+});
+export const ListInfrastructureCostsResponse = zod.array(
+  ListInfrastructureCostsResponseItem,
+);
+
+/**
+ * @summary Add infrastructure cost
+ */
+export const CreateInfrastructureCostParams = zod.object({
+  projectionId: zod.coerce.number(),
+});
+
+export const CreateInfrastructureCostBody = zod.object({
+  name: zod.string(),
+  category: zod.string().optional(),
+  currency: zod.string().optional(),
+  amount: zod.number().optional(),
+  billingCycle: zod.enum(["monthly", "annual", "one_time"]).optional(),
+  marginPercent: zod.number().optional(),
+  allocationBasis: zod.enum(["shared", "per_client"]).optional(),
+  assignedClientCount: zod.number().nullish(),
+  notes: zod.string().nullish(),
+});
+
+/**
+ * @summary Update infrastructure cost
+ */
+export const UpdateInfrastructureCostParams = zod.object({
+  projectionId: zod.coerce.number(),
+  id: zod.coerce.number(),
+});
+
+export const UpdateInfrastructureCostBody = zod.object({
+  name: zod.string().optional(),
+  category: zod.string().optional(),
+  currency: zod.string().optional(),
+  amount: zod.number().optional(),
+  billingCycle: zod.enum(["monthly", "annual", "one_time"]).optional(),
+  marginPercent: zod.number().optional(),
+  allocationBasis: zod.enum(["shared", "per_client"]).optional(),
+  assignedClientCount: zod.number().nullish(),
+  notes: zod.string().nullish(),
+});
+
+export const UpdateInfrastructureCostResponse = zod.object({
+  id: zod.number(),
+  projectionId: zod.number(),
+  name: zod.string(),
+  category: zod.string(),
+  currency: zod.string(),
+  amount: zod.number(),
+  billingCycle: zod.enum(["monthly", "annual", "one_time"]),
+  marginPercent: zod.number(),
+  allocationBasis: zod.enum(["shared", "per_client"]),
+  assignedClientCount: zod.number().nullish(),
+  notes: zod.string().nullish(),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary Remove infrastructure cost
+ */
+export const DeleteInfrastructureCostParams = zod.object({
   projectionId: zod.coerce.number(),
   id: zod.coerce.number(),
 });
@@ -841,6 +1036,9 @@ export const GetDashboardSummaryResponse = zod.object({
         sarRate: zod.number(),
         numClients: zod.number(),
         marginPercent: zod.number(),
+        fiscalYear: zod.string(),
+        durationYears: zod.number(),
+        vatRate: zod.number(),
         createdAt: zod.string(),
         updatedAt: zod.string(),
       }),
@@ -877,9 +1075,20 @@ export const GetDashboardSummaryResponse = zod.object({
       sellingPriceWithVatYearly: zod.number(),
       salesSupportTotalCost: zod.number(),
       salesSupportSellingPrice: zod.number(),
+      vendorSetupTotalCost: zod.number().optional(),
+      vendorSetupMonthlyAmortized: zod.number().optional(),
+      vendorSetupSellingPriceMonthly: zod.number().optional(),
+      vendorSetupPerClientMonthly: zod.number().optional(),
+      infrastructureMonthlyCost: zod.number().optional(),
+      infrastructureSellingPriceMonthly: zod.number().optional(),
+      infrastructurePerClientMonthly: zod.number().optional(),
+      durationYears: zod.number().optional(),
+      vatRate: zod.number().optional(),
       employeeCount: zod.number(),
       subscriptionCount: zod.number(),
       salesSupportCount: zod.number(),
+      vendorSetupCount: zod.number().optional(),
+      infrastructureCount: zod.number().optional(),
     })
     .optional(),
   recentQuotations: zod.array(

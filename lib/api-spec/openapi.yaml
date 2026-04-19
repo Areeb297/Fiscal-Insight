@@ -12,6 +12,8 @@ tags:
   - name: employees
   - name: subscriptions
   - name: salesSupport
+  - name: vendorSetupFees
+  - name: infrastructureCosts
   - name: quotations
   - name: admin
   - name: chat
@@ -398,6 +400,190 @@ paths:
       operationId: deleteSalesSupportResource
       tags: [salesSupport]
       summary: Remove sales support resource
+      parameters:
+        - name: projectionId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /projections/{projectionId}/vendor-setup-fees:
+    get:
+      operationId: listVendorSetupFees
+      tags: [vendorSetupFees]
+      summary: List vendor setup fees
+      parameters:
+        - name: projectionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VendorSetupFee"
+    post:
+      operationId: createVendorSetupFee
+      tags: [vendorSetupFees]
+      summary: Add vendor setup fee
+      parameters:
+        - name: projectionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateVendorSetupFeeBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VendorSetupFee"
+
+  /projections/{projectionId}/vendor-setup-fees/{id}:
+    put:
+      operationId: updateVendorSetupFee
+      tags: [vendorSetupFees]
+      summary: Update vendor setup fee
+      parameters:
+        - name: projectionId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateVendorSetupFeeBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VendorSetupFee"
+    delete:
+      operationId: deleteVendorSetupFee
+      tags: [vendorSetupFees]
+      summary: Remove vendor setup fee
+      parameters:
+        - name: projectionId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /projections/{projectionId}/infrastructure-costs:
+    get:
+      operationId: listInfrastructureCosts
+      tags: [infrastructureCosts]
+      summary: List infrastructure costs
+      parameters:
+        - name: projectionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InfrastructureCost"
+    post:
+      operationId: createInfrastructureCost
+      tags: [infrastructureCosts]
+      summary: Add infrastructure cost
+      parameters:
+        - name: projectionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInfrastructureCostBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InfrastructureCost"
+
+  /projections/{projectionId}/infrastructure-costs/{id}:
+    put:
+      operationId: updateInfrastructureCost
+      tags: [infrastructureCosts]
+      summary: Update infrastructure cost
+      parameters:
+        - name: projectionId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateInfrastructureCostBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InfrastructureCost"
+    delete:
+      operationId: deleteInfrastructureCost
+      tags: [infrastructureCosts]
+      summary: Remove infrastructure cost
       parameters:
         - name: projectionId
           in: path
@@ -820,11 +1006,17 @@ components:
           type: integer
         marginPercent:
           type: number
+        fiscalYear:
+          type: string
+        durationYears:
+          type: integer
+        vatRate:
+          type: number
         createdAt:
           type: string
         updatedAt:
           type: string
-      required: [id, yearLabel, sarRate, numClients, marginPercent, createdAt, updatedAt]
+      required: [id, yearLabel, sarRate, numClients, marginPercent, fiscalYear, durationYears, vatRate, createdAt, updatedAt]
 
     CreateProjectionBody:
       type: object
@@ -834,6 +1026,12 @@ components:
           nullable: true
         yearLabel:
           type: string
+        fiscalYear:
+          type: string
+        durationYears:
+          type: integer
+        vatRate:
+          type: number
         sarRate:
           type: number
         numClients:
@@ -850,6 +1048,12 @@ components:
           nullable: true
         yearLabel:
           type: string
+        fiscalYear:
+          type: string
+        durationYears:
+          type: integer
+        vatRate:
+          type: number
         sarRate:
           type: number
         numClients:
@@ -1082,6 +1286,157 @@ components:
           nullable: true
         includeInTotals:
           type: boolean
+
+    VendorSetupFee:
+      type: object
+      properties:
+        id:
+          type: integer
+        projectionId:
+          type: integer
+        name:
+          type: string
+        vendorName:
+          type: string
+        currency:
+          type: string
+        amount:
+          type: number
+        amortizeMonths:
+          type: integer
+        marginPercent:
+          type: number
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, projectionId, name, vendorName, currency, amount, amortizeMonths, marginPercent, createdAt]
+
+    CreateVendorSetupFeeBody:
+      type: object
+      properties:
+        name:
+          type: string
+        vendorName:
+          type: string
+        currency:
+          type: string
+        amount:
+          type: number
+        amortizeMonths:
+          type: integer
+        marginPercent:
+          type: number
+        notes:
+          type: string
+          nullable: true
+      required: [name]
+
+    UpdateVendorSetupFeeBody:
+      type: object
+      properties:
+        name:
+          type: string
+        vendorName:
+          type: string
+        currency:
+          type: string
+        amount:
+          type: number
+        amortizeMonths:
+          type: integer
+        marginPercent:
+          type: number
+        notes:
+          type: string
+          nullable: true
+
+    InfrastructureCost:
+      type: object
+      properties:
+        id:
+          type: integer
+        projectionId:
+          type: integer
+        name:
+          type: string
+        category:
+          type: string
+        currency:
+          type: string
+        amount:
+          type: number
+        billingCycle:
+          type: string
+          enum: [monthly, annual, one_time]
+        marginPercent:
+          type: number
+        allocationBasis:
+          type: string
+          enum: [shared, per_client]
+        assignedClientCount:
+          type: integer
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, projectionId, name, category, currency, amount, billingCycle, marginPercent, allocationBasis, createdAt]
+
+    CreateInfrastructureCostBody:
+      type: object
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+        currency:
+          type: string
+        amount:
+          type: number
+        billingCycle:
+          type: string
+          enum: [monthly, annual, one_time]
+        marginPercent:
+          type: number
+        allocationBasis:
+          type: string
+          enum: [shared, per_client]
+        assignedClientCount:
+          type: integer
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+      required: [name]
+
+    UpdateInfrastructureCostBody:
+      type: object
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+        currency:
+          type: string
+        amount:
+          type: number
+        billingCycle:
+          type: string
+          enum: [monthly, annual, one_time]
+        marginPercent:
+          type: number
+        allocationBasis:
+          type: string
+          enum: [shared, per_client]
+        assignedClientCount:
+          type: integer
+          nullable: true
+        notes:
+          type: string
+          nullable: true
 
     Quotation:
       type: object
@@ -1466,11 +1821,33 @@ components:
           type: number
         salesSupportSellingPrice:
           type: number
+        vendorSetupTotalCost:
+          type: number
+        vendorSetupMonthlyAmortized:
+          type: number
+        vendorSetupSellingPriceMonthly:
+          type: number
+        vendorSetupPerClientMonthly:
+          type: number
+        infrastructureMonthlyCost:
+          type: number
+        infrastructureSellingPriceMonthly:
+          type: number
+        infrastructurePerClientMonthly:
+          type: number
+        durationYears:
+          type: integer
+        vatRate:
+          type: number
         employeeCount:
           type: integer
         subscriptionCount:
           type: integer
         salesSupportCount:
+          type: integer
+        vendorSetupCount:
+          type: integer
+        infrastructureCount:
           type: integer
       required: [projection, totalDeptCostMonthly, totalDeptCostYearly, engagementMonths, costPerClientYearly, costPerClientMonthly, totalOverheadMonthly, totalOverheadYearly, totalMonthlyCostPerClient, overheadPerClientMonthly, overheadPerClientYearly, totalYearlyCostPerClient, oneTimeCostsTotal, recurringOverheadMonthly, sellingPriceWithoutVat, sellingPriceWithoutVatYearly, marginSarMonthly, marginSarYearly, sellingPriceWithVatMonthly, sellingPriceWithVatYearly, salesSupportTotalCost, salesSupportSellingPrice, employeeCount, subscriptionCount, salesSupportCount]
 

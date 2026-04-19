@@ -33,7 +33,18 @@ export interface ProjectionSummary {
   sellingPriceWithVatYearly: number;
   salesSupportTotalCost: number;
   salesSupportSellingPrice: number;
+  vendorSetupTotalCost?: number;
+  vendorSetupMonthlyAmortized?: number;
+  vendorSetupSellingPriceMonthly?: number;
+  vendorSetupPerClientMonthly?: number;
+  infrastructureMonthlyCost?: number;
+  infrastructureSellingPriceMonthly?: number;
+  infrastructurePerClientMonthly?: number;
+  durationYears?: number;
+  vatRate?: number;
   employeeCount: number;
   subscriptionCount: number;
   salesSupportCount: number;
+  vendorSetupCount?: number;
+  infrastructureCount?: number;
 }
