@@ -128,25 +128,28 @@ export default function Admin() {
   return (
     <div className="space-y-6 pb-24">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Administration</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Administration</h1>
         <p className="text-muted-foreground mt-1">Manage system settings, currencies, and calculation rules</p>
       </div>
 
       <Tabs defaultValue="settings" className="w-full">
-        <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent">
-          <TabsTrigger value="settings" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-6 py-3">
-            System Settings
-          </TabsTrigger>
-          <TabsTrigger value="currencies" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-6 py-3">
-            Currencies
-          </TabsTrigger>
-          <TabsTrigger value="ctcrules" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-6 py-3">
-            CTC Rules
-          </TabsTrigger>
-          <TabsTrigger value="users" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-6 py-3">
-            Users & Permissions
-          </TabsTrigger>
-        </TabsList>
+        {/* Scrollable on xs so tabs don't wrap/clip */}
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <TabsList className="w-max min-w-full justify-start border-b rounded-none h-auto p-0 bg-transparent">
+            <TabsTrigger value="settings" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 sm:px-6 py-3 whitespace-nowrap">
+              System Settings
+            </TabsTrigger>
+            <TabsTrigger value="currencies" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 sm:px-6 py-3 whitespace-nowrap">
+              Currencies
+            </TabsTrigger>
+            <TabsTrigger value="ctcrules" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 sm:px-6 py-3 whitespace-nowrap">
+              CTC Rules
+            </TabsTrigger>
+            <TabsTrigger value="users" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 sm:px-6 py-3 whitespace-nowrap">
+              Users &amp; Permissions
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="users" className="mt-6 space-y-6">
           <UsersPanel />
@@ -571,52 +574,63 @@ function UsersPanel() {
           </div>
         )}
         {users && (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((u) => (
-                <TableRow key={u.id}>
-                  <TableCell>{[u.firstName, u.lastName].filter(Boolean).join(" ") || "—"}</TableCell>
-                  <TableCell className="font-mono text-xs">{u.email ?? "—"}</TableCell>
-                  <TableCell>
-                    <span
-                      className={
-                        u.role === "admin"
-                          ? "inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
-                          : "inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
-                      }
-                    >
-                      {u.role}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right space-x-2 whitespace-nowrap">
-                    <Button size="sm" variant="outline" onClick={() => resetPassword(u.id, u.email)}>
-                      Reset password
-                    </Button>
-                    {u.role === "admin" ? (
-                      <Button size="sm" variant="outline" onClick={() => setRole(u.id, "user")}>
-                        Revoke admin
-                      </Button>
-                    ) : (
-                      <Button size="sm" variant="outline" onClick={() => setRole(u.id, "admin")}>
-                        Make admin
-                      </Button>
-                    )}
-                    <Button size="sm" variant="destructive" onClick={() => removeUser(u.id, u.email)}>
-                      Delete
-                    </Button>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead className="hidden sm:table-cell">Email</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {users.map((u) => (
+                  <TableRow key={u.id}>
+                    <TableCell>
+                      <div>{[u.firstName, u.lastName].filter(Boolean).join(" ") || "—"}</div>
+                      {/* Email visible on xs below the name */}
+                      <div className="sm:hidden text-xs text-muted-foreground font-mono truncate max-w-[140px]">{u.email ?? ""}</div>
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell font-mono text-xs">{u.email ?? "—"}</TableCell>
+                    <TableCell>
+                      <span
+                        className={
+                          u.role === "admin"
+                            ? "inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
+                            : "inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
+                        }
+                      >
+                        {u.role}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-1 flex-wrap">
+                        <Button size="sm" variant="outline" onClick={() => resetPassword(u.id, u.email)}>
+                          <span className="hidden sm:inline">Reset password</span>
+                          <span className="sm:hidden">Reset</span>
+                        </Button>
+                        {u.role === "admin" ? (
+                          <Button size="sm" variant="outline" onClick={() => setRole(u.id, "user")}>
+                            <span className="hidden sm:inline">Revoke admin</span>
+                            <span className="sm:hidden">Revoke</span>
+                          </Button>
+                        ) : (
+                          <Button size="sm" variant="outline" onClick={() => setRole(u.id, "admin")}>
+                            <span className="hidden sm:inline">Make admin</span>
+                            <span className="sm:hidden">Admin</span>
+                          </Button>
+                        )}
+                        <Button size="sm" variant="destructive" onClick={() => removeUser(u.id, u.email)}>
+                          Delete
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </CardContent>
     </Card>

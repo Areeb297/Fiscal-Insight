@@ -154,16 +154,16 @@ export default function QuotationsList() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Quotations</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Quotations</h1>
           <p className="text-muted-foreground mt-1">Manage client proposals and pricing</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setLocation("/quotations/new")}>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button variant="outline" className="w-full sm:w-auto" onClick={() => setLocation("/quotations/new")}>
             <Plus className="h-4 w-4 mr-2" /> New Quotation
           </Button>
-          <Button onClick={() => setFromProjectionOpen(true)}>
+          <Button className="w-full sm:w-auto" onClick={() => setFromProjectionOpen(true)}>
             <Sparkles className="h-4 w-4 mr-2" /> New From Projection
           </Button>
         </div>
@@ -188,10 +188,10 @@ export default function QuotationsList() {
                 <TableRow>
                   <TableHead>Number</TableHead>
                   <TableHead>Company</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead className="hidden md:table-cell">Client</TableHead>
+                  <TableHead className="hidden md:table-cell">Date</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Terms</TableHead>
+                  <TableHead className="hidden lg:table-cell">Terms</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -200,10 +200,10 @@ export default function QuotationsList() {
                   <TableRow key={q.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setLocation(`/quotations/${q.id}`)}>
                     <TableCell className="font-medium">{q.quotationNumber}</TableCell>
                     <TableCell>{q.companyName}</TableCell>
-                    <TableCell>{q.clientName}</TableCell>
-                    <TableCell>{format(new Date(q.date), "MMM d, yyyy")}</TableCell>
+                    <TableCell className="hidden md:table-cell">{q.clientName}</TableCell>
+                    <TableCell className="hidden md:table-cell">{format(new Date(q.date), "MMM d, yyyy")}</TableCell>
                     <TableCell>{getStatusBadge(q.status)}</TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
+                    <TableCell className="hidden lg:table-cell" onClick={(e) => e.stopPropagation()}>
                       {(() => {
                         const state = getTermsState(q.termsText);
                         if (state === "none") {

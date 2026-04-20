@@ -92,12 +92,12 @@ export default function Dashboard() {
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-32 w-full" />)}
         </div>
       ) : summary?.recentProjection ? (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">Selling Price (Engagement)</CardTitle>
@@ -146,7 +146,7 @@ export default function Dashboard() {
               </CardContent>
             </Card>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">Invoice #1 per Client</CardTitle>
@@ -208,7 +208,7 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 <ChartContainer
-                  className="h-[260px] w-full"
+                  className="h-[200px] sm:h-[220px] md:h-[240px] lg:h-[260px] w-full"
                   config={{ amount: { label: "SAR / mo", color: "hsl(var(--chart-1))" } } satisfies ChartConfig}
                 >
                   <BarChart data={summary.charts.costBreakdown} margin={{ left: 12, right: 12, bottom: 40 }}>
@@ -243,7 +243,7 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   <ChartContainer
-                    className="h-[260px] w-full"
+                    className="h-[200px] sm:h-[220px] md:h-[240px] lg:h-[260px] w-full"
                     config={Object.fromEntries(
                       summary.charts.headcountByCountry.map((row, i) => [
                         row.country,
@@ -289,7 +289,7 @@ export default function Dashboard() {
                     }));
                     return (
                       <ChartContainer
-                        className="h-[260px] w-full"
+                        className="h-[200px] sm:h-[220px] md:h-[240px] lg:h-[260px] w-full"
                         config={Object.fromEntries(
                           costData.map((r) => [r.country, { label: r.country, color: r.fill }])
                         ) satisfies ChartConfig}
@@ -325,7 +325,7 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 <ChartContainer
-                  className="h-[280px] w-full"
+                  className="h-[220px] sm:h-[240px] md:h-[260px] lg:h-[280px] w-full"
                   config={{
                     monthlyCost: { label: "Monthly Cost", color: "hsl(var(--chart-1))" },
                     monthlyRevenue: { label: "Monthly Revenue", color: "hsl(var(--chart-2))" },
@@ -363,7 +363,7 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 <ChartContainer
-                  className="h-[240px] w-full"
+                  className="h-[180px] sm:h-[200px] md:h-[220px] lg:h-[240px] w-full"
                   config={{ marginPercent: { label: "Margin %", color: "hsl(var(--chart-3))" } } satisfies ChartConfig}
                 >
                   <LineChart data={summary.charts.projectionTrend} margin={{ left: 12, right: 12 }}>
@@ -386,7 +386,7 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 <ChartContainer
-                  className="h-[260px] w-full"
+                  className="h-[200px] sm:h-[220px] md:h-[240px] lg:h-[260px] w-full"
                   config={{ amount: { label: "SAR / client / mo", color: "hsl(var(--chart-2))" } } satisfies ChartConfig}
                 >
                   <BarChart
@@ -413,7 +413,7 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 <ChartContainer
-                  className="h-[260px] w-full"
+                  className="h-[200px] sm:h-[220px] md:h-[240px] lg:h-[260px] w-full"
                   config={Object.fromEntries(
                     summary.charts.costAllocationBreakdown.map((row, i) => [
                       row.basis,
@@ -450,7 +450,7 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 <ChartContainer
-                  className="h-[260px] w-full"
+                  className="h-[200px] sm:h-[220px] md:h-[240px] lg:h-[260px] w-full"
                   config={{
                     cost: { label: "Cost", color: "hsl(var(--chart-1))" },
                     revenue: { label: "Revenue", color: "hsl(var(--chart-2))" },
@@ -488,7 +488,7 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 <ChartContainer
-                  className="h-[240px] w-full"
+                  className="h-[180px] sm:h-[200px] md:h-[220px] lg:h-[240px] w-full"
                   config={{ count: { label: "Count", color: "hsl(var(--chart-4))" } } satisfies ChartConfig}
                 >
                   <BarChart data={summary.charts.quotationsByStatus} margin={{ left: 12, right: 12 }}>

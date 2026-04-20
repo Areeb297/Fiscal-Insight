@@ -83,7 +83,7 @@ function MetricCard({
           <div className="min-w-0">
             <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-1">{label}</p>
             <p className={cn(
-              "text-2xl font-bold tabular-nums leading-none",
+              "text-lg sm:text-2xl font-bold tabular-nums leading-none",
               accent === "red" ? "text-red-600" : accent === "emerald" ? "text-emerald-600" : "text-foreground"
             )}>
               {value}
@@ -233,7 +233,7 @@ export default function InvoicesList() {
       </div>
 
       {/* ── KPI row ── */}
-      <div className="flex gap-4 flex-wrap">
+      <div className="grid grid-cols-3 gap-3 sm:flex sm:gap-4 sm:flex-wrap">
         <MetricCard
           label="Total Billed"
           value={`SAR ${fmtMoney(grandTotal)}`}
@@ -264,7 +264,7 @@ export default function InvoicesList() {
         </CardHeader>
         <Separator />
         <CardContent className="pt-4">
-          <div className="flex flex-wrap items-end gap-3">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3">
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Projection</label>
               <Select value={genProjId ? String(genProjId) : ""} onValueChange={(v) => setGenProjId(Number(v))}>
@@ -396,9 +396,9 @@ export default function InvoicesList() {
                   <TableRow className="bg-muted/40 hover:bg-muted/40">
                     <TableHead className="pl-6 w-36">Invoice #</TableHead>
                     <SortHead label="Client"  sortKey="client"       currentKey={sortKey} dir={sortDir} onSort={toggleSort} />
-                    <SortHead label="Month"   sortKey="billingMonth" currentKey={sortKey} dir={sortDir} onSort={toggleSort} />
-                    <SortHead label="Issued"  sortKey="issueDate"    currentKey={sortKey} dir={sortDir} onSort={toggleSort} />
-                    <SortHead label="Due"     sortKey="dueDate"      currentKey={sortKey} dir={sortDir} onSort={toggleSort} />
+                    <SortHead label="Month"   sortKey="billingMonth" currentKey={sortKey} dir={sortDir} onSort={toggleSort} className="hidden sm:table-cell" />
+                    <SortHead label="Issued"  sortKey="issueDate"    currentKey={sortKey} dir={sortDir} onSort={toggleSort} className="hidden lg:table-cell" />
+                    <SortHead label="Due"     sortKey="dueDate"      currentKey={sortKey} dir={sortDir} onSort={toggleSort} className="hidden md:table-cell" />
                     <TableHead>Status</TableHead>
                     <SortHead label="Total"   sortKey="amount"       currentKey={sortKey} dir={sortDir} onSort={toggleSort} className="text-right pr-6" />
                     <TableHead className="w-10" />
@@ -420,7 +420,7 @@ export default function InvoicesList() {
                           {inv.invoiceNumber}
                         </TableCell>
                         <TableCell className="font-medium text-sm">{inv.clientName}</TableCell>
-                        <TableCell>
+                        <TableCell className="hidden sm:table-cell">
                           <div className="flex items-center gap-2">
                             <span className="tabular-nums text-sm">{inv.billingMonth}</span>
                             <span className={cn(
@@ -433,8 +433,8 @@ export default function InvoicesList() {
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell className="tabular-nums text-sm text-muted-foreground">{inv.issueDate}</TableCell>
-                        <TableCell className="tabular-nums text-sm text-muted-foreground">{inv.dueDate}</TableCell>
+                        <TableCell className="hidden lg:table-cell tabular-nums text-sm text-muted-foreground">{inv.issueDate}</TableCell>
+                        <TableCell className="hidden md:table-cell tabular-nums text-sm text-muted-foreground">{inv.dueDate}</TableCell>
                         <TableCell onClick={(e) => e.stopPropagation()}>
                           <Select
                             value={inv.status}

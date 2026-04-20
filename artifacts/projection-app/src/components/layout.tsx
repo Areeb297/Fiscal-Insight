@@ -11,6 +11,7 @@ import {
   LogOut,
   ChevronRight,
 } from "lucide-react";
+import { BottomNav } from "@/components/layout/bottom-nav";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -150,17 +151,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           {/* Top bar */}
           <header className="h-14 flex items-center gap-3 px-4 border-b border-border bg-background/95 backdrop-blur-sm shrink-0">
-            <SidebarTrigger className="h-8 w-8 text-muted-foreground hover:text-foreground" />
-            <Separator orientation="vertical" className="h-5 opacity-40" />
+            {/* Sidebar trigger — desktop only; mobile uses bottom nav */}
+            <SidebarTrigger className="hidden md:flex h-8 w-8 text-muted-foreground hover:text-foreground" />
+            <Separator orientation="vertical" className="hidden md:block h-5 opacity-40" />
             <PageBreadcrumb />
           </header>
 
-          {/* Content */}
-          <main className="flex-1 overflow-y-auto">
+          {/* Content — pb-16 reserves space for mobile bottom nav */}
+          <main className="flex-1 overflow-y-auto pb-16 md:pb-0">
             <div className="w-full px-4 py-4">
               {children}
             </div>
-            <footer className="border-t border-border/50 py-3 px-6 text-center space-y-1">
+            <footer className="hidden sm:block border-t border-border/50 py-3 px-6 text-center space-y-1">
               <div className="flex items-center justify-center gap-2">
                 <span className="text-xs text-muted-foreground/70 font-medium">Powered by</span>
                 <img src="/onasi-logo.png" alt="Onasi" className="h-6 w-auto object-contain opacity-80" />
@@ -170,6 +172,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </main>
         </div>
       </div>
+
+      {/* Bottom navigation — xs/sm only (hidden md+) */}
+      <BottomNav />
     </SidebarProvider>
   );
 }

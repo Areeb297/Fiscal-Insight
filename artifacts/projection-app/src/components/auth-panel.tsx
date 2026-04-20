@@ -144,30 +144,6 @@ function ParticleCanvas({ rm }: { rm: boolean }) {
   );
 }
 
-/* ── scrolling ticker ───────────────────────────────────────────────── */
-const TICKER = [
-  "Revenue Growth: +18.4%","Gross Margin: 32.4%","Active FTEs: 48",
-  "Budget Utilization: 78%","Client Count: 12","Multi-region Ready",
-  "Q2 '26 Forecast: SAR 4.2M","Cost Variance: −2.1%","NPV: SAR 18.7M",
-  "EBITDA Margin: 22.6%","Headcount Plan: +6 hires",
-];
-const TICKER_STR = TICKER.map(t => `·  ${t}  `).join("   ");
-
-function TickerStrip() {
-  return (
-    <div style={{ position:"absolute",bottom:0,left:0,right:0,height:34,zIndex:30,
-      overflow:"hidden",display:"flex",alignItems:"center",
-      background:"rgba(4,14,28,0.7)",backdropFilter:"blur(4px)",
-      borderTop:`1px solid rgba(57,181,166,0.1)` }}>
-      <div style={{ display:"flex",animation:"ticker 36s linear infinite",whiteSpace:"nowrap" }}>
-        <span style={{ fontSize:9.5,color:"rgba(255,255,255,0.42)",fontFamily:"'DM Mono',monospace" }}>
-          {TICKER_STR}{TICKER_STR}
-        </span>
-      </div>
-    </div>
-  );
-}
-
 /* ── animated SVG chart ─────────────────────────────────────────────── */
 function AnimatedChart() {
   const rm = useReducedMotion();
@@ -458,25 +434,12 @@ export function AuthDecorativePanel() {
         </p>
       </div>
 
-      {/* ── ticker strip ── */}
-      <TickerStrip/>
-
       {/* ── main content — absolutely fills panel, centred vertically ── */}
       <div style={{ position:"absolute",inset:0,zIndex:10,display:"flex",flexDirection:"column",
         justifyContent:"center",padding:"82px 48px 78px",overflowY:"auto" }}>
 
         {/* headline block */}
         <motion.div {...fadeUp(0)} style={{ marginBottom:18 }}>
-
-          {/* live badge */}
-          <div style={{ display:"inline-flex",alignItems:"center",gap:7,padding:"4px 11px",
-            borderRadius:100,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",
-            marginBottom:16 }}>
-            <span style={{ width:6,height:6,borderRadius:"50%",background:"#34d399",
-              boxShadow:"0 0 8px rgba(52,211,153,0.75)",animation:"pulse 2s infinite" }}/>
-            <span style={{ fontSize:8.5,textTransform:"uppercase",letterSpacing:"0.2em",
-              color:"rgba(255,255,255,0.62)",fontFamily:"'DM Mono',monospace" }}>FY 2026 · Live</span>
-          </div>
 
           {/* heading — editorial fintech serif (Mercury / Ramp / Pipe register) */}
           <h2 style={{
@@ -573,7 +536,6 @@ export function AuthContentWrapper({ children }: { children: React.ReactNode }) 
       <style>{`
         @keyframes pulse      { 0%,100%{opacity:1}   50%{opacity:0.4}    }
         @keyframes shimmerH   { 0%{background-position:0% center} 100%{background-position:200% center} }
-        @keyframes ticker     { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
 
         /* form inputs — polished, bank-grade */
         .auth-wrap input {
@@ -672,7 +634,7 @@ export function AuthContentWrapper({ children }: { children: React.ReactNode }) 
               <div style={{ display:"flex",flexDirection:"column",alignItems:"center",
                 gap:16,marginBottom:32 }}>
                 <img src="/ebttikar-logo.png" alt="Ebttikar"
-                  style={{ height:72,width:"auto",display:"block" }}/>
+                  style={{ height:"clamp(48px,10vw,72px)",width:"auto",display:"block" }}/>
                 <div style={{ display:"flex",alignItems:"center",gap:12 }}>
                   <div style={{ width:26,height:1,background:"rgba(14,40,65,0.2)" }}/>
                   <p style={{ fontSize:10,textTransform:"uppercase",letterSpacing:"0.3em",
@@ -690,7 +652,7 @@ export function AuthContentWrapper({ children }: { children: React.ReactNode }) 
                   "linear-gradient(180deg, #ffffff 0%, #fbfcfd 100%)",
                 border:"1px solid rgba(14,40,65,0.09)",
                 borderRadius:18,
-                padding:"38px 38px 34px",
+                padding:"clamp(20px,5vw,38px) clamp(16px,5vw,38px) clamp(18px,4vw,34px)",
                 boxShadow:
                   "0 0 0 1px rgba(255,255,255,0.5) inset," +
                   "0 1px 2px rgba(14,40,65,0.04)," +
