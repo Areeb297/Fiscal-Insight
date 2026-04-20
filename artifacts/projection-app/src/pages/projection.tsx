@@ -55,6 +55,7 @@ import {
   SlidersHorizontal, Users, CreditCard, Activity,
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
@@ -206,13 +207,13 @@ function KpiItem({
   color: string;
 }) {
   return (
-    <div className="flex flex-col justify-center gap-1 px-5 py-4 min-w-0 flex-1">
-      <span className="text-[11px] uppercase tracking-[0.15em] font-bold text-muted-foreground/55 truncate">{label}</span>
-      <div className="flex items-baseline gap-1.5 flex-wrap">
-        <span className={cn("text-2xl font-bold tabular-nums leading-none tracking-tight", color)}>{value}</span>
-        <span className="text-xs font-medium text-muted-foreground">{unit}</span>
+    <div className="flex flex-col justify-center gap-0.5 px-2 py-2 sm:px-5 sm:py-4 min-w-0 flex-1 bg-background">
+      <span className="text-[9px] sm:text-[11px] uppercase tracking-[0.1em] sm:tracking-[0.15em] font-bold text-muted-foreground/55 truncate">{label}</span>
+      <div className="flex items-baseline gap-1 flex-wrap">
+        <span className={cn("text-sm sm:text-2xl font-bold tabular-nums leading-none tracking-tight", color)}>{value}</span>
+        <span className="text-[10px] sm:text-xs font-medium text-muted-foreground">{unit}</span>
       </div>
-      <span className="text-[11px] text-muted-foreground/65 tabular-nums truncate leading-snug">{sub}</span>
+      <span className="hidden sm:block text-[11px] text-muted-foreground/65 tabular-nums truncate leading-snug">{sub}</span>
     </div>
   );
 }
@@ -519,7 +520,7 @@ export default function Projection() {
       {/* ── Sticky KPI Strip ── */}
       <div className="sticky top-0 z-20 border-b border-border/60 bg-background/95 backdrop-blur-sm">
         {summary ? (
-          <div className="flex divide-x divide-border/60 overflow-x-auto">
+          <div className="grid grid-cols-3 gap-px bg-border/30 sm:gap-0 sm:bg-transparent sm:flex sm:divide-x sm:divide-border/60 sm:overflow-x-auto">
             <KpiItem
               label="Total Cost"
               value={fmt(totalCostMonthly)}
@@ -573,7 +574,7 @@ export default function Projection() {
       {/* ── TWEAKS Bar ── */}
       {showTweaks && (
         <div className="sticky top-[76px] z-10 px-5 py-3.5 bg-muted/50 border-b border-border/60 backdrop-blur-sm">
-          <div className="flex flex-wrap items-end gap-4">
+          <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-end sm:gap-4">
             <div className="space-y-1.5">
               <Label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Year Label</Label>
               <Input
@@ -753,6 +754,27 @@ export default function Projection() {
         {/* Main Content Sections */}
         <div className="flex-1 min-w-0 space-y-5 px-4 py-5 pb-20">
 
+          {/* Mobile Section Nav — visible below lg */}
+          <div className="lg:hidden sticky top-[76px] z-10 bg-background border-b -mx-4 px-4 py-2">
+            <Select onValueChange={(id) => {
+              const el = document.getElementById(id);
+              if (el) { if (!openSections.has(id as SectionId)) toggleSection(id as SectionId); setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 50); }
+            }}>
+              <SelectTrigger className="h-8 text-sm">
+                <SelectValue placeholder="Jump to section…" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="team">§ 1.1 Team</SelectItem>
+                <SelectItem value="overheads">§ 1.2 Overheads &amp; Subscriptions</SelectItem>
+                <SelectItem value="sales">§ 1.3 Sales Support</SelectItem>
+                <SelectItem value="setup">§ 1.4 Setup Fees</SelectItem>
+                <SelectItem value="infra">§ 1.5 Infrastructure</SelectItem>
+                <SelectItem value="streams">§ 2.1 Revenue Streams</SelectItem>
+                <SelectItem value="invoice">§ 2.2 Invoice Schedule</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* ── Cost Structure Summary (always-visible) ── */}
           {summary && (
             <div className="rounded-[14px] border border-[#e5eaf0] overflow-hidden" style={{ boxShadow: "0 1px 0 rgba(16,24,40,0.03), 0 1px 2px rgba(16,24,40,0.04)" }}>
@@ -760,7 +782,14 @@ export default function Projection() {
                 <span className="text-[10px] font-mono font-black tracking-widest text-slate-300 uppercase">Cost Structure</span>
                 <span className="text-[10px] text-slate-400 ml-auto">Monthly · Engagement Total · Per Client / mo</span>
               </div>
-              <table className="w-full text-[13px]">
+              {/* Mobile dl view — xs/sm only */}
+              <dl className="sm:hidden divide-y divide-border/30 px-4 py-2 text-xs">
+                <div className="flex justify-between gap-2 py-2"><dt className="flex items-center gap-1.5 text-muted-foreground"><span className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0"/>Team · Dept Cost</dt><dd className="font-semibold tabular-nums text-blue-700 dark:text-blue-300">{fmt(summary.totalDeptCostMonthly)}<span className="text-muted-foreground font-normal"> / mo</span></dd></div>
+                <div className="flex justify-between gap-2 py-2"><dt className="flex items-center gap-1.5 text-muted-foreground"><span className="h-1.5 w-1.5 rounded-full bg-slate-400 shrink-0"/>Overheads</dt><dd className="font-semibold tabular-nums text-slate-700 dark:text-slate-300">{fmt(summary.totalOverheadMonthly)}<span className="text-muted-foreground font-normal"> / mo</span></dd></div>
+                <div className="flex justify-between gap-2 py-2"><dt className="flex items-center gap-1.5 font-bold text-slate-800 dark:text-slate-200"><span className="h-1.5 w-1.5 rounded-full bg-slate-600 shrink-0"/>Grand Total · Core</dt><dd className="font-bold tabular-nums">{fmt(totalCostMonthly)}<span className="text-muted-foreground font-normal"> / mo</span></dd></div>
+                {msTotalCost > 0 && <div className="flex justify-between gap-2 py-2"><dt className="flex items-center gap-1.5 text-muted-foreground"><span className="h-1.5 w-1.5 rounded-full bg-violet-500 shrink-0"/>Managed Services</dt><dd className="font-semibold tabular-nums text-violet-700 dark:text-violet-300">{fmt(msTotalCost / Math.max(months, 1))}<span className="text-muted-foreground font-normal"> / mo</span></dd></div>}
+              </dl>
+            <table className="hidden sm:table w-full text-[13px]">
                 <thead><tr className="bg-slate-50 dark:bg-slate-900/50 border-b border-border/50">
                   <th className="px-4 py-2 text-left text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Category</th>
                   <th className="px-4 py-2 text-right text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">/ Month</th>
@@ -807,7 +836,14 @@ export default function Projection() {
                 <span className="text-[10px] text-emerald-300 ml-1">· After {targetMarginPct.toFixed(0)}% Margin + {vat}% VAT</span>
                 <span className="text-[10px] text-emerald-400 ml-auto">Ex-VAT · Inc-VAT per client / mo</span>
               </div>
-              <table className="w-full text-[13px]">
+              {/* Mobile dl view — xs/sm only */}
+              <dl className="sm:hidden divide-y divide-border/30 px-4 py-2 text-xs">
+                {(summary.coreSellExVatMonthly ?? 0) > 0 && <div className="flex justify-between gap-2 py-2"><dt className="flex items-center gap-1.5 text-muted-foreground"><span className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0"/>Core Platform</dt><dd className="font-semibold tabular-nums text-blue-700 dark:text-blue-300">{fmt(summary.coreSellIncVatMonthly ?? 0)}<span className="text-muted-foreground font-normal"> / mo</span></dd></div>}
+                {(summary.msSellExVatMonthly ?? 0) > 0 && <div className="flex justify-between gap-2 py-2"><dt className="flex items-center gap-1.5 text-muted-foreground"><span className="h-1.5 w-1.5 rounded-full bg-violet-500 shrink-0"/>Managed Services</dt><dd className="font-semibold tabular-nums text-violet-700 dark:text-violet-300">{fmt(summary.msSellIncVatMonthly ?? 0)}<span className="text-muted-foreground font-normal"> / mo</span></dd></div>}
+                <div className="flex justify-between gap-2 py-2"><dt className="flex items-center gap-1.5 font-bold text-emerald-800 dark:text-emerald-200"><span className="h-1.5 w-1.5 rounded-full bg-emerald-600 shrink-0"/>Total per client</dt><dd className="font-bold tabular-nums text-emerald-700 dark:text-emerald-300">{fmt(summary.sellingPriceWithVatMonthly)}<span className="text-muted-foreground font-normal"> / mo</span></dd></div>
+                {setupFeesTotalWithVat > 0 && <div className="flex justify-between gap-2 py-2"><dt className="flex items-center gap-1.5 text-muted-foreground"><span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"/>Setup Fees</dt><dd className="font-semibold tabular-nums text-amber-700 dark:text-amber-300">{fmt(setupFeesTotalWithVat)}<span className="text-muted-foreground font-normal"> one-time</span></dd></div>}
+              </dl>
+              <table className="hidden sm:table w-full text-[13px]">
                 <thead><tr className="bg-emerald-50/60 dark:bg-emerald-950/30 border-b border-border/50">
                   <th className="px-4 py-2 text-left text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Stream</th>
                   <th className="px-4 py-2 text-right text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Sell ex-VAT</th>
@@ -866,7 +902,44 @@ export default function Projection() {
               </Button>
             }
           >
-            <div className="overflow-x-auto">
+            {/* Mobile card-stack (xs/sm) */}
+            <div className="md:hidden space-y-2 p-3">
+              {employees?.map((emp) => (
+                <div key={emp.id} className="rounded-lg border bg-card p-3 space-y-2.5">
+                  <div className="flex items-start gap-2">
+                    <div className="flex-1 grid grid-cols-2 gap-2 min-w-0">
+                      <Input defaultValue={emp.name} onBlur={(e) => handleUpdateEmployee(emp.id, "name", e.target.value)} className="h-8 text-sm font-medium col-span-2" placeholder="Full name" />
+                      <Input defaultValue={emp.title} onBlur={(e) => handleUpdateEmployee(emp.id, "title", e.target.value)} className="h-8 text-xs" placeholder="Job title" />
+                      <Select defaultValue={emp.country} onValueChange={(val) => handleUpdateEmployee(emp.id, "country", val)}>
+                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>{ctcRules?.map(r => <SelectItem key={r.id} value={r.countryName}>{r.countryName}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteEmployee(emp.id)}><Trash className="h-3.5 w-3.5" /></Button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+                    {[
+                      { label: "Salary (SAR)", el: <Input type="number" defaultValue={emp.salarySar} onBlur={(e) => handleUpdateEmployee(emp.id, "salarySar", parseFloat(e.target.value))} className="h-7 text-right tabular-nums text-xs" /> },
+                      { label: "Months", el: <Input type="number" step="0.5" defaultValue={emp.monthsFte} onBlur={(e) => handleUpdateEmployee(emp.id, "monthsFte", parseFloat(e.target.value))} className="h-7 text-right tabular-nums text-xs" /> },
+                      { label: "Alloc %", el: <Input type="number" min="0" max="100" defaultValue={emp.allocationPercent ?? 100} onBlur={(e) => handleUpdateEmployee(emp.id, "allocationPercent", parseFloat(e.target.value))} className="h-7 text-right tabular-nums text-xs" /> },
+                      { label: "Margin %", el: null },
+                    ].filter(f => f.el).map(({ label, el }) => (
+                      <div key={label} className="space-y-0.5">
+                        <p className="text-[9px] text-muted-foreground uppercase tracking-wide">{label}</p>
+                        {el}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-between pt-1.5 border-t text-xs">
+                    <span className="text-muted-foreground">Total / yr</span>
+                    <span className="font-semibold tabular-nums">{fmt(emp.totalYearlyCost)}</span>
+                  </div>
+                </div>
+              ))}
+              {!employees?.length && <p className="text-center text-sm text-muted-foreground py-6">No team members. Click Add to get started.</p>}
+            </div>
+            {/* Desktop/tablet table (md+) */}
+            <div className="hidden md:block overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-[#f6f8fb]">
@@ -974,7 +1047,44 @@ export default function Projection() {
               </Button>
             }
           >
-            <div className="overflow-x-auto">
+            {/* Mobile card-stack (xs/sm) */}
+            <div className="md:hidden space-y-2 p-3">
+              {subscriptions?.map((sub) => (
+                <div key={sub.id} className="rounded-lg border bg-card p-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Input defaultValue={sub.name} onBlur={(e) => handleUpdateSubscription(sub.id, "name", e.target.value)} className="h-8 text-sm font-medium flex-1" placeholder="Name" />
+                    <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteSubscription(sub.id)}><Trash className="h-3.5 w-3.5" /></Button>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="space-y-0.5">
+                      <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Type</p>
+                      <Select value={sub.isOneTime ? "one-time" : "recurring"} onValueChange={(val) => handleUpdateSubscription(sub.id, "isOneTime", val === "one-time")}>
+                        <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent><SelectItem value="recurring">Recurring</SelectItem><SelectItem value="one-time">One-time</SelectItem></SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-0.5">
+                      <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Currency</p>
+                      <Select defaultValue={sub.currency} onValueChange={(val) => handleUpdateSubscription(sub.id, "currency", val)}>
+                        <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>{currencies?.map(c => <SelectItem key={c.id} value={c.code}>{c.code}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-0.5">
+                      <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Amount</p>
+                      <Input type="number" defaultValue={sub.originalPrice} onBlur={(e) => handleUpdateSubscription(sub.id, "originalPrice", parseFloat(e.target.value))} className="h-7 text-right tabular-nums text-xs" />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between pt-1.5 border-t text-xs">
+                    <span className="text-muted-foreground">{fmt(sub.monthlySar)} / mo</span>
+                    <span className="font-semibold tabular-nums">{fmt(sub.yearlySar)} / yr</span>
+                  </div>
+                </div>
+              ))}
+              {!subscriptions?.length && <p className="text-center text-sm text-muted-foreground py-6">No overheads yet.</p>}
+            </div>
+            {/* Desktop/tablet table (md+) */}
+            <div className="hidden md:block overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-[#f6f8fb]">
@@ -1054,7 +1164,44 @@ export default function Projection() {
               </Button>
             }
           >
-            <div className="overflow-x-auto">
+            {/* Mobile card-stack (xs/sm) */}
+            <div className="md:hidden space-y-2 p-3">
+              {salesSupport?.map((res) => (
+                <div key={res.id} className="rounded-lg border bg-card p-3 space-y-2.5">
+                  <div className="flex items-start gap-2">
+                    <div className="flex-1 grid grid-cols-2 gap-2 min-w-0">
+                      <Input defaultValue={res.name ?? ""} onBlur={(e) => handleUpdateSalesSupport(res.id, "name", e.target.value)} className="h-8 text-sm font-medium" placeholder="Full name" />
+                      <Input defaultValue={res.title} onBlur={(e) => handleUpdateSalesSupport(res.id, "title", e.target.value)} className="h-8 text-xs" placeholder="Job title" />
+                      <Select defaultValue={res.country} onValueChange={(val) => handleUpdateSalesSupport(res.id, "country", val)}>
+                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>{ctcRules?.map(r => <SelectItem key={r.id} value={r.countryName}>{r.countryName}</SelectItem>)}</SelectContent>
+                      </Select>
+                      <Input type="number" defaultValue={res.salarySar} onBlur={(e) => handleUpdateSalesSupport(res.id, "salarySar", parseFloat(e.target.value))} className="h-8 text-right tabular-nums text-xs" placeholder="Salary" />
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteSalesSupport(res.id)}><Trash className="h-3.5 w-3.5" /></Button>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { label: "Months", el: <Input type="number" step="0.5" defaultValue={res.months} onBlur={(e) => handleUpdateSalesSupport(res.id, "months", parseFloat(e.target.value))} className="h-7 text-right tabular-nums text-xs" /> },
+                      { label: "Alloc %", el: <Input type="number" min="0" max="100" defaultValue={res.allocationPercent ?? 100} onBlur={(e) => handleUpdateSalesSupport(res.id, "allocationPercent", parseFloat(e.target.value))} className="h-7 text-right tabular-nums text-xs" /> },
+                      { label: "Margin %", el: <Input type="number" step="0.1" defaultValue={res.marginPercent} onBlur={(e) => handleUpdateSalesSupport(res.id, "marginPercent", parseFloat(e.target.value))} className="h-7 text-right tabular-nums text-xs" /> },
+                    ].map(({ label, el }) => (
+                      <div key={label} className="space-y-0.5">
+                        <p className="text-[9px] text-muted-foreground uppercase tracking-wide">{label}</p>
+                        {el}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-between pt-1.5 border-t text-xs">
+                    <span className="text-muted-foreground">Total cost</span>
+                    <span className="font-semibold tabular-nums">{fmt(res.totalSalaryCost)}</span>
+                  </div>
+                </div>
+              ))}
+              {!salesSupport?.length && <p className="text-center text-sm text-muted-foreground py-6">No managed service resources added.</p>}
+            </div>
+            {/* Desktop/tablet table (md+) */}
+            <div className="hidden md:block overflow-x-auto">
               <Table className="min-w-[2100px]">
                 <TableHeader>
                   <TableRow className="bg-[#f6f8fb]">
@@ -1188,7 +1335,30 @@ export default function Projection() {
               });
               const totals = rows.reduce((acc, r) => ({ cost: acc.cost + r.cost, marginSar: acc.marginSar + r.marginSar, vatAmt: acc.vatAmt + r.vatAmt, totalWithVat: acc.totalWithVat + r.totalWithVat }), { cost: 0, marginSar: 0, vatAmt: 0, totalWithVat: 0 });
               return (
-                <div className="overflow-x-auto">
+                <>
+                {/* Mobile card-stack (xs/sm) */}
+                <div className="md:hidden space-y-2 p-3">
+                  {rows.map(({ v, cost, vatAmt, totalWithVat }, idx) => (
+                    <div key={v.id} className="rounded-lg border bg-card p-3 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-mono text-muted-foreground w-5 shrink-0">{idx + 1}</span>
+                        <Input defaultValue={v.name} onBlur={(e) => handleUpdateVendor(v.id, "name", e.target.value)} className="h-8 text-sm font-medium flex-1" placeholder="Item name" />
+                        <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteVendor(v.id)}><Trash className="h-3.5 w-3.5" /></Button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-0.5"><p className="text-[9px] text-muted-foreground uppercase tracking-wide">Cost (SAR)</p><Input type="number" step="0.01" defaultValue={cost} onBlur={(e) => handleUpdateVendor(v.id, "amount", parseFloat(e.target.value))} className="h-7 text-right tabular-nums text-xs" /></div>
+                        <div className="space-y-0.5"><p className="text-[9px] text-muted-foreground uppercase tracking-wide">Margin %</p><Input type="number" step="0.5" defaultValue={v.marginPercent} onBlur={(e) => handleUpdateVendor(v.id, "marginPercent", parseFloat(e.target.value))} className="h-7 text-right tabular-nums text-xs" /></div>
+                      </div>
+                      <div className="flex items-center justify-between pt-1.5 border-t text-xs">
+                        <span className="text-muted-foreground">VAT: {fmt(vatAmt)}</span>
+                        <span className="font-bold tabular-nums text-primary">{fmt(totalWithVat)} inc-VAT</span>
+                      </div>
+                    </div>
+                  ))}
+                  {!rows.length && <p className="text-center text-sm text-muted-foreground py-6">No setup fees yet.</p>}
+                </div>
+                {/* Desktop/tablet table (md+) */}
+                <div className="hidden md:block overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-[#f6f8fb]">
@@ -1234,6 +1404,7 @@ export default function Projection() {
                     </TableBody>
                   </Table>
                 </div>
+                </>
               );
             })()}
           </SectionBand>
@@ -1254,7 +1425,58 @@ export default function Projection() {
               </Button>
             }
           >
-            <div className="overflow-x-auto">
+            {/* Mobile card-stack (xs/sm) */}
+            <div className="md:hidden space-y-2 p-3">
+              {infrastructureCosts?.map((line) => {
+                const fxToSar2 = (cur: string) => { if (cur === "SAR") return 1; if (cur === "USD") return activeProjection?.sarRate ?? 3.75; return currencies?.find(x => x.code === cur)?.rateToSar ?? 1; };
+                const sarAmount2 = (line.amount || 0) * fxToSar2(line.currency || "SAR");
+                const cycle2 = line.billingCycle || "one_time";
+                const displayCost2 = cycle2 === "one_time" ? sarAmount2 : cycle2 === "annual" ? sarAmount2 / 12 : sarAmount2;
+                const selling2 = computeSellingPrice(displayCost2, line.marginPercent ?? 0);
+                return (
+                  <div key={line.id} className={cn("rounded-lg border bg-card p-3 space-y-2", cycle2 === "one_time" && "border-amber-200 dark:border-amber-800")}>
+                    <div className="flex items-center gap-2">
+                      <Input defaultValue={line.name} onBlur={(e) => handleUpdateInfra(line.id, "name", e.target.value)} className="h-8 text-sm font-medium flex-1" />
+                      {cycle2 === "one_time" && <span className="text-[9px] font-bold uppercase tracking-wide text-amber-600 bg-amber-100 dark:bg-amber-900/40 dark:text-amber-400 px-1.5 py-0.5 rounded shrink-0">Setup</span>}
+                      <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteInfra(line.id)}><Trash className="h-3.5 w-3.5" /></Button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-0.5">
+                        <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Category</p>
+                        <Select value={line.category || "compute"} onValueChange={(val) => handleUpdateInfra(line.id, "category", val)}>
+                          <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="compute">Compute</SelectItem><SelectItem value="storage">Storage</SelectItem><SelectItem value="network">Network</SelectItem><SelectItem value="saas">SaaS</SelectItem><SelectItem value="security">Security</SelectItem><SelectItem value="other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-0.5">
+                        <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Billing</p>
+                        <Select value={cycle2} onValueChange={(val) => handleUpdateInfra(line.id, "billingCycle", val)}>
+                          <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                          <SelectContent><SelectItem value="monthly">Monthly</SelectItem><SelectItem value="annual">Annual</SelectItem><SelectItem value="one_time">One-time</SelectItem></SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-0.5">
+                        <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Amount ({line.currency || "SAR"})</p>
+                        <Input type="number" step="0.01" defaultValue={line.amount} onBlur={(e) => handleUpdateInfra(line.id, "amount", parseFloat(e.target.value))} className="h-7 text-right tabular-nums text-xs" />
+                      </div>
+                      <div className="space-y-0.5">
+                        <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Margin %</p>
+                        <Input type="number" step="0.5" defaultValue={line.marginPercent} onBlur={(e) => handleUpdateInfra(line.id, "marginPercent", parseFloat(e.target.value))} className="h-7 text-right tabular-nums text-xs" />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between pt-1.5 border-t text-xs">
+                      <span className="text-muted-foreground">{fmt(displayCost2)}{cycle2 === "one_time" ? " one-time" : " / mo"}</span>
+                      <span className="font-semibold tabular-nums text-primary">{fmt(selling2)}</span>
+                    </div>
+                  </div>
+                );
+              })}
+              {!infrastructureCosts?.length && <p className="text-center text-sm text-muted-foreground py-6">No infrastructure lines yet.</p>}
+            </div>
+            {/* Desktop/tablet table (md+) */}
+            <div className="hidden md:block overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-[#f6f8fb]">

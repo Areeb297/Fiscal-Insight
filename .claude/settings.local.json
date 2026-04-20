@@ -24,10 +24,15 @@
       "Bash(\"C:/Users/areeb/AppData/Roaming/npm/pnpm.cmd\" --filter @workspace/db run push)",
       "Bash(DATABASE_URL=\"postgresql://neondb_owner:npg_w6LpBEyHJ4rD@ep-jolly-cake-ajnhpoki.c-3.us-east-2.aws.neon.tech/neondb?sslmode=require\" \"C:/Users/areeb/AppData/Roaming/npm/pnpm.cmd\" --filter @workspace/db run push)",
       "Bash(node:*)",
-      "Bash(git add *)",
-      "Bash(git -c user.name=Areeb297 -c user.email=areeb.shafqat@gmail.com commit -m ' *)",
-      "Bash(git push *)",
-      "Bash(ssh *)"
+      "Bash(grep -E \"\\\\.\\(tsx|ts\\)$\")",
+      "Read(//c/Users/areeb/.claude/plugins/cache/**)",
+      "Read(//c/Users/areeb/.claude/plugins/**)",
+      "Bash(xargs grep:*)",
+      "Bash(pnpm typecheck:*)",
+      "Bash(pnpm --filter @workspace/projection-app exec tsc --noEmit)",
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(node_modules/.bin/vite build:*)",
+      "Bash(\"C:/Users/areeb/AppData/Roaming/npm/pnpm.cmd\" run *)"
     ]
   }
 }

@@ -2,7 +2,20 @@
 
 > **Scope:** Every page and shell component from 375 px portrait to 1440 px+ desktop.  
 > **Stack:** TailwindCSS v4, React 19, Shadcn/ui (Radix primitives), Framer Motion, Recharts.  
-> **Status:** Implementation blueprint — no code has been changed yet.
+> **Status:** Phase 1 complete ✓ · Phase 2 complete ✓ · Phase 3 complete ✓ (see §17 for completion tracking)
+
+## Implementation Progress
+
+| Priority | Area | Status |
+|---|---|---|
+| 1 | Shell + BottomNav | ✅ Complete — `bottom-nav.tsx` created, `layout.tsx` updated with `pb-16 md:pb-0`, footer `hidden sm:block` |
+| 2 | Dashboard (grid + chart heights) | ✅ Complete — `grid-cols-2`, responsive chart heights `h-[200px] sm:h-[220px] md:h-[240px] lg:h-[260px]` |
+| 3 | Projection KPI strip + Tweaks Bar | ✅ Complete — KPI strip `grid grid-cols-3` on xs, tweaks bar `grid grid-cols-2 sm:flex-wrap` on mobile, section nav Select on `lg:hidden` |
+| 4 | Projection tables → card-stack | ✅ Complete — Team, Overheads, Sales Support, Setup Fees, Infrastructure all have `md:hidden` card-stack + `hidden md:block` table; Cost Structure & Selling Prices have `sm:hidden` dl view |
+| 5 | Quotations + Invoices list tables | ✅ Complete — column visibility classes added, button stacking applied |
+| 6 | Invoice Calendar carousel | ⏳ Pending |
+| 7 | Admin tables | ✅ Complete — tabs `overflow-x-auto`, Users email `hidden sm:table-cell`, scrollable tabs |
+| 8 | Auth panel minor polish | ✅ Complete — responsive logo height, form card padding |
 
 ---
 
